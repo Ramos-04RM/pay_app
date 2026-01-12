@@ -1,0 +1,90 @@
+{% extends 'index.html' %}
+{% load static %}
+{% load crispy_forms_filters %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% block title %}
+        <meta charset="UTF-8">
+        <title>Cabinet</title>
+    {% endblock %}
+</head>
+<body>
+{% block table %}
+    <div class="main">
+       {% if not form_cabinet_edit %}
+      <table class="home-table" border="5">
+          <thead bgcolor="#7fff00" >
+            <tr>
+                <td>
+                    <a class="" href="{% url 'app:cabinet_new' %}">
+                        <button class="btn_pay">+</button>
+                    </a>
+                </td>
+                <td><a href='{% url "app:sort_by_name_cabinet" 'login' %}'>Логін</a></td>
+                <td><a href='{% url "app:sort_by_name_cabinet" 'link' %}'>Посилання</a></td>
+                <td>Пароль</td>
+                <td><a href='{% url "app:sort_by_name_cabinet" 'email_login' %}'>Еmail</a></td>
+                <td>Еmail_Рassword</td>
+                <td><a href='{% url "app:sort_by_name_cabinet" 'note' %}'>Примітки</a></td>
+                <td>Cервіси</td>
+                <td>Видалити</td>
+            </tr>
+          </thead>
+          <tbody>
+               {% for j in object_k %}
+                <tr tabindex="0">
+                    <td bgcolor="#7fff00">
+                        <a href="{% url 'app:cabinet_edit' j.id%}">
+                             <div class="all_cell">
+                                {{ forloop.counter }}
+                             </div>
+                        </a>
+                    </td>
+                    <td>{{ j.login }}</td>
+                    <td><a href="{{ j.link }}">{{ j.link }}</a></td>
+                    <td>{{ j.password }}</td>
+                    <td>{{ j.email_login }}</td>
+                    <td>{{ j.email_password }}</td>
+                    <td>{{ j.note }}</td>
+                    <td>
+                        <h5 style="background-color: #ffffff">{{ j.pay_set.all.count}}</h5>
+                        {% if j.pay_set.all.count > 0 %}
+                            <button type="button" class="btn_pay_yellow" onclick='my_func("{{ j }}")' id="btn{{ j }}">Show</button>
+                        {% endif %}
+                        <div style="display: none" id="remove-heli-{{ j }}" >
+                             {% for s in j.pay_set.all  %}
+                                 <a href="{% url 'app:home_page_with_cabinet' s.id %}">
+                                    <h3 style="background-color: #7dff97; margin-top: 1px"> {{ s }}</h3>
+                                 </a>
+                             {% endfor %}
+                        </div>
+                    </td>
+                    <td>
+                        {% if j.pay_set.count == 0 %}
+                            <a class="btn_pay_red" href={% url 'app:delete_cabinet'  j.id %}>
+                                <button class="btn_pay_red" onclick="return proverka();">Delete</button>
+                            </a>
+                        {% else %}
+                            <button class="btn_pay_red" onclick="return delete_item()">Delete</button>
+                        {% endif %}
+                    </td>
+                 </tr>
+          </tbody>
+            {% endfor %}
+       {% endif %}
+        {% block cabinet %}
+        {% endblock %}
+        {% if form_cabinet_edit %}
+            <form method="POST" class="form_cabinet">
+                {% csrf_token %}
+                {{ form_cabinet_edit|crispy }}
+                <button type="submit" class="btn_pay">Save</button>
+            </form>
+      </table>
+        {% endif %}
+    </div>
+{% endblock %}
+</body>
+</html>

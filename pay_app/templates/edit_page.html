@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+       {% block title %}
+          <title>
+              Edit page
+          </title>
+       {% endblock %}
+   </head>
+       <body>
+       {% block content %}
+    {% if request.user.is_authenticated %}
+         <li class="admin_class">
+             <a class="button-container"  href="{% url 'app:index' %}"><button class="btn_pay">Home</button> </a>
+             {{ request.user.username }}, ви авторизовані!
+             <a href={% url 'logout' %}>
+                 <button class="btn_pay"> Вийти </button>
+             </a>
+         </li>
+    <div class="">
+        <table class="table_pay" border="5">
+            <tr>
+                    <tr bgcolor="#7fff00">
+                    <td><button class="btn_add"><a href="{% url 'app:pay_new' %}" >Додати</a></button></td>
+                    <td>№</td>
+                    <td>Група</td>
+                    <td>Дата створення</td>
+                    <td>Сервіс</td>
+                    <td>Тип ресурсу</td>
+                    <td>Ціна на місяць</td>
+                    <td>Валюта</td>
+                    <td>Платіжна система</td>
+                    <td>Проплачено до</td>
+                    <td>Стан</td>
+                    <td>Логін</td>
+                    <td>IP/Port</td>
+                    <td>Пароль</td>
+                    <td>Видалити</td>
+
+            {% if object_l.count > 0 %}
+            {% for i in object_l%}
+            <tr tabindex="0">
+                <td bgcolor="#7fff00">
+                    <a class="btn_pay_edit" href={% url 'app:edit_tb'  i.id %}>
+                            Edit<i class="fa fa-cog fa-spin fa-1x fa-fw" aria-hidden="true"></i>
+                    </a>
+                </td>
+                <td bgcolor="#00ffff">
+                    {{ forloop.counter}}
+                </td>
+{#                <td>{{ i.cabinet }}</td>#}
+                <td>{{ i.groups }}</td>
+                <td>{{ i.create_date|date:"d.m.Y"}}</td>
+                <td>{{ i.service }}</td>
+               <td>{{ i.type_source}}</td>
+                <td>{{ i.price_per_month }}</td>
+                <td>{{ i.currency }}</td>
+                <td>{{ i.pay_sys}}</td>
+                <td>
+                    {{ i.paid_up_to|date:"d.m.Y" }}
+                </td>
+                <td>{{ i.status }}</td>
+                <td>{{ i.email_login }}</td>
+                <td>{{ i.ip }}</td>
+                 <td typeof="password" bgcolor="#fbfd02">
+                <div class="btn-group" >
+                    <button type="button" class="btn btn-default" onclick='my_func("{{ i }}")' id="btn{{ i }}">Show</button>
+                        <label style="display: none" id="remove-heli-{{ i }}" >
+                            {{ i.password }}
+                        </label>
+                </div>
+                </td>
+                <td>
+                    <a class="btn_pay_red" href={% url 'app:delete'  i.id %}>
+                         <button class="btn_pay_red" onclick="return proverka();">Delete</button>
+                    </a>
+                </td>
+            </tr>
+         {% endfor %}
+            {% endif %}
+
+        </table>
+         {% endif %}
+    </div>
+       {% endblock %}
+   </body>
+
+</html>

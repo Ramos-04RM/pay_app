@@ -1,0 +1,284 @@
+{% load static %}
+{% load crispy_forms_filters %}
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+       <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+       <script src="{% static 'js/app.pay.js' %}"></script>
+       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+       <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.13.0/css/all.css"
+      integrity="sha384-Bfad6CLCknfcloXFOyFnlgtENryhrpZCe29RTifKEixXQZ38WheV+i/6YWSzkz3V"
+      crossorigin="anonymous"
+ />
+   {% block title %}
+      <title>
+         HOME
+      </title>
+   {% endblock %}
+   </head>
+       <body class="body">
+    {% if request.user.is_authenticated %}
+         <li class="admin_class">
+             {{ request.user.username }}, ви авторизовані!
+             <a href="{% url 'logout' %}">
+                 <button class="btn_pay"> Вийти </button>
+             </a>
+         </li>
+
+            <h7 class="button-container">
+                <div class="main">
+                     {% if request.user.username == 'admin' %}
+                         <a href="{% url 'app:index' %}"><button class="btn_pay">Home</button> </a>
+                             <a href={% url 'app:cabinet_page' %}><button class="btn_pay">Cabinets</button></a>
+                        {% if object_l %}
+                             <a href={% url 'app:edit_page' %}><button class="btn_pay">Edit</button></a>
+                             <label class="label"> Кількість елементів в таблиці:
+                                 {{ object_l.count }}
+                             </label>
+                        {% endif %}
+                    {% endif %}
+                </div>
+              </h7>
+
+        <div class="sidenav">
+                          {% if request.user.username == 'admin' %}
+                         <h2 class="h_admin"> Hello <a href="http://127.0.0.1:8000/admin/"><button class="btn_pay">{{ request.user.username }}</button> </a></h2>
+                          {% endif %}
+                           <li class="check-field-label"> Платіжна система
+                                <a href='{% url "app:filter_by_pay_sys"  'BTC' %}'><button class="btn_pay">BTC</button></a>
+                                <a href='{% url "app:filter_by_pay_sys" 'WM' %}'><button class="btn_pay">WM</button></a>
+                                <a href='{% url "app:filter_by_pay_sys" 'BTC|WM' %}'><button class="btn_pay">BTC|WM</button></a>
+                           </li>
+                                <br>
+                            <li class="check-field-label">Тип ресурсу<br>
+                                <a href='{% url "app:filter_by_type_source" 'VPS' %}'><button class="btn_pay">VPS</button></a>
+                                <a href='{% url "app:filter_by_type_source" 'site' %}'><button class="btn_pay">site</button></a>
+                                <a href='{% url "app:filter_by_type_source" 'proxy' %}'><button class="btn_pay">proxy</button></a>
+                            </li> <br>
+                            <li class="check-field-label">Активне<br>
+                                <a href='{% url "app:filter_by_active" 'active' %}'><button class="btn_pay">Yes</button></a>
+                                <a href='{% url "app:filter_by_active" 'not active' %}'><button class="btn_pay">No</button></a>
+                            </li> <br>
+                            <form class="example" action="{% url 'app:searching' 'g' %}" method="get" style="margin:auto;max-width:200px">
+                                <label>
+                                    <input name="g" type="text"  placeholder="Search in page..">
+                                    <button type="submit"><img class="search_icon" src="{% static 'image/search_icon.png' %}" alt="search"></button>
+                                </label>
+                            </form>
+                            <h3> <a href='{% url "app:filter_by_date" '1' %}'><button class="btn_pay_yellow">Найближчі оплати</button></a></h3>
+
+                                {% for i in last_dt %}
+                                        <label class="h_admin"> <td>-{{ i.paid_up_to|date:"d.m.Y" }}-</td>  </label>
+                                {% endfor %}
+                            <h3> <a href='{% url "app:overdue_payments" '1' %}'><button class="btn_pay_red">Прострочені оплати</button></a></h3>
+                                {% if not_paid.count > 0 %}
+                                        {% for i in not_paid %}
+                                                <label class="paid"> <td>-{{ i.paid_up_to|date:"d.m.Y" }}-</td>  </label>
+                                        {% endfor %}
+                                {% endif %}
+
+                </div>
+      {% block table %}
+            <div class="main">
+            {% if not form_edit_pay %}
+        <table class="table_pay" border="5">
+               <thead bgcolor="#7fff00">
+                 <tr>
+                    <td>
+                        <a href="{% url 'app:pay_new' %}" class="all_cell">
+                            <button class="btn_pay">+</button>
+                        </a>
+                    </td>
+                    <td><a href='{% url "app:sorted_by_name" 'groups' %}'>Група</a></td>
+                    <td><a href='{% url "app:sorted_by_name" 'create_date'%}'>Дата створення</a></td>
+                    <td><a href='{% url "app:sorted_by_name" 'service'%}'>Умовна назва сервісу</a></td>
+                    <td><a href='{% url "app:sorted_by_name" 'type_source'%}'>Тип ресурсу</a></td>
+                    <td><a href='{% url "app:sorted_by_name" 'price_per_month'%}'>Ціна на місяць</a></td>
+                    <td><a href='{% url "app:sorted_by_name" 'currency'%}'>Валюта</a></td>
+                    <td><a href='{% url "app:sorted_by_name" 'pay_sys'%}'>Платіжна система</a></td>
+                    <td><a href='{% url "app:sorted_by_name" 'paid_up_to'%}'>Проплачено до</a></td>
+                    <td><a href="{% url "app:sorted_by_name" 'email_login' %}">Логін</a></td>
+                    <td>IP/Port</td>
+                    <td>Пароль</td>
+                    <td>Примітка</td>
+                 </tr>
+               </thead>
+            {% endif %}
+          <tbody>
+            {% for i in object_l %}
+                <tr tabindex="0">
+                    <td bgcolor="#7fff00">
+                        <a href="{% url 'app:pay_edit' i.id%}">
+                            <div class="all_cell">
+                                {{ forloop.counter }}
+                            </div>
+                        </a>
+                    </td>
+                <td>{{ i.groups }}</td>
+                <td>{{ i.create_date|date:"d.m.Y"}}</td>
+                {% if i.status == "active" %}
+                    <td class="active_status" >
+                        <a target="_blank" href="{% url 'app:home_page_with_cabinet' i.id %}">
+                            <div class="all_cell">
+                                {{ i.service }}
+                            </div>
+                        </a>
+                    </td>
+                {% endif %}
+                {% if i.status != "active" %}
+                     <td class="not_active_status">
+                         <a target="_blank" href="{% url 'app:home_page_with_cabinet' i.id %}">
+                             <div class="all_cell">
+                                {{ i.service }}
+                            </div>
+                        </a>
+                     </td>
+                {% endif %}
+{#                <td bgcolor="#00ffff">{{ i.service }}</td>#}
+                <td>{{ i.type_source}}</td>
+                <td>{{ i.price_per_month }}</td>
+                <td>{{ i.currency }}</td>
+                <td>{{ i.pay_sys}}</td>
+                 {% if i.paid_up_to <= today and i.status == "active" %}
+                     <td class="not_active_status">
+                         <a class="" href={% url 'app:edit_dt'  i.id %}>
+                             <div class="all_cell">
+                                {{ i.paid_up_to|date:"d.m.Y" }}
+                             </div>
+                        </a>
+                     </td>
+                 {% endif %}
+                 {% if i.paid_up_to <= today and i.status != "active" %}
+                 <td class="not_active_date">
+                     <a class="" href={% url 'app:edit_dt'  i.id %}>
+                          <div class="all_cell">
+                                {{ i.paid_up_to|date:"d.m.Y" }}
+                          </div>
+                    </a>
+                 </td>
+                 {% endif %}
+                 {% if i.paid_up_to > today and i.paid_up_to <= week and i.status == "active"%}
+                 <td class="active_status_week">
+                     <a class="" href={% url 'app:edit_dt'  i.id %}>
+                         <div class="all_cell">
+                               {{ i.paid_up_to|date:"d.m.Y" }}
+                         </div>
+                    </a>
+                 </td>
+                 {% endif %}
+                {% if i.paid_up_to > today and i.paid_up_to > week and i.status == "active"%}
+                 <td class="active_status">
+                     <a class="" href={% url 'app:edit_dt'  i.id %}>
+                        <div class="all_cell">
+                               {{ i.paid_up_to|date:"d.m.Y" }}
+                        </div>
+                    </a>
+                 </td>
+                 {% endif %}
+                {% if i.paid_up_to > today and i.status != "active"%}
+                 <td class="not_active_date">
+                     <a class="" href={% url 'app:edit_dt'  i.id %}s>
+                        <div class="all_cell">
+                               {{ i.paid_up_to|date:"d.m.Y" }}
+                        </div>
+                    </a>
+                 </td>
+                 {% endif %}
+                <td>{{ i.email_login }}</td>
+                <td> {{ i.ip }}
+                </td>
+                <td typeof="password" bgcolor="#fbfd02">
+                    <h4>
+                         <button type="button" class="btn_pay_yellow" onclick='my_func("{{ i }}")' id="btn{{ i }}">
+                             Show
+                         </button>
+                         <label style="display: none" id="remove-heli-{{ i }}" >
+                             {{ i.password }}
+                         </label>
+                    </h4>
+                </td>
+                <td> {{ i.note_pay }}</td>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endblock %}
+
+        {% if form_edit_pay %}
+         <form method="POST" class="form_cabinet">
+            {% csrf_token %}
+            {{ form_edit_pay.as_ul }}
+             <button type="submit" class="btn_add">Save</button>
+          </form>
+             <form method="POST" class="form_cabinet">
+            {% csrf_token %}
+            {{ form_edit_cabinet.as_p }}
+                <button type="submit" class="btn_pay">Save</button>
+             </form>
+         {% endif %}
+{#        {% if request.user.username != 'admin' %}#}
+{#            <h2>  <a href="{% url 'app:index' %}"><button class="btn_pay">Reset</button> </a></h2>#}
+{#        {% endif %}#}
+{#                     {% if request.user.username == 'admin' %}#}
+{#                              <h2>  <a href={% url 'app:edit_page' %}><button class="btn_pay">Edit</button> </a></h2>#}
+{#                     {% endif %}#}
+         {% endif %}
+       {% block cabinet %}
+       {% if not form_edit_pay %}
+       {% if cabinet_obj %}
+
+
+       <table class="home-table_cabinet" border="5">
+            {% for j in cabinet_obj %}
+                <tr bgcolor="#7fff00">
+                    <th bgcolor="#7bbb00">Cервіс:</th>
+                    <td bgcolor="#77ff72" >- {{j.service}} - </td>
+                <tr></tr>
+                <tr>
+                    <th> Кабінет:
+{#                        {% if object_l %}#}
+{#                                <a href={% url 'app:cabinet_page' %}><button class="btn_pay">Cabinets:</button></a>#}
+{#                        {% endif %}#}
+                    </th>
+                    <td>№{{ j.cabinet.id }}</td>
+                </tr>
+                <tr>
+                    <th> Логін: </th>
+                    <td>{{j.cabinet.login}}</td>
+                </tr>
+                <tr>
+                    <th>Посилання:</th>
+                    <td><a href="{{ j.cabinet.link }}">{{ j.cabinet.link }}</a></td>
+                </tr>
+                <tr>
+                    <th>Пароль:</th>
+                    <td>{{ j.cabinet.password }}</td>
+                </tr>
+                <tr>
+                    <th>Еmail:</th>
+                    <td>{{ j.cabinet.email_login }}</td>
+                </tr>
+                 <tr>
+                    <th>Еmail_Рassword:</th>
+                    <td>{{ j.cabinet.email_password }}</td>
+                </tr>
+                 <tr>
+                    <th>Примітки:</th>
+                    <td>{{ j.cabinet.note }}</td>
+                </tr>
+            {% endfor %}
+           {% endif %}
+       {% endif %}
+        </table>
+       {% endblock %}
+     {% if not request.user.is_authenticated %}
+        <a href="{% url 'login' %}"> Ви не авторизовані!!!
+            <button class="btn_pay"> Ввійти </button>
+        </a>
+     {% endif %}
+    </div>
+   </body>
+
+
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+            <form method="POST" action={% url 'app:create' %}>
+                   {% csrf_token %}
+                <td><input type="submit" value="Добавити" ></td>
+                <td bgcolor="#00ffff"><input type="text"  name="groups" value="{{forloop.counter}}" /></td>
+                <td bgcolor="#00ffff"> <input type="text"  name="groups" value="{{object_l.groups}}" /></td>
+                <td><input type="text"  name="cabinet_id" value={{object_l.cabinet.id}} /></td>
+                <td bgcolor="#00ffff"> <input type="date"  name="create_date" value="{{object_l.create_date}}" /></td>
+                <td> <input type="text"  name="service" value="{{object_l.service}}" /></td>
+                <td> <input type="text"  name="type_source" value="{{object_l.type_source}}"/></td>
+                <td> <input type="text"  name="price_per_month" value="{{object_l.price_per_month}}" /></td>
+                <td> <input type="text"  name="currency" value="{{object_l.currency}}" /></td>
+                <td> <input type="text"  name="pay_sys" value="{{object_l.pay_sys}}" /></td>
+                <td> <input type="date"  name="paid_up_to" value="{{object_l.paid_up_to}}" /></td>
+                <td> <input type="checkbox"  name="status" value="{{object_l.status}}" /></td>
+                <td> <input type="url"  name="link"  value="{{object_l.link}}"></td>
+                <td> <input type="text"  name="email_login" value="{{object_l.email_login}}" /></td>
+                <td> <input type="password" name="password" value="{{object_l.password}}" /></td>
+           </form>
+</body>
+</html>

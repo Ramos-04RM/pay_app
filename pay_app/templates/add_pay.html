@@ -1,0 +1,48 @@
+{% extends "index.html" %}
+{% load crispy_forms_filters %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="ua">
+<head>
+    <meta charset="UTF-8">
+    {% block title %}
+        <title>new_item</title>
+    {% endblock %}
+</head>
+{% block table %}
+
+{% endblock %}
+{% block cabinet %}
+<body>
+    <div class="main">
+{#        <a href="{% url 'app:index' %}">#}
+{#            <button class="btn_pay">Back to home</button>#}
+{#        </a>#}
+    {% if form_pay and not form_cabinet %}
+        <a class="" href="{% url 'app:cabinet_new' %}">
+            <button class="btn_pay">ADD CABINET</button>
+        </a>
+    {% elif form_pay and form_cabinet %}
+        <a href="{% url 'app:pay_new' %}">
+            <button class="btn_pay">Back</button>
+        </a>
+    {% endif %}
+    <form method="POST" class="form_pay">
+        {% csrf_token %}
+        {{ form_pay.as_ul }}
+            {% if form_pay and not form_cabinet %}
+                <button type="submit" class="btn_pay">Save</button>
+            {% endif %}
+    </form>
+    <form method="POST" class="form_cabinet">
+        {% if form_cabinet %}
+            <label>New cabiten</label>
+            {% csrf_token %}
+            {{ form_cabinet.as_ul}}
+                <button type="submit" class="btn_pay">Save</button>
+        {% endif %}
+    </form>
+    {% endblock %}
+    </div>
+</body>
+</html>

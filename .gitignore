@@ -1,0 +1,11 @@
+.venv
+pay_app/migrations
+.idea
+
+
+db.sqlite3
+dump.sql
+data.json
+mydb.dump
+
+d1/settings.py
