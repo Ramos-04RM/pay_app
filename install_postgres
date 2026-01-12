@@ -1,0 +1,24 @@
+
+
+ sudo apt install python3-pip python3-dev libpq-dev postgresql postgresql-contrib nginx curl
+ sudo service postgresql start
+ sudo service status postgresql
+ sudo -u postgres psql
+ sudo su postgres
+        if  dropdb app_pay_db
+            sudo -u postgres psql
+            CREATE DATABASE app_pay_db;
+            CREATE USER admin WITH PASSWORD 'admin';
+            GRANT ALL PRIVILEGES ON DATABASE app_pay_db TO admin;
+
+sudo -H pip3 install --upgrade pip
+sudo -H pip3 install virtualenv
+mkdir ~/project
+cd ~/project
+source venv/Scripts/activate
+pip install django gunicorn psycopg2-binary
+pip install -r requirements.txt
+
+python manage.py makemigrations
+python manage.py migrate
+python manage.py createsuperuser
