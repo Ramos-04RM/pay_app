@@ -530,3 +530,81 @@ white-space: nowrap;
     height: 15px;
     width: 15px;
 }
+
+/* Cabinet highlight (deep-link from Pay) */
+tr.cabinet-highlight td {
+  background: #ff0633 !important; /* жовтий */
+  color: #000 !important;
+}
+
+/* Pulse effect */
+@keyframes cabinetPulse {
+  0%   { filter: brightness(1); }
+  50%  { filter: brightness(1.2); }
+  100% { filter: brightness(1); }
+}
+
+tr.cabinet-pulse td {
+  animation: cabinetPulse 0.8s ease-in-out 0s 2;
+}
+
+/* ===== Forms layout: create/edit aligned ===== */
+.forms-grid {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+  flex-wrap: wrap;            /* щоб на вузьких екранах падало вниз */
+  margin-top: 10px;
+}
+
+.form-card {
+  background: #8cb68c;
+  border: 2px solid rgba(0, 0, 0, 0.35);
+  border-radius: 6px;
+  padding: 14px 16px;
+  min-width: 520px;
+}
+
+/* UL rendering (as_ul) */
+.form-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.form-card li {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+/* labels right-aligned */
+.form-card label {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* inputs/selects stretch */
+.form-card input,
+.form-card select,
+.form-card textarea {
+  width: 100%;
+  max-width: 520px;
+}
+
+/* make textareas nicer */
+.form-card textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+/* kill old huge margins so it doesn't drift */
+.form_pay,
+.form_cabinet {
+  margin-left: 0 !important;
+  margin-bottom: 0 !important;
+  display: block !important;
+  width: auto !important;
+}

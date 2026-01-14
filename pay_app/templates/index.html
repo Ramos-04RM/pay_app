@@ -12,7 +12,7 @@
       integrity="sha384-Bfad6CLCknfcloXFOyFnlgtENryhrpZCe29RTifKEixXQZ38WheV+i/6YWSzkz3V"
       crossorigin="anonymous"
  />
-   {% block title %}
+ {% block title %}
       <title>
          HOME
       </title>
@@ -136,7 +136,6 @@
                         </a>
                      </td>
                 {% endif %}
-{#                <td bgcolor="#00ffff">{{ i.service }}</td>#}
                 <td>{{ i.type_source}}</td>
                 <td>{{ i.price_per_month }}</td>
                 <td>{{ i.currency }}</td>
@@ -186,19 +185,45 @@
                     </a>
                  </td>
                  {% endif %}
-                <td>{{ i.email_login }}</td>
-                <td> {{ i.ip }}
+
+                <!-- LAZY: email_login (не світимо при рендері) -->
+                <td bgcolor="#fbfd02">
+                    <h4>
+                        <button type="button"
+                                class="btn_pay_yellow"
+                                id="pay-email_login-btn-{{ i.id }}"
+                                onclick="decryptAndCopy({id: {{ i.id }}, model: 'pay', field: 'email_login'})">
+                            Show
+                        </button>
+                        <label id="pay-email_login-val-{{ i.id }}"
+                               data-visible="0"
+                               data-decrypted=""
+                               style="margin-left:8px;">
+                            *****
+                        </label>
+                    </h4>
                 </td>
+
+                <td> {{ i.ip }} </td>
+
+                <!-- LAZY: password (не світимо при рендері) -->
                 <td typeof="password" bgcolor="#fbfd02">
                     <h4>
-                         <button type="button" class="btn_pay_yellow" onclick='my_func("{{ i }}")' id="btn{{ i }}">
+                         <button type="button"
+                                 class="btn_pay_yellow"
+                                 id="pay-password-btn-{{ i.id }}"
+                                 onclick="decryptAndCopy({id: {{ i.id }}, model: 'pay', field: 'password'})">
                              Show
                          </button>
-                         <label style="display: none" id="remove-heli-{{ i }}" >
-                             {{ i.password }}
+                         <label id="pay-password-val-{{ i.id }}"
+                                data-visible="0"
+                                data-decrypted=""
+                                style="margin-left:8px;">
+                             *****
                          </label>
                     </h4>
                 </td>
+
                 <td> {{ i.note_pay }}</td>
             {% endfor %}
           </tbody>
@@ -206,28 +231,26 @@
       {% endblock %}
 
         {% if form_edit_pay %}
-         <form method="POST" class="form_cabinet">
-            {% csrf_token %}
-            {{ form_edit_pay.as_ul }}
-             <button type="submit" class="btn_add">Save</button>
-          </form>
-             <form method="POST" class="form_cabinet">
-            {% csrf_token %}
-            {{ form_edit_cabinet.as_p }}
-                <button type="submit" class="btn_pay">Save</button>
-             </form>
-         {% endif %}
-{#        {% if request.user.username != 'admin' %}#}
-{#            <h2>  <a href="{% url 'app:index' %}"><button class="btn_pay">Reset</button> </a></h2>#}
-{#        {% endif %}#}
-{#                     {% if request.user.username == 'admin' %}#}
-{#                              <h2>  <a href={% url 'app:edit_page' %}><button class="btn_pay">Edit</button> </a></h2>#}
-{#                     {% endif %}#}
+          <div class="forms-grid">
+
+            <form method="POST" class="form_cabinet form-card">
+              {% csrf_token %}
+              {{ form_edit_pay.as_ul }}
+              <button type="submit" class="btn_add">Save</button>
+            </form>
+
+            <form method="POST" class="form_cabinet form-card">
+              {% csrf_token %}
+              {{ form_edit_cabinet.as_ul }}
+              <button type="submit" class="btn_pay">Save</button>
+            </form>
+
+          </div>
+        {% endif %}
          {% endif %}
        {% block cabinet %}
        {% if not form_edit_pay %}
        {% if cabinet_obj %}
-
 
        <table class="home-table_cabinet" border="5">
             {% for j in cabinet_obj %}
@@ -236,12 +259,12 @@
                     <td bgcolor="#77ff72" >- {{j.service}} - </td>
                 <tr></tr>
                 <tr>
-                    <th> Кабінет:
-{#                        {% if object_l %}#}
-{#                                <a href={% url 'app:cabinet_page' %}><button class="btn_pay">Cabinets:</button></a>#}
-{#                        {% endif %}#}
-                    </th>
-                    <td>№{{ j.cabinet.id }}</td>
+                    <th> Кабінет:</th>
+                    <td>
+                  <a href="{% url 'app:cabinet_page' %}?highlight={{ j.cabinet.id }}#cabinet-{{ j.cabinet.id }}">
+                    №{{ j.cabinet.id }}
+                  </a>
+                </td>
                 </tr>
                 <tr>
                     <th> Логін: </th>
@@ -251,18 +274,49 @@
                     <th>Посилання:</th>
                     <td><a href="{{ j.cabinet.link }}">{{ j.cabinet.link }}</a></td>
                 </tr>
+
+                <!-- LAZY: Cabinet.password -->
                 <tr>
                     <th>Пароль:</th>
-                    <td>{{ j.cabinet.password }}</td>
+                    <td bgcolor="#fbfd02">
+                        <button type="button"
+                                class="btn_pay_yellow"
+                                id="cabinet-password-btn-{{ j.cabinet.id }}"
+                                onclick="decryptAndCopy({id: {{ j.cabinet.id }}, model: 'cabinet', field: 'password'})">
+                            Show
+                        </button>
+                        <span id="cabinet-password-val-{{ j.cabinet.id }}"
+                              data-visible="0"
+                              data-decrypted=""
+                              style="margin-left:8px;">
+                            *****
+                        </span>
+                    </td>
                 </tr>
                 <tr>
                     <th>Еmail:</th>
-                    <td>{{ j.cabinet.email_login }}</td>
+                    <td>№{{ j.cabinet.email_login }}</td>
                 </tr>
+
+                <!-- LAZY: Cabinet.email_password -->
                  <tr>
                     <th>Еmail_Рassword:</th>
-                    <td>{{ j.cabinet.email_password }}</td>
+                    <td bgcolor="#fbfd02">
+                        <button type="button"
+                                class="btn_pay_yellow"
+                                id="cabinet-email_password-btn-{{ j.cabinet.id }}"
+                                onclick="decryptAndCopy({id: {{ j.cabinet.id }}, model: 'cabinet', field: 'email_password'})">
+                            Show
+                        </button>
+                        <span id="cabinet-email_password-val-{{ j.cabinet.id }}"
+                              data-visible="0"
+                              data-decrypted=""
+                              style="margin-left:8px;">
+                            *****
+                        </span>
+                    </td>
                 </tr>
+
                  <tr>
                     <th>Примітки:</th>
                     <td>{{ j.cabinet.note }}</td>
@@ -279,6 +333,4 @@
      {% endif %}
     </div>
    </body>
-
-
 </html>

@@ -1,90 +1,178 @@
 {% extends 'index.html' %}
 {% load static %}
 {% load crispy_forms_filters %}
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    {% block title %}
-        <meta charset="UTF-8">
-        <title>Cabinet</title>
-    {% endblock %}
-</head>
-<body>
-{% block table %}
-    <div class="main">
-       {% if not form_cabinet_edit %}
-      <table class="home-table" border="5">
-          <thead bgcolor="#7fff00" >
-            <tr>
-                <td>
-                    <a class="" href="{% url 'app:cabinet_new' %}">
-                        <button class="btn_pay">+</button>
-                    </a>
-                </td>
-                <td><a href='{% url "app:sort_by_name_cabinet" 'login' %}'>Логін</a></td>
-                <td><a href='{% url "app:sort_by_name_cabinet" 'link' %}'>Посилання</a></td>
-                <td>Пароль</td>
-                <td><a href='{% url "app:sort_by_name_cabinet" 'email_login' %}'>Еmail</a></td>
-                <td>Еmail_Рassword</td>
-                <td><a href='{% url "app:sort_by_name_cabinet" 'note' %}'>Примітки</a></td>
-                <td>Cервіси</td>
-                <td>Видалити</td>
-            </tr>
-          </thead>
-          <tbody>
-               {% for j in object_k %}
-                <tr tabindex="0">
-                    <td bgcolor="#7fff00">
-                        <a href="{% url 'app:cabinet_edit' j.id%}">
-                             <div class="all_cell">
-                                {{ forloop.counter }}
-                             </div>
-                        </a>
-                    </td>
-                    <td>{{ j.login }}</td>
-                    <td><a href="{{ j.link }}">{{ j.link }}</a></td>
-                    <td>{{ j.password }}</td>
-                    <td>{{ j.email_login }}</td>
-                    <td>{{ j.email_password }}</td>
-                    <td>{{ j.note }}</td>
-                    <td>
-                        <h5 style="background-color: #ffffff">{{ j.pay_set.all.count}}</h5>
-                        {% if j.pay_set.all.count > 0 %}
-                            <button type="button" class="btn_pay_yellow" onclick='my_func("{{ j }}")' id="btn{{ j }}">Show</button>
-                        {% endif %}
-                        <div style="display: none" id="remove-heli-{{ j }}" >
-                             {% for s in j.pay_set.all  %}
-                                 <a href="{% url 'app:home_page_with_cabinet' s.id %}">
-                                    <h3 style="background-color: #7dff97; margin-top: 1px"> {{ s }}</h3>
-                                 </a>
-                             {% endfor %}
-                        </div>
-                    </td>
-                    <td>
-                        {% if j.pay_set.count == 0 %}
-                            <a class="btn_pay_red" href={% url 'app:delete_cabinet'  j.id %}>
-                                <button class="btn_pay_red" onclick="return proverka();">Delete</button>
-                            </a>
-                        {% else %}
-                            <button class="btn_pay_red" onclick="return delete_item()">Delete</button>
-                        {% endif %}
-                    </td>
-                 </tr>
-          </tbody>
-            {% endfor %}
-       {% endif %}
-        {% block cabinet %}
-        {% endblock %}
-        {% if form_cabinet_edit %}
-            <form method="POST" class="form_cabinet">
-                {% csrf_token %}
-                {{ form_cabinet_edit|crispy }}
-                <button type="submit" class="btn_pay">Save</button>
-            </form>
-      </table>
-        {% endif %}
-    </div>
+{% block title %}
+  <meta charset="UTF-8">
+  <title>Cabinet</title>
 {% endblock %}
-</body>
-</html>
+
+{% block table %}
+<div class="main">
+
+  {% if not form_cabinet_edit %}
+
+  <table class="home-table" border="5">
+    <thead bgcolor="#7fff00">
+      <tr>
+        <td>
+          <a href="{% url 'app:cabinet_new' %}">
+            <button class="btn_pay">+</button>
+          </a>
+        </td>
+        <td>
+          <a href='{% url "app:sort_by_name_cabinet" "login" %}'>Логін</a>
+        </td>
+        <td>
+          <a href='{% url "app:sort_by_name_cabinet" "link" %}'>Посилання</a>
+        </td>
+        <td>Пароль</td>
+        <td>
+          <a href='{% url "app:sort_by_name_cabinet" "email_login" %}'>Email</a>
+        </td>
+        <td>Email password</td>
+        <td>
+          <a href='{% url "app:sort_by_name_cabinet" "note" %}'>Примітки</a>
+        </td>
+        <td>Сервіси</td>
+        <td>Видалити</td>
+      </tr>
+    </thead>
+
+    <tbody>
+    {% for j in object_k %}
+     <tr
+         id="cabinet-{{ j.id }}"
+         tabindex="0"
+         class="{% if highlight_id and j.id == highlight_id %}cabinet-highlight{% endif %}">
+
+        <!-- index -->
+        <td bgcolor="#7fff00">
+          <a href="{% url 'app:cabinet_edit' j.id %}">
+            <div class="all_cell">{{ forloop.counter }}</div>
+          </a>
+        </td>
+
+        <!-- login (НЕ криптований) -->
+        <td>{{ j.login }}</td>
+
+        <!-- link -->
+        <td>
+          <a href="{{ j.link }}" target="_blank">{{ j.link }}</a>
+        </td>
+
+        <!-- PASSWORD : LAZY decrypt + copy -->
+        <td bgcolor="#fbfd02">
+          <button
+            type="button"
+            class="btn_pay_yellow"
+            id="cabinet-password-btn-{{ j.id }}"
+            onclick="decryptAndCopy({id: {{ j.id }}, model: 'cabinet', field: 'password'})">
+            Show
+          </button>
+
+          <span
+            id="cabinet-password-val-{{ j.id }}"
+            data-visible="0"
+            data-decrypted=""
+            style="margin-left:8px">
+            *****
+          </span>
+        </td>
+
+        <!-- email_login (НЕ криптований у тебе, лишаємо як є) -->
+        <td>{{ j.email_login }}</td>
+
+        <!-- EMAIL PASSWORD : LAZY decrypt + copy -->
+        <td bgcolor="#fbfd02">
+          <button
+            type="button"
+            class="btn_pay_yellow"
+            id="cabinet-email_password-btn-{{ j.id }}"
+            onclick="decryptAndCopy({id: {{ j.id }}, model: 'cabinet', field: 'email_password'})">
+            Show
+          </button>
+
+          <span
+            id="cabinet-email_password-val-{{ j.id }}"
+            data-visible="0"
+            data-decrypted=""
+            style="margin-left:8px">
+            *****
+          </span>
+        </td>
+
+        <!-- note -->
+        <td>{{ j.note }}</td>
+
+        <!-- services (старий my_func — тут ОК) -->
+        <td>
+          <h5 style="background-color:#ffffff">{{ j.pay_set.count }}</h5>
+
+          {% if j.pay_set.count > 0 %}
+            <button
+              type="button"
+              class="btn_pay_yellow"
+              onclick='my_func("{{ j.id }}")'
+              id="btn{{ j.id }}">
+              Show
+            </button>
+          {% endif %}
+
+          <div style="display:none" id="remove-heli-{{ j.id }}">
+            {% for s in j.pay_set.all %}
+              <a href="{% url 'app:home_page_with_cabinet' s.id %}" target="_blank">
+                <h3 style="background-color:#7dff97;margin-top:1px">
+                  {{ s }}
+                </h3>
+              </a>
+            {% endfor %}
+          </div>
+        </td>
+
+        <!-- delete -->
+        <td>
+          {% if j.pay_set.count == 0 %}
+            <a href="{% url 'app:delete_cabinet' j.id %}">
+              <button class="btn_pay_red" onclick="return proverka();">
+                Delete
+              </button>
+            </a>
+          {% else %}
+            <button class="btn_pay_red" onclick="return delete_item()">
+              Delete
+            </button>
+          {% endif %}
+        </td>
+
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  {% endif %}
+
+  {% if form_cabinet_edit %}
+    <form method="POST" class="form_cabinet">
+      {% csrf_token %}
+      {{ form_cabinet_edit|crispy }}
+      <button type="submit" class="btn_pay">Save</button>
+    </form>
+  {% endif %}
+
+</div>
+{% endblock %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const highlightId = "{{ highlight_id|default:'' }}";
+    if (!highlightId) return;
+
+    const row = document.getElementById(`cabinet-${highlightId}`);
+    if (!row) return;
+
+    row.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    row.classList.add("cabinet-pulse");
+    setTimeout(() => row.classList.remove("cabinet-pulse"), 2000);
+  });
+</script>

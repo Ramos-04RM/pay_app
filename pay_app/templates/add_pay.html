@@ -1,48 +1,60 @@
 {% extends "index.html" %}
 {% load crispy_forms_filters %}
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="ua">
 <head>
-    <meta charset="UTF-8">
-    {% block title %}
-        <title>new_item</title>
-    {% endblock %}
+  <meta charset="UTF-8">
+  {% block title %}
+    <title>new_item</title>
+  {% endblock %}
 </head>
-{% block table %}
 
+{% block table %}
 {% endblock %}
+
 {% block cabinet %}
 <body>
-    <div class="main">
-{#        <a href="{% url 'app:index' %}">#}
-{#            <button class="btn_pay">Back to home</button>#}
-{#        </a>#}
+  <div class="main">
+
+    {# Top actions #}
     {% if form_pay and not form_cabinet %}
-        <a class="" href="{% url 'app:cabinet_new' %}">
-            <button class="btn_pay">ADD CABINET</button>
-        </a>
+      <a href="{% url 'app:cabinet_new' %}">
+        <button class="btn_pay" type="button">ADD CABINET</button>
+      </a>
     {% elif form_pay and form_cabinet %}
-        <a href="{% url 'app:pay_new' %}">
-            <button class="btn_pay">Back</button>
-        </a>
+      <a href="{% url 'app:pay_new' %}">
+        <button class="btn_pay" type="button">Back</button>
+      </a>
     {% endif %}
-    <form method="POST" class="form_pay">
+
+    <div class="forms-grid">
+
+      {# Pay form #}
+      <form method="POST" class="form_pay form-card">
         {% csrf_token %}
         {{ form_pay.as_ul }}
-            {% if form_pay and not form_cabinet %}
-                <button type="submit" class="btn_pay">Save</button>
-            {% endif %}
-    </form>
-    <form method="POST" class="form_cabinet">
-        {% if form_cabinet %}
-            <label>New cabiten</label>
-            {% csrf_token %}
-            {{ form_cabinet.as_ul}}
-                <button type="submit" class="btn_pay">Save</button>
+        {% if form_pay and not form_cabinet %}
+          <button type="submit" class="btn_pay">Save</button>
         {% endif %}
-    </form>
-    {% endblock %}
+      </form>
+
+      {# Cabinet form (optional) #}
+      <form method="POST" class="form_cabinet form-card">
+        {% if form_cabinet %}
+          <label style="display:block; font-weight:700; margin-bottom:10px;">
+            New cabinet
+          </label>
+          {% csrf_token %}
+          {{ form_cabinet.as_ul }}
+          <button type="submit" class="btn_pay">Save</button>
+        {% endif %}
+      </form>
+
     </div>
+
+  </div>
 </body>
+{% endblock %}
 </html>

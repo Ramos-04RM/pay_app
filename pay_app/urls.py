@@ -27,5 +27,7 @@ urlpatterns = [
     path(r'edit_tb/<int:id>', views.edit_table, name='edit_tb'),
     path(r'delete/<int:id>', views.delete, name='delete'),
     path(r'delete_cabinet/<int:id>', views.delete_cabinet, name='delete_cabinet'),
+    path("decrypt_item/", views.decrypt_item, name="decrypt_item"),
+
 
 ]

@@ -5,10 +5,14 @@ from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
 from datetime import timedelta
 import datetime
-from django.http import HttpResponseRedirect, HttpResponseNotFound
+from django.http import HttpResponseRedirect, HttpResponseNotFound, JsonResponse
 import cryptocode
 from .forms import PayForm, CabinetForm
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import cache_page
+from django.views.decorators.http import require_POST
+from d1.settings import CACHE_TIME
+import json
 
 today = datetime.date.today()
 month = today + timedelta(days=31)
@@ -18,10 +22,8 @@ weeks = [today, week]
 nt_pd = today - timedelta(days=31)
 nt_pds = [nt_pd, today]
 
-last_dt = Pay.objects.filter(Q(status='active') & Q(paid_up_to__range=weeks)).order_by('paid_up_to')[
-          :5]  # оплата в найближчому часі
-not_paid = Pay.objects.filter(Q(status='active') & Q(paid_up_to__range=nt_pds)).order_by(
-    'paid_up_to')[:5]  # просрочені оплати for month
+last_dt = Pay.objects.filter(Q(status='active') & Q(paid_up_to__range=weeks)).order_by('paid_up_to')[:5]
+not_paid = Pay.objects.filter(Q(status='active') & Q(paid_up_to__range=nt_pds)).order_by('paid_up_to')[:5]
 
 cont = {
     'week': week,
@@ -46,6 +48,66 @@ def decrypt_cabinet(object_k):  # decrypt psw adn log in cabinet
         i.email_password = cryptocode.decrypt(i.email_password, user_psw.password)
 
 
+@require_POST
+@login_required
+def decrypt_item(request):
+    """
+    One endpoint for all.
+    Request JSON:
+      {
+        "model": "pay" | "cabinet",
+        "id": <int>,
+        "field": "password" | "email_login" | "email_password"
+      }
+
+    Response JSON:
+      { "value": "<decrypted>" }
+    """
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    model = (payload.get("model") or "").strip().lower()
+    field = (payload.get("field") or "").strip()
+    obj_id = payload.get("id")
+
+    # Whitelist models + fields (no funny business)
+    allowed = {
+        "pay": {
+            "cls": Pay,
+            "fields": {"password", "email_login"},
+        },
+        "cabinet": {
+            "cls": Cabinet,
+            "fields": {"password", "email_password", "email_login"},
+        }
+    }
+
+    if model not in allowed:
+        return JsonResponse({"error": "Invalid model"}, status=400)
+    if field not in allowed[model]["fields"]:
+        return JsonResponse({"error": "Invalid field"}, status=400)
+
+    try:
+        obj_id = int(obj_id)
+    except Exception:
+        return JsonResponse({"error": "Invalid id"}, status=400)
+
+    obj = get_object_or_404(allowed[model]["cls"], pk=obj_id)
+
+    encrypted_value = getattr(obj, field, None)
+    if not encrypted_value:
+        return JsonResponse({"error": "Empty value"}, status=400)
+
+    user_psw = User.objects.get(username='admin').password
+    decrypted_value = cryptocode.decrypt(encrypted_value, user_psw)
+    if decrypted_value is False or decrypted_value is None or decrypted_value == "":
+        return JsonResponse({"error": "Decryption failed"}, status=400)
+
+    return JsonResponse({"value": decrypted_value})
+
+
 @login_required
 def pay_new(request):
     if request.method == "POST":
@@ -56,14 +118,11 @@ def pay_new(request):
             return redirect('app:pay_new')
     else:
         if Cabinet.objects.all().count() > 0:
-            lst_id = Cabinet.objects.all().last().id  # last id
-            form_pay = PayForm(initial={"cabinet": lst_id,
-                                        'create_date': today})  # default value for few collums
+            lst_id = Cabinet.objects.all().last().id
+            form_pay = PayForm(initial={"cabinet": lst_id, 'create_date': today})
         else:
             form_pay = PayForm()
-    content = {
-        'form_pay': form_pay
-    }
+    content = {'form_pay': form_pay}
     content.update(cont)
     return render(request, 'add_pay.html', content)
 
@@ -79,20 +138,19 @@ def cabinet_new(request):
     else:
         form_cabinet = CabinetForm()
         form_pay = PayForm()
-    content = {
-        'form_cabinet': form_cabinet,
-        'form_pay': form_pay
-    }
+    content = {'form_cabinet': form_cabinet, 'form_pay': form_pay}
     content.update(cont)
     return render(request, 'add_pay.html', content)
 
 
 @login_required
+@cache_page(CACHE_TIME)
 def cabinet_edit(request, id):
+    # EDIT view: тут дешифрування лишаємо, бо форма має показувати значення
     post = get_object_or_404(Cabinet, pk=id)
     user_psw = User.objects.get(username='admin').password
-    post.password = cryptocode.decrypt(post.password, user_psw)   # decrypt Cabinet.psw
-    post.email_password = cryptocode.decrypt(post.email_password, user_psw)  # decrypt Cabinet.email_psw
+    post.password = cryptocode.decrypt(post.password, user_psw)
+    post.email_password = cryptocode.decrypt(post.email_password, user_psw)
     if request.method == "POST":
         form_cabinet_edit = CabinetForm(request.POST, instance=post)
         if form_cabinet_edit.is_valid():
@@ -101,9 +159,7 @@ def cabinet_edit(request, id):
             return redirect('app:cabinet_page')
     else:
         form_cabinet_edit = CabinetForm(instance=post)
-    content = {
-        'form_cabinet_edit': form_cabinet_edit,
-    }
+    content = {'form_cabinet_edit': form_cabinet_edit}
     content.update(cont)
     return render(request, 'cabinet.html', content)
 
@@ -113,174 +169,147 @@ def pay_edit(request, id):
     post = get_object_or_404(Pay, pk=id)
     id_pay = Cabinet.objects.get(pay__id=id).id
     post_cabinet = get_object_or_404(Cabinet, pk=id_pay)
-    user_psw = User.objects.get(username='admin').password  #
-    post.password = cryptocode.decrypt(post.password, user_psw)  # decrypt Pay.psw
-    post.email_login = cryptocode.decrypt(post.email_login, user_psw)  # decrypt Pay.
-    post_cabinet.password = cryptocode.decrypt(post_cabinet.password, user_psw)  # decrypt Cabinet.psw
-    post_cabinet.email_password = cryptocode.decrypt(post_cabinet.email_password, user_psw)  # decrypt Cabinet.email_psw
+
+    user_psw = User.objects.get(username='admin').password
+    post.password = cryptocode.decrypt(post.password, user_psw)
+    post.email_login = cryptocode.decrypt(post.email_login, user_psw)
+    post_cabinet.password = cryptocode.decrypt(post_cabinet.password, user_psw)
+    post_cabinet.email_password = cryptocode.decrypt(post_cabinet.email_password, user_psw)
+
     if request.method == "POST":
         form_edit_pay = PayForm(request.POST, instance=post)
         form_edit_cabinet = CabinetForm(request.POST, instance=post_cabinet)
+
         if form_edit_pay.is_valid():
             post = form_edit_pay.save(commit=False)
             post.save()
-            return redirect('app:index')
+            return redirect('app:home_page_with_cabinet', id=id)
+
         if form_edit_cabinet.is_valid():
             post_cabinet = form_edit_cabinet.save(commit=False)
             post_cabinet.save()
-            return redirect('app:pay_edit', id)
+            return redirect('app:home_page_with_cabinet', id=id)
     else:
-        form_edit_pay = PayForm(instance=post)  # для завнення класу своїми даними
+        form_edit_pay = PayForm(instance=post)
         form_edit_cabinet = CabinetForm(instance=post_cabinet)
-    content = {
-        'form_edit_pay': form_edit_pay,
-        'form_edit_cabinet': form_edit_cabinet,
-    }
+
+    content = {'form_edit_pay': form_edit_pay, 'form_edit_cabinet': form_edit_cabinet}
     content.update(cont)
     return render(request, 'index.html', content)
 
 
 @login_required
-def home_page(request):  # home page
+@cache_page(CACHE_TIME)
+def home_page(request):
     object_l = Pay.objects.all().order_by('id')
-    decrypt(object_l)
-    content = {
-        'object_l': object_l,
-    }
+    # LAZY: не дешифруємо тут
+    content = {'object_l': object_l}
     content.update(cont)
     return render(request, 'index.html', content)
 
 
 @login_required
-def home_page_with_cabinet(request, id):  # home page+cabinet_id
-    user_psw = User.objects.get(username='admin').password
+def home_page_with_cabinet(request, id):
+    # LAZY: не дешифруємо тут
     object_l = Pay.objects.filter(id=id)
-    decrypt(object_l)
     cabinet_obj = Pay.objects.filter(id=id)
-    for i in cabinet_obj:
-        i.cabinet.password = cryptocode.decrypt(i.cabinet.password, user_psw)
-        i.cabinet.email_password = cryptocode.decrypt(i.cabinet.email_password, user_psw)
-    content = {
-        'object_l': object_l,
-        'cabinet_obj': cabinet_obj,
-    }
+    content = {'object_l': object_l, 'cabinet_obj': cabinet_obj}
     content.update(cont)
     return render(request, 'index.html', content)
 
 
 @login_required
-def cabinet_page(request):  # for cabinet.html
+@cache_page(CACHE_TIME)
+def cabinet_page(request):
     object_k = Cabinet.objects.all().order_by('id')
-    decrypt_cabinet(object_k)
-    content = {
-        'object_k': object_k,
-    }
+    # LAZY: не дешифруємо тут
+    content = {'object_k': object_k}
     content.update(cont)
-
     return render(request, 'cabinet.html', content)
 
 
-# sort <tr> title table
 @login_required
 def sort_by_name(request, name):
     sort_groups = Pay.objects.all().order_by(name)
-    decrypt(sort_groups)
-    content = {
-        'object_l': sort_groups,
-    }
+    # LAZY
+    content = {'object_l': sort_groups}
     content.update(cont)
     return render(request, 'index.html', content)
 
 
 def sort_by_name_cabinet(request, name):
     sort_cabinet = Cabinet.objects.all().order_by(name)
-    decrypt_cabinet(sort_cabinet)
-    content = {
-        'object_k': sort_cabinet,
-    }
+    # LAZY
+    content = {'object_k': sort_cabinet}
     content.update(cont)
     return render(request, 'cabinet.html', content)
 
 
-#  filter (оплата найближчем часом)
 def filter_by_date(request, name):
     dt = Pay.objects.filter(Q(status='active') & Q(paid_up_to__range=weeks)).order_by('paid_up_to')
-    decrypt(dt)
-    content = {
-        'object_l': dt,
-    }
+    # LAZY
+    content = {'object_l': dt}
     content.update(cont)
     return render(request, 'index.html', content)
 
 
-# filter (оплата найближчем часом)
 def overdue_payments(request, name):
     dt = Pay.objects.filter(Q(status='active') & Q(paid_up_to__range=nt_pds)).order_by('paid_up_to')
-    decrypt(dt)
-    content = {
-        'object_l': dt,
-    }
+    # LAZY
+    content = {'object_l': dt}
     content.update(cont)
     return render(request, 'index.html', content)
 
 
 def filter_by_pay_sys(request, name):
     pay_sys = Pay.objects.filter(pay_sys=name)
-    decrypt(pay_sys)
-    content = {
-        'object_l': pay_sys,
-    }
+    # LAZY
+    content = {'object_l': pay_sys}
     content.update(cont)
     return render(request, 'index.html', content)
 
 
 def filter_by_type_source(request, name):
     pay_type_source = Pay.objects.filter(type_source=name)
-    decrypt(pay_type_source)
-    content = {
-        'object_l': pay_type_source,
-    }
+    # LAZY
+    content = {'object_l': pay_type_source}
     content.update(cont)
     return render(request, 'index.html', content)
 
 
 def filter_by_active(request, name):
     active = Pay.objects.filter(status=name)
-    decrypt(active)
-    content = {
-        'object_l': active,
-    }
+    # LAZY
+    content = {'object_l': active}
     content.update(cont)
     return render(request, 'index.html', content)
 
 
 def searching(request, name):
     name = request.GET.get("g")
-    filter_items = Pay.objects.filter(Q(ip__contains=name) | Q(service=name)
-                                      | Q(ip=name) | Q(type_source=name)
-                                      | Q(pay_sys=name) | Q(status=name)
-                                      | Q(currency=name) | Q(groups=name))
-    decrypt(filter_items)
-    content = {
-        'object_l': filter_items,
-    }
+    filter_items = Pay.objects.filter(
+        Q(ip__contains=name) | Q(service=name)
+        | Q(ip=name) | Q(type_source=name)
+        | Q(pay_sys=name) | Q(status=name)
+        | Q(currency=name) | Q(groups=name)
+    )
+    # LAZY
+    content = {'object_l': filter_items}
     content.update(cont)
     return render(request, 'index.html', content)
 
 
-#  update_date_paid_up_to
 def update_date(request, name):
     name = request.GET.get("q")
     pay_type_source = Pay.objects.filter(paid_up_to=name)
-    decrypt(pay_type_source)
-    content = {
-        'object_l': pay_type_source,
-    }
+    # LAZY
+    content = {'object_l': pay_type_source}
     content.update(cont)
     return render(request, 'index.html', content)
 
 
-def edit_dt(request, id):  # редактор дати
+def edit_dt(request, id):
+    # EDIT view: дешифрування лишаємо для форми
     try:
         item = Pay.objects.get(id=id)
         user_psw = User.objects.get(username='admin')
@@ -298,17 +327,15 @@ def edit_dt(request, id):  # редактор дати
 
 def edit_page(request):
     object_l = Pay.objects.all().order_by('id')
-    decrypt(object_l)
+    # LAZY: тут теж не дешифруємо
     cabinet = Cabinet.objects.all()
-    content = {
-        'object_l': object_l,
-        'cabinet': cabinet,
-    }
+    content = {'object_l': object_l, 'cabinet': cabinet}
     content.update(cont)
     return render(request, 'edit_page.html', content)
 
 
 def edit_table(request, id):
+    # EDIT view: дешифрування лишаємо для форми
     try:
         item = Pay.objects.get(id=id)
         user_psw = User.objects.get(username='admin')
@@ -328,9 +355,7 @@ def edit_table(request, id):
             item.password = request.POST.get('password')
             item.ip = request.POST.get('ip')
             item.save()
-            content = {
-                'object_l': item,
-            }
+            content = {'object_l': item}
             content.update(cont)
             return HttpResponseRedirect("/edit_page/", content)
         else:
@@ -357,28 +382,3 @@ def delete_cabinet(request, id):
         return HttpResponseNotFound("<h2>Дане поле неможливо видалити!! Поле зв'язане із елементом у іншій таблиці</h2>")
     except Cabinet.DoesNotExist:
         return HttpResponseNotFound("<h2>Pay not found</h2>")
-
-
-# save  data in db
-# def create(request):
-#     global content
-#     # cabinet = Cabinet.objects.get(name=cabinet_name)
-#     # cabinet = Cabinet.objects.all().last()
-#     item = Pay()
-#     if request.method == "POST":
-#         item.id = request.POST.get('id')
-#         # item.cabinet = request.POST.get(cabinet)
-#         item.groups = request.POST.get('groups')
-#         item.create_date = request.POST.get('create_date')
-#         item.service = request.POST.get('service')
-#         item.type_source = request.POST.get("type_source")
-#         item.price_per_month = request.POST.get('price_per_month')
-#         item.currency = request.POST.get('currency')
-#         item.pay_sys = request.POST.get('pay_sys')
-#         item.paid_up_to = request.POST.get('paid_up_to')
-#         item.status = request.POST.get('status')
-#         item.email_login = request.POST.get('email_login')
-#         item.password = request.POST.get('password')
-#         item.ip = request.POST.get('ip')
-#         item.save()
-#     return HttpResponseRedirect("/edit_page/")
