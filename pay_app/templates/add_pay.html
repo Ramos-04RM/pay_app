@@ -33,11 +33,28 @@
 
       {# Pay form #}
       <form method="POST" class="form_pay form-card">
-        {% csrf_token %}
-        {{ form_pay.as_ul }}
-        {% if form_pay and not form_cabinet %}
-          <button type="submit" class="btn_pay">Save</button>
-        {% endif %}
+          {% csrf_token %}
+          {% if form_pay %}
+              <ul>
+                  {% for field in form_pay %}
+                      <li>
+                          {{ field.label_tag }}
+                          {{ field }}
+                          {% if field.name == 'groups' %}
+                              <datalist id="groups-list">
+                                  {% for group in group_options %}
+                                      <option value="{{ group }}"></option>
+                                  {% endfor %}
+                              </datalist>
+                          {% endif %}
+                          {{ field.errors }}
+                      </li>
+                  {% endfor %}
+              </ul>
+          {% endif %}
+          {% if form_pay and not form_cabinet %}
+              <button type="submit" class="btn_pay">Save</button>
+          {% endif %}
       </form>
 
       {# Cabinet form (optional) #}

@@ -110,6 +110,14 @@ def decrypt_item(request):
 
 @login_required
 def pay_new(request):
+    group_options = list(
+        Pay.objects.exclude(groups__isnull=True)
+        .exclude(groups__exact='')
+        .order_by('groups')
+        .values_list('groups', flat=True)
+        .distinct()
+    )
+
     if request.method == "POST":
         form_pay = PayForm(request.POST)
         if form_pay.is_valid():
@@ -122,7 +130,8 @@ def pay_new(request):
             form_pay = PayForm(initial={"cabinet": lst_id, 'create_date': today})
         else:
             form_pay = PayForm()
-    content = {'form_pay': form_pay}
+
+    content = {'form_pay': form_pay, 'group_options': group_options}
     content.update(cont)
     return render(request, 'add_pay.html', content)
 

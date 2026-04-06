@@ -29,9 +29,9 @@
 
             <h7 class="button-container">
                 <div class="main">
+                     <a href="{% url 'app:index' %}"><button class="btn_pay">Home</button> </a>
+                     <a href={% url 'app:cabinet_page' %}><button class="btn_pay">Cabinets</button></a>
                      {% if request.user.username == 'admin' %}
-                         <a href="{% url 'app:index' %}"><button class="btn_pay">Home</button> </a>
-                             <a href={% url 'app:cabinet_page' %}><button class="btn_pay">Cabinets</button></a>
                         {% if object_l %}
                              <a href={% url 'app:edit_page' %}><button class="btn_pay">Edit</button></a>
                              <label class="label"> Кількість елементів в таблиці:
@@ -43,10 +43,10 @@
               </h7>
 
         <div class="sidenav">
-                          {% if request.user.username == 'admin' %}
-                         <h2 class="h_admin"> Hello <a href="http://127.0.0.1:8000/admin/"><button class="btn_pay">{{ request.user.username }}</button> </a></h2>
-                          {% endif %}
-                           <li class="check-field-label"> Платіжна система
+               {% if request.user.username == 'admin' %}
+                    <h2 class="h_admin"> Hello <a href="http://127.0.0.1:8000/admin/"><button class="btn_pay">{{ request.user.username }}</button> </a></h2>
+               {% endif %}
+                <li class="check-field-label"> Платіжна система
                                 <a href='{% url "app:filter_by_pay_sys"  'BTC' %}'><button class="btn_pay">BTC</button></a>
                                 <a href='{% url "app:filter_by_pay_sys" 'WM' %}'><button class="btn_pay">WM</button></a>
                                 <a href='{% url "app:filter_by_pay_sys" 'BTC|WM' %}'><button class="btn_pay">BTC|WM</button></a>
