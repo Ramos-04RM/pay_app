@@ -55,7 +55,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-SESSION_EXPIRE_SECONDS = 1800  # 1 = 3600 hour
+SESSION_EXPIRE_SECONDS = 2 * 3600  # 1 = 3600 hour
 SESSION_EXPIRE_AFTER_LAST_ACTIVITY = True
 SESSION_EXPIRE_AFTER_LAST_ACTIVITY_GRACE_PERIOD = 60  # group by minute
 SESSION_TIMEOUT_REDIRECT = '/'

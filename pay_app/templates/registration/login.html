@@ -1,57 +1,66 @@
 {% extends 'base.html' %}
 {% load crispy_forms_filters %}
 {% load static %}
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
-      rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
-      crossorigin="anonymous">
-{% block title %}Login{% endblock %}
+
+{% block title %}
+  <title>Login</title>
+{% endblock %}
+
+
 {% block content %}
+  <div class="auth-shell">
+    <div class="login-card">
+      <div class="login-card__header">
+        <p class="eyebrow">Pay app</p>
+        <h1 class="page-title page-title--sm">Вхід до системи</h1>
 
-<body class="body_login">
-    <div class="wrapper_login">
-        <div class="container_login">
-            {% if form.errors %}
-              <h3 class="h3_login">Невірний логін або пароль. Спробуйте ще раз.</h3>
-            {% endif %}
-            {% if not form.errors %}
-              <h3 class="h3_login">Введіть логін і пароль.</h3>
-            {% endif %}
+        {% if form.errors %}
+          <div class="status-banner status-banner--danger" role="alert">
+            Невірний логін або пароль. Спробуйте ще раз.
+          </div>
+        {% else %}
+          <p class="page-subtitle">Введіть логін і пароль, щоб продовжити роботу.</p>
+        {% endif %}
 
-            {% if next %}
-              {% if user.is_authenticated %}
-                <p>Your account doesn't have access to this page. To proceed,
-                please login with an account that has access.</p>
-              {% else %}
-                <p>Please login to see this page.</p>
-              {% endif %}
-            {% endif %}
+        {% if next %}
+          {% if user.is_authenticated %}
+            <div class="status-banner status-banner--warning">
+              Ваш обліковий запис не має доступу до цієї сторінки. Увійдіть під користувачем із потрібними правами.
+            </div>
+          {% else %}
+            <div class="status-banner status-banner--info">
+              Увійдіть, щоб переглянути цю сторінку.
+            </div>
+          {% endif %}
+        {% endif %}
+      </div>
 
-            <form method="post" action="{% url 'login' %}" class="form_login">
-                {% csrf_token %}
-                <label>
-                     <input class="input_login" type="text" placeholder="Username" {{ form.username }}
-                </label>
-                <label>
-                    <input class="input_login" type="password" placeholder="Password" {{ form.password }}
-                </label>
+      <form method="post" action="{% url 'login' %}" class="form_login form-card form-card--flat">
+        {% csrf_token %}
 
+        <div class="form-list form-list--stacked">
+          <div class="form-field">
+            <label for="{{ form.username.id_for_label }}">Username</label>
+            {{ form.username }}
+            {{ form.username.errors }}
+          </div>
 
-                {#      <td class="input_login"> {{ form.username.label_tag }}</td>#}
-{#                      <td class="input_login">{{ form.username }}</td>#}
-
-{#                      <td>{{ form.password.label_tag }}</td>#}
-{#                      <td>{{ form.password }}</td>#}
-
-                <button class="button_login" type="submit" value="login" id="login-button">Login</button>
-                <input class="input_login" type="hidden" name="next" value="{{ next }}">
-            </form>
-
-            {# Assumes you setup the password_reset view in your URLconf #}
-            <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
+          <div class="form-field">
+            <label for="{{ form.password.id_for_label }}">Password</label>
+            {{ form.password }}
+            {{ form.password.errors }}
+          </div>
         </div>
-    </div>
-</body>
-{% endblock %}
-{% block cabinet %}
 
+        <button class="btn_pay btn_pay--wide" type="submit" value="login" id="login-button">Login</button>
+        <input type="hidden" name="next" value="{{ next }}">
+      </form>
+
+      <div class="login-card__footer">
+        <a href="{% url 'password_reset' %}" class="text-link">Lost password?</a>
+      </div>
+    </div>
+  </div>
 {% endblock %}
+
+{% block cabinet %}{% endblock %}

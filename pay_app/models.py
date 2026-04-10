@@ -81,3 +81,43 @@ class Cabinet(models.Model):
         """
         return '%i, %s, %s' % (self.id, self.login, self.link)
 
+
+class Tag(models.Model):
+    name = models.CharField(max_length=120, unique=True, verbose_name='Назва тегу')
+    slug = models.SlugField(max_length=140, unique=True, verbose_name='Slug')
+    note = models.CharField(max_length=255, blank=True, verbose_name='Опис')
+
+    class Meta:
+        ordering = ('name',)
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
+
+    def __str__(self):
+        return self.name
+
+
+class CabinetTag(models.Model):
+    cabinet = models.ForeignKey(
+        Cabinet,
+        on_delete=models.CASCADE,
+        related_name='cabinet_tags',
+        verbose_name='Кабінет',
+    )
+    tag = models.ForeignKey(
+        Tag,
+        on_delete=models.CASCADE,
+        related_name='cabinet_tags',
+        verbose_name='Тег',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('tag__name', 'id')
+        verbose_name = 'Тег кабінету'
+        verbose_name_plural = 'Теги кабінетів'
+        constraints = [
+            models.UniqueConstraint(fields=('cabinet', 'tag'), name='uniq_cabinet_tag'),
+        ]
+
+    def __str__(self):
+        return f'{self.cabinet_id} -> {self.tag.name}'

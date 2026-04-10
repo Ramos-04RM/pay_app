@@ -1,30 +1,27 @@
-function proverka() {
+function confirmDelete() {
   return confirm("Видалити дане поле? ");
 }
 
-function delete_item() {
-  return alert(" Видалити неможливо! Даний кабінет використовуться!");
+function showDeleteBlocked() {
+  alert("Видалити неможливо! Даний кабінет використовується.");
 }
 
-/**
- * Legacy show/hide (залишив, якщо десь ще використовується).
- */
 function my_func(i) {
-  const myPsw = document.getElementById("remove-heli-" + i);
-  const displaySetting = myPsw.style.display;
-  const clockButton = document.getElementById("btn" + i);
-  if (displaySetting === "block") {
-    myPsw.style.display = "none";
-    clockButton.innerHTML = "Show";
-  } else {
-    myPsw.style.display = "block";
-    clockButton.innerHTML = "Hide";
+  const target = document.getElementById("remove-heli-" + i);
+  const button = document.getElementById("btn" + i);
+  if (!target || !button) return;
+  const isHidden = target.hasAttribute("hidden") || target.style.display === "none" || target.style.display === "";
+  if (isHidden) {
+    target.hidden = false;
+    target.style.removeProperty("display");
+    setIconButtonState(button, true);
+    return;
   }
+  target.hidden = true;
+  target.style.display = "none";
+  setIconButtonState(button, false);
 }
 
-/**
- * CSRF helper
- */
 function getCookie(name) {
   let cookieValue = null;
   if (document.cookie && document.cookie !== "") {
@@ -40,19 +37,73 @@ function getCookie(name) {
   return cookieValue;
 }
 
-/**
- * New: Lazy decrypt + copy to clipboard.
- *
- * Usage in template:
- *   onclick="decryptAndCopy({id: {{i.id}}, model: 'pay', field: 'password'})"
- *
- * Also supports positional call:
- *   decryptAndCopy({{i.id}}, 'password', 'pay')
- */
-async function decryptAndCopy(arg1, fieldArg, modelArg) {
-  let id, field, model;
+let toastTimer = null;
 
-  // Support object style: decryptAndCopy({id, field, model})
+function ensureToast() {
+  let toast = document.getElementById("pay-app-toast");
+  if (toast) return toast;
+
+  toast = document.createElement("div");
+  toast.id = "pay-app-toast";
+  toast.className = "copy-toast";
+  toast.setAttribute("role", "status");
+  toast.setAttribute("aria-live", "polite");
+  toast.setAttribute("aria-atomic", "true");
+  document.body.appendChild(toast);
+  return toast;
+}
+
+function showToast(message, isError = false) {
+  const toast = ensureToast();
+  toast.textContent = message;
+  toast.classList.toggle("is-error", Boolean(isError));
+  toast.classList.add("is-visible");
+
+  if (toastTimer) {
+    clearTimeout(toastTimer);
+  }
+
+  toastTimer = window.setTimeout(() => {
+    toast.classList.remove("is-visible");
+  }, 1900);
+}
+
+function setIconButtonState(button, isActive) {
+  if (!button) return;
+
+  const showLabel = button.dataset.showLabel || "Показати";
+  const hideLabel = button.dataset.hideLabel || "Сховати";
+  const label = isActive ? hideLabel : showLabel;
+  const iconClass = isActive ? "fa-regular fa-eye-slash" : "fa-regular fa-eye";
+
+  let icon = button.querySelector("i");
+  if (!icon) {
+    icon = document.createElement("i");
+    icon.setAttribute("aria-hidden", "true");
+    button.prepend(icon);
+  }
+  icon.className = iconClass;
+
+  let hiddenText = button.querySelector(".visually-hidden");
+  if (!hiddenText) {
+    hiddenText = document.createElement("span");
+    hiddenText.className = "visually-hidden";
+    button.appendChild(hiddenText);
+  }
+  hiddenText.textContent = label;
+
+  button.setAttribute("aria-label", label);
+  button.setAttribute("title", label);
+  if (button.hasAttribute("aria-expanded")) {
+    button.setAttribute("aria-expanded", isActive ? "true" : "false");
+  }
+}
+
+async function decryptAndCopy(arg1, fieldArg, modelArg) {
+  let id;
+  let field;
+  let model;
+
   if (typeof arg1 === "object" && arg1 !== null) {
     id = arg1.id;
     field = arg1.field;
@@ -70,7 +121,6 @@ async function decryptAndCopy(arg1, fieldArg, modelArg) {
 
   const valueElId = `${model}-${field}-val-${id}`;
   const btnId = `${model}-${field}-btn-${id}`;
-
   const valueEl = document.getElementById(valueElId);
   const btn = document.getElementById(btnId);
 
@@ -79,30 +129,24 @@ async function decryptAndCopy(arg1, fieldArg, modelArg) {
     return;
   }
 
-  // Toggle hide
   const isVisible = valueEl.getAttribute("data-visible") === "1";
   if (isVisible) {
     valueEl.textContent = "*****";
     valueEl.setAttribute("data-visible", "0");
-    btn.textContent = "Show";
+    setIconButtonState(btn, false);
     return;
   }
 
-  // If already decrypted once -> reuse, just show + copy
   const cached = valueEl.getAttribute("data-decrypted");
   if (cached && cached.length > 0) {
     valueEl.textContent = cached;
     valueEl.setAttribute("data-visible", "1");
-    btn.textContent = "Hide";
-    try {
-      await navigator.clipboard.writeText(cached);
-    } catch (e) {
-      console.warn("Clipboard copy failed:", e);
-    }
+    setIconButtonState(btn, true);
+    const copied = await copyToClipboard(cached);
+    showToast(copied ? "Скопійовано в буфер обміну" : "Не вдалося скопіювати", !copied);
     return;
   }
 
-  // Fetch decrypt from backend
   try {
     const resp = await fetch("/decrypt_item/", {
       method: "POST",
@@ -111,47 +155,37 @@ async function decryptAndCopy(arg1, fieldArg, modelArg) {
         "X-CSRFToken": getCookie("csrftoken"),
       },
       body: JSON.stringify({
-        model: model,
-        id: id,
-        field: field,
+        model,
+        id,
+        field,
       }),
     });
 
     const data = await resp.json();
-
     if (!resp.ok) {
       alert(data.error || "Decrypt error");
       return;
     }
 
     const plain = data.value;
-
     valueEl.textContent = plain;
     valueEl.setAttribute("data-visible", "1");
     valueEl.setAttribute("data-decrypted", plain);
-    btn.textContent = "Hide";
+    setIconButtonState(btn, true);
 
-    try {
-      await navigator.clipboard.writeText(plain);
-    } catch (e) {
-      console.warn("Clipboard copy failed:", e);
-    }
-  } catch (err) {
-    console.error(err);
+    const copied = await copyToClipboard(plain);
+    showToast(copied ? "Скопійовано в буфер обміну" : "Не вдалося скопіювати", !copied);
+  } catch (error) {
+    console.error(error);
     alert("Request failed");
   }
 }
-/**
- * Generate a strong password using crypto-grade randomness.
- * Length: 14-20.
- */
+
 function generateStrongPassword(length = null) {
-  // Safe-ish special chars for most services (no spaces/quotes/backticks).
   const UPPER = "ABCDEFGHJKLMNPQRSTUVWXYZ";
   const LOWER = "abcdefghijkmnopqrstuvwxyz";
   const DIGIT = "0123456789";
   const SPECIAL = "!@#$%^&*_-+=:,.?";
-
   const ALL = UPPER + LOWER + DIGIT + SPECIAL;
 
   const randIntInclusive = (min, max) => {
@@ -160,12 +194,10 @@ function generateStrongPassword(length = null) {
     return min + (arr[0] % (max - min + 1));
   };
 
-  // If length not provided -> random 14..20
   const len = (length === null || length === undefined)
     ? randIntInclusive(14, 20)
     : Math.max(Number(length) || 0, 12);
 
-  // Pick at least 1 char from each bucket.
   const picks = [UPPER, LOWER, DIGIT, SPECIAL];
   const out = [];
 
@@ -178,8 +210,7 @@ function generateStrongPassword(length = null) {
   for (const bucket of picks) out.push(pickOne(bucket));
   while (out.length < len) out.push(pickOne(ALL));
 
-  // Fisher–Yates shuffle.
-  for (let i = out.length - 1; i > 0; i--) {
+  for (let i = out.length - 1; i > 0; i -= 1) {
     const arr = new Uint32Array(1);
     window.crypto.getRandomValues(arr);
     const j = arr[0] % (i + 1);
@@ -195,11 +226,10 @@ async function copyToClipboard(text) {
       await navigator.clipboard.writeText(text);
       return true;
     }
-  } catch (e) {
-    // fall through
+  } catch (error) {
+    // fall through to fallback
   }
 
-  // Legacy fallback
   try {
     const ta = document.createElement("textarea");
     ta.value = text;
@@ -211,50 +241,25 @@ async function copyToClipboard(text) {
     const ok = document.execCommand("copy");
     document.body.removeChild(ta);
     return ok;
-  } catch (e) {
-    console.warn("Clipboard copy failed:", e);
+  } catch (error) {
+    console.warn("Clipboard copy failed:", error);
     return false;
   }
 }
 
-function injectPasswordGenStylesOnce() {
-  if (document.getElementById("pay-password-gen-style")) return;
-
-  const style = document.createElement("style");
-  style.id = "pay-password-gen-style";
-  style.textContent = `
-    .pay-gen-wrap{display:inline-flex;align-items:stretch;gap:0;}
-    .pay-gen-wrap input{margin:0;border-top-right-radius:0;border-bottom-right-radius:0;}
-    .pay-gen-btn{
-      padding:0 10px;margin:0;min-width:34px;line-height:1;
-      display:inline-flex;align-items:center;justify-content:center;
-      border-top-left-radius:0;border-bottom-left-radius:0;
-    }
-    .pay-gen-btn i{pointer-events:none;}
-    .pay-password-generated{outline:2px solid #7fff00;transition:outline-color .3s;}
-  `;
-  document.head.appendChild(style);
-}
-
 function isPayAppFormInput(input) {
-  // Hard gate: only on our forms, never on auth/login pages.
   const form = input.closest("form");
   if (!form) return false;
   return form.classList.contains("form_pay") || form.classList.contains("form_cabinet");
 }
 
-/**
- * DOM-injection: find inputs by name and add a small key button next to them.
- */
 function attachPasswordGenerators() {
-  injectPasswordGenStylesOnce();
-
   const names = ["password", "email_password"];
   const selector = names.map((n) => `input[name="${n}"]`).join(",");
   const inputs = document.querySelectorAll(selector);
 
   inputs.forEach((input) => {
-    if (!isPayAppFormInput(input)) return;          // <-- FIX: no login page
+    if (!isPayAppFormInput(input)) return;
     if (input.dataset.genAttached === "1") return;
     input.dataset.genAttached = "1";
 
@@ -269,10 +274,10 @@ function attachPasswordGenerators() {
 
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "btn_pay_yellow pay-gen-btn";
-    button.title = "Generate password";
+    button.className = "btn_pay_yellow pay-gen-btn icon-btn";
+    button.title = "Згенерувати пароль";
     button.setAttribute("aria-label", `Generate ${input.name}`);
-    button.innerHTML = '<i class="fa-solid fa-key"></i>'; // <-- icon instead of text
+    button.innerHTML = '<i class="fa-solid fa-key" aria-hidden="true"></i><span class="visually-hidden">Згенерувати пароль</span>';
 
     wrap.appendChild(button);
 
@@ -284,18 +289,151 @@ function attachPasswordGenerators() {
 
       const pwd = generateStrongPassword();
       input.value = pwd;
-
       input.dispatchEvent(new Event("input", { bubbles: true }));
       input.dispatchEvent(new Event("change", { bubbles: true }));
-
       input.classList.add("pay-password-generated");
       setTimeout(() => input.classList.remove("pay-password-generated"), 900);
-
-      await copyToClipboard(pwd);
+      const copied = await copyToClipboard(pwd);
+      showToast(copied ? "Пароль згенеровано і скопійовано" : "Пароль згенеровано", !copied);
     });
   });
 }
 
+function toggleTargetBlock(button) {
+  const targetId = button.dataset.targetId;
+  if (!targetId) return;
+  const target = document.getElementById(targetId);
+  if (!target) return;
+
+  const shouldShow = target.hasAttribute("hidden") || target.style.display === "none" || target.style.display === "";
+  if (shouldShow) {
+    target.hidden = false;
+    target.style.removeProperty("display");
+    setIconButtonState(button, true);
+    return;
+  }
+
+  target.hidden = true;
+  target.style.display = "none";
+  setIconButtonState(button, false);
+}
+
+function syncCabinetSelectedTags() {
+  const cabinetCreateForm = document.getElementById("cabinet-create-form");
+  const cabinetTagCreateForm = document.getElementById("cabinet-tag-create-form");
+  const hiddenContainer = document.getElementById("cabinet-selected-tags-hidden-container");
+
+  if (!cabinetCreateForm || !cabinetTagCreateForm || !hiddenContainer) return;
+
+  cabinetTagCreateForm.addEventListener("submit", () => {
+    hiddenContainer.innerHTML = "";
+
+    const checkedTags = cabinetCreateForm.querySelectorAll('input[name="tags"]:checked');
+    checkedTags.forEach((checkbox) => {
+      const hiddenInput = document.createElement("input");
+      hiddenInput.type = "hidden";
+      hiddenInput.name = "selected_tags";
+      hiddenInput.value = checkbox.value;
+      hiddenContainer.appendChild(hiddenInput);
+    });
+  });
+}
+
+function initCabinetHighlight() {
+  const container = document.querySelector("[data-highlight-id]");
+  if (!container) return;
+
+  const highlightId = (container.dataset.highlightId || "").trim();
+  if (!highlightId) return;
+
+  const row = document.getElementById(`cabinet-${highlightId}`);
+  if (!row) return;
+
+  row.scrollIntoView({ behavior: "smooth", block: "center" });
+  row.classList.add("cabinet-pulse");
+  setTimeout(() => row.classList.remove("cabinet-pulse"), 2000);
+}
+
+function togglePasswordInput(button) {
+  const targetId = button.dataset.targetId;
+  if (!targetId) return;
+  const input = document.getElementById(targetId);
+  if (!input) return;
+
+  const show = input.type === "password";
+  input.type = show ? "text" : "password";
+  setIconButtonState(button, show);
+}
+
+function initIconButtons() {
+  document.querySelectorAll('[data-action="decrypt-copy"]').forEach((button) => {
+    const id = button.dataset.id;
+    const model = button.dataset.model;
+    const field = button.dataset.field;
+    const valueEl = document.getElementById(`${model}-${field}-val-${id}`);
+    const isVisible = valueEl ? valueEl.getAttribute("data-visible") === "1" : false;
+    setIconButtonState(button, isVisible);
+  });
+
+  document.querySelectorAll('[data-action="toggle-block"]').forEach((button) => {
+    const target = document.getElementById(button.dataset.targetId || "");
+    const isOpen = Boolean(target && !target.hasAttribute("hidden") && target.style.display !== "none");
+    setIconButtonState(button, isOpen);
+  });
+
+  document.querySelectorAll('[data-action="toggle-password-input"]').forEach((button) => {
+    const target = document.getElementById(button.dataset.targetId || "");
+    const isOpen = Boolean(target && target.type === "text");
+    setIconButtonState(button, isOpen);
+  });
+}
+
+document.addEventListener("click", async (event) => {
+  const decryptBtn = event.target.closest('[data-action="decrypt-copy"]');
+  if (decryptBtn) {
+    event.preventDefault();
+    await decryptAndCopy({
+      id: decryptBtn.dataset.id,
+      model: decryptBtn.dataset.model,
+      field: decryptBtn.dataset.field,
+    });
+    return;
+  }
+
+  const toggleBtn = event.target.closest('[data-action="toggle-block"]');
+  if (toggleBtn) {
+    event.preventDefault();
+    toggleTargetBlock(toggleBtn);
+    return;
+  }
+
+  const togglePasswordBtn = event.target.closest('[data-action="toggle-password-input"]');
+  if (togglePasswordBtn) {
+    event.preventDefault();
+    togglePasswordInput(togglePasswordBtn);
+    return;
+  }
+
+  const confirmLink = event.target.closest('[data-action="confirm-navigation"]');
+  if (confirmLink) {
+    const message = confirmLink.dataset.confirmMessage || "Видалити дане поле?";
+    if (!window.confirm(message)) {
+      event.preventDefault();
+    }
+    return;
+  }
+
+  const alertBtn = event.target.closest('[data-action="alert"]');
+  if (alertBtn) {
+    event.preventDefault();
+    const message = alertBtn.dataset.alertMessage || "Дію заборонено.";
+    window.alert(message);
+  }
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   attachPasswordGenerators();
+  syncCabinetSelectedTags();
+  initCabinetHighlight();
+  initIconButtons();
 });

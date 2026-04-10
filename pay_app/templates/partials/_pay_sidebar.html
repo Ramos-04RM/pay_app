@@ -1,0 +1,108 @@
+{% load static %}
+{% url 'admin:index' as admin_url %}
+<div class="sidenav">
+  {% if request.user.username == 'admin' %}
+    <div class="sidebar-topbar">
+      <div>
+        <p class="eyebrow">Admin</p>
+        <h2 class="sidebar-title">Hello</h2>
+      </div>
+      <a href="{{ admin_url }}" class="btn_pay btn-linklike">{{ request.user.username }}</a>
+    </div>
+  {% endif %}
+
+  <section class="sidebar-section">
+    <h3 class="check-field-label">Платіжна система</h3>
+    <div class="sidebar-button-group">
+      {% for item in pay_sys_links %}
+        <a href="{{ item.url }}" class="btn_pay btn-linklike {% if item.selected %}is-selected{% endif %}">
+          {{ item.value }}
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="sidebar-section">
+    <h3 class="check-field-label">Тип ресурсу</h3>
+    <div class="sidebar-button-group">
+      {% for item in type_source_links %}
+        <a href="{{ item.url }}" class="btn_pay btn-linklike {% if item.selected %}is-selected{% endif %}">
+          {{ item.value }}
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="sidebar-section">
+    <h3 class="check-field-label">Статус</h3>
+    <form method="get" action="{{ pay_list_base_url|default:'/' }}" class="sidebar-form">
+      <input type="hidden" name="mode" value="{{ pay_current_mode|default:'all' }}">
+      {% if pay_search_query %}<input type="hidden" name="q" value="{{ pay_search_query }}">{% endif %}
+      {% if pay_sort %}<input type="hidden" name="sort" value="{{ pay_sort }}">{% endif %}
+      {% if selected_pay_sys %}<input type="hidden" name="pay_sys" value="{{ selected_pay_sys }}">{% endif %}
+      {% if selected_type_source %}<input type="hidden" name="type_source" value="{{ selected_type_source }}">{% endif %}
+
+      <label class="sidebar-checkbox">
+        <input type="checkbox" name="status" value="active" {% if 'active' in selected_statuses %}checked{% endif %}>
+        <span>Активне</span>
+      </label>
+
+      <label class="sidebar-checkbox">
+        <input type="checkbox" name="status" value="not active" {% if 'not active' in selected_statuses %}checked{% endif %}>
+        <span>Не активне</span>
+      </label>
+
+      <div class="page-actions page-actions--stacked">
+        <button type="submit" class="btn_pay">Apply</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="sidebar-section">
+    <form class="example sidebar-search" action="{{ pay_list_base_url|default:'/' }}" method="get">
+      <input type="hidden" name="mode" value="{{ pay_current_mode|default:'all' }}">
+      {% for status in selected_statuses %}
+        <input type="hidden" name="status" value="{{ status }}">
+      {% endfor %}
+      {% if pay_sort %}<input type="hidden" name="sort" value="{{ pay_sort }}">{% endif %}
+      {% if selected_pay_sys %}<input type="hidden" name="pay_sys" value="{{ selected_pay_sys }}">{% endif %}
+      {% if selected_type_source %}<input type="hidden" name="type_source" value="{{ selected_type_source }}">{% endif %}
+
+      <h3 class="check-field-label">Пошук</h3>
+      <label>
+        <input name="q" type="text" value="{{ pay_search_query }}" placeholder="Search in page..">
+        <button type="submit" class="search-submit" aria-label="Search payments">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        </button>
+      </label>
+    </form>
+  </section>
+
+  <section class="sidebar-section sidebar-section--muted">
+    <div class="sidebar-cta">
+      <a href="{{ pay_upcoming_url|default:'#' }}" class="btn_pay_yellow btn-linklike">Найближчі оплати</a>
+      <div class="date-stack">
+        {% for i in last_dt %}
+          <span class="context-chip">{{ i.paid_up_to|date:"d.m.Y" }}</span>
+        {% empty %}
+          <span class="muted-text">Немає найближчих оплат</span>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="sidebar-cta">
+      <a href="{{ pay_overdue_url|default:'#' }}" class="btn_pay_red btn-linklike">Прострочені оплати</a>
+      <div class="date-stack">
+        {% for i in not_paid %}
+          <span class="context-chip context-chip--danger">{{ i.paid_up_to|date:"d.m.Y" }}</span>
+        {% empty %}
+          <span class="muted-text">Прострочених оплат немає</span>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if pay_current_mode != 'all' or pay_search_query or selected_pay_sys or selected_type_source or pay_sort != 'id_asc' %}
+      <a href="{{ pay_reset_url|default:'/' }}" class="btn_pay_red btn-linklike">Reset</a>
+    {% endif %}
+  </section>
+</div>

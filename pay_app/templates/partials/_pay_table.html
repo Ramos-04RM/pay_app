@@ -1,0 +1,174 @@
+<div class="main">
+  {% if not form_edit_pay %}
+    <section class="table-card table-card--wide">
+      <div class="table-card__header table-card__header--with-hint">
+        <div>
+          <div class="section-title-row">
+            <h2 class="section-title">Платежі</h2>
+            <span class="metric-pill">Знайдено: {{ object_l|length }}</span>
+          </div>
+{#          <p class="section-subtitle">Широка таблиця не розпирає layout: перегляд усіх колонок відбувається через горизонтальний скрол всередині card-контейнера.</p>#}
+        </div>
+        <div class="table-scroll-hint">
+          <i class="fa-solid fa-left-right" aria-hidden="true"></i>
+          <span>Гортайте таблицю по горизонталі</span>
+        </div>
+      </div>
+
+      <div class="table-responsive table-responsive--wide">
+        <table class="table_pay">
+          <thead>
+            <tr>
+              <th>
+                <a href="{% url 'app:pay_new' %}" class="btn_pay btn-linklike">+</a>
+              </th>
+              <th><a href="{{ pay_sort_groups_url|default:'#' }}">Група</a></th>
+              <th><a href="{{ pay_sort_create_date_url|default:'#' }}">Дата створення</a></th>
+              <th><a href="{{ pay_sort_service_url|default:'#' }}">Умовна назва сервісу</a></th>
+              <th><a href="{{ pay_sort_type_source_url|default:'#' }}">Тип ресурсу</a></th>
+              <th><a href="{{ pay_sort_price_per_month_url|default:'#' }}">Ціна на місяць</a></th>
+              <th><a href="{{ pay_sort_currency_url|default:'#' }}">Валюта</a></th>
+              <th><a href="{{ pay_sort_pay_sys_url|default:'#' }}">Платіжна система</a></th>
+              <th><a href="{{ pay_sort_paid_up_to_url|default:'#' }}">Проплачено до</a></th>
+              <th><a href="{{ pay_sort_email_login_url|default:'#' }}">Логін</a></th>
+              <th>IP/Port</th>
+              <th>Пароль</th>
+              <th>Примітка</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for i in object_l %}
+              <tr tabindex="0">
+                <td class="table-index-cell">
+                  <a href="{% url 'app:pay_edit' i.id %}">
+                    <div class="all_cell">{{ forloop.counter }}</div>
+                  </a>
+                </td>
+                <td>{{ i.groups }}</td>
+                <td>{{ i.create_date|date:"d.m.Y" }}</td>
+
+                {% if i.status == "active" %}
+                  <td class="active_status service-link-cell">
+                    <a class="all_cell service-link" target="_blank" href="{% url 'app:home_page_with_cabinet' i.id %}">
+                      <span class="service-link__content">
+                        <span class="service-link__label">{{ i.service }}</span>
+{#                        <span class="service-link__hint">деталі</span>#}
+                      </span>
+                      <i class="fa-solid fa-arrow-up-right-from-square service-link__icon" aria-hidden="true"></i>
+                    </a>
+                  </td>
+                {% else %}
+                  <td class="not_active_status service-link-cell">
+                    <a class="all_cell service-link" target="_blank" href="{% url 'app:home_page_with_cabinet' i.id %}">
+                      <span class="service-link__content">
+                        <span class="service-link__label">{{ i.service }}</span>
+{#                        <span class="service-link__hint">деталі</span>#}
+                      </span>
+                      <i class="fa-solid fa-arrow-up-right-from-square service-link__icon" aria-hidden="true"></i>
+                    </a>
+                  </td>
+                {% endif %}
+
+                <td>{{ i.type_source }}</td>
+                <td>{{ i.price_per_month }}</td>
+                <td>{{ i.currency }}</td>
+                <td>{{ i.pay_sys }}</td>
+
+                {% if i.paid_up_to < today and i.status == "active" %}
+                  <td class="not_active_status">
+                    <a href="{% url 'app:edit_dt' i.id %}">
+                      <div class="all_cell">{{ i.paid_up_to|date:"d.m.Y" }}</div>
+                    </a>
+                  </td>
+                {% elif i.paid_up_to < today and i.status != "active" %}
+                  <td class="not_active_date">
+                    <a href="{% url 'app:edit_dt' i.id %}">
+                      <div class="all_cell">{{ i.paid_up_to|date:"d.m.Y" }}</div>
+                    </a>
+                  </td>
+                {% elif i.paid_up_to >= today and i.paid_up_to <= week and i.status == "active" %}
+                  <td class="active_status_week">
+                    <a href="{% url 'app:edit_dt' i.id %}">
+                      <div class="all_cell">{{ i.paid_up_to|date:"d.m.Y" }}</div>
+                    </a>
+                  </td>
+                {% elif i.paid_up_to > week and i.status == "active" %}
+                  <td class="active_status">
+                    <a href="{% url 'app:edit_dt' i.id %}">
+                      <div class="all_cell">{{ i.paid_up_to|date:"d.m.Y" }}</div>
+                    </a>
+                  </td>
+                {% else %}
+                  <td class="not_active_date">
+                    <a href="{% url 'app:edit_dt' i.id %}">
+                      <div class="all_cell">{{ i.paid_up_to|date:"d.m.Y" }}</div>
+                    </a>
+                  </td>
+                {% endif %}
+
+                <td class="masked-cell masked-cell--warning">
+                  <div class="masked-cell__content">
+                    <button
+                      type="button"
+                      class="btn_pay_yellow icon-btn js-decrypt-btn"
+                      id="pay-email_login-btn-{{ i.id }}"
+                      data-action="decrypt-copy"
+                      data-id="{{ i.id }}"
+                      data-model="pay"
+                      data-field="email_login"
+                      data-show-label="Показати та скопіювати логін"
+                      data-hide-label="Сховати логін">
+                      <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                      <span class="visually-hidden">Показати та скопіювати логін</span>
+                    </button>
+                    <span
+                      id="pay-email_login-val-{{ i.id }}"
+                      data-visible="0"
+                      data-decrypted=""
+                      class="masked-value">
+                      *****
+                    </span>
+                  </div>
+                </td>
+
+                <td>{{ i.ip }}</td>
+
+                <td class="masked-cell masked-cell--warning">
+                  <div class="masked-cell__content">
+                    <button
+                      type="button"
+                      class="btn_pay_yellow icon-btn js-decrypt-btn"
+                      id="pay-password-btn-{{ i.id }}"
+                      data-action="decrypt-copy"
+                      data-id="{{ i.id }}"
+                      data-model="pay"
+                      data-field="password"
+                      data-show-label="Показати та скопіювати пароль"
+                      data-hide-label="Сховати пароль">
+                      <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                      <span class="visually-hidden">Показати та скопіювати пароль</span>
+                    </button>
+                    <span
+                      id="pay-password-val-{{ i.id }}"
+                      data-visible="0"
+                      data-decrypted=""
+                      class="masked-value">
+                      *****
+                    </span>
+                  </div>
+                </td>
+
+                <td>{{ i.note_pay }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="13" class="table-empty">Нічого не знайдено по поточних фільтрах.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+</div>

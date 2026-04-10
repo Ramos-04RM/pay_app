@@ -1,115 +1,467 @@
-from django.db.models import Q, QuerySet
-from django.db import IntegrityError
-from .models import Pay, Cabinet
-from django.contrib.auth.models import User
-from django.shortcuts import render, redirect, get_object_or_404
-from datetime import timedelta
-import datetime
-from django.http import HttpResponseRedirect, HttpResponseNotFound, JsonResponse
-import cryptocode
-from .forms import PayForm, CabinetForm
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.cache import cache_page
-from django.views.decorators.http import require_POST
-from d1.settings import CACHE_TIME
 import json
+import datetime
+import cryptocode
+from urllib.parse import urlencode
 
-today = datetime.date.today()
-month = today + timedelta(days=31)
-week = today + timedelta(days=7)
-weeks = [today, week]
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.db import IntegrityError
+from django.db.models import Q, Count
+from django.http import HttpResponseNotFound, JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
+from django.views.decorators.http import require_POST
 
-nt_pd = today - timedelta(days=31)
-nt_pds = [nt_pd, today]
+from .forms import PayForm, CabinetForm, TagForm, CabinetTagAssignForm
+from .models import Pay, Cabinet, Tag, CabinetTag
 
-last_dt = Pay.objects.filter(Q(status='active') & Q(paid_up_to__range=weeks)).order_by('paid_up_to')[:5]
-not_paid = Pay.objects.filter(Q(status='active') & Q(paid_up_to__range=nt_pds)).order_by('paid_up_to')[:5]
 
-cont = {
-    'week': week,
-    'today': today,
-    'last_dt': last_dt,
-    'not_paid': not_paid,
-    'month': month,
+PAY_MODE_ALL = 'all'
+PAY_MODE_UPCOMING = 'upcoming'
+PAY_MODE_OVERDUE = 'overdue'
+PAY_MODES = {PAY_MODE_ALL, PAY_MODE_UPCOMING, PAY_MODE_OVERDUE}
+
+PAY_SORT_MAP = {
+    'id_asc': ('id',),
+    'id_desc': ('-id',),
+    'groups_asc': ('groups', 'id'),
+    'groups_desc': ('-groups', 'id'),
+    'create_date_asc': ('create_date', 'id'),
+    'create_date_desc': ('-create_date', 'id'),
+    'service_asc': ('service', 'id'),
+    'service_desc': ('-service', 'id'),
+    'type_source_asc': ('type_source', 'id'),
+    'type_source_desc': ('-type_source', 'id'),
+    'price_per_month_asc': ('price_per_month', 'id'),
+    'price_per_month_desc': ('-price_per_month', 'id'),
+    'currency_asc': ('currency', 'id'),
+    'currency_desc': ('-currency', 'id'),
+    'pay_sys_asc': ('pay_sys', 'id'),
+    'pay_sys_desc': ('-pay_sys', 'id'),
+    'paid_up_to_asc': ('paid_up_to', 'id'),
+    'paid_up_to_desc': ('-paid_up_to', 'id'),
+    'email_login_asc': ('email_login', 'id'),
+    'email_login_desc': ('-email_login', 'id'),
+    'status_asc': ('status', 'id'),
+    'status_desc': ('-status', 'id'),
 }
+PAY_SORT_DEFAULT = 'id_asc'
 
 
-def decrypt(object_l):  # decrypt psw adn log in pay
-    user_psw = User.objects.get(username='admin').password
-    for i in object_l:  # decrypt log_and_psw
-        i.password = cryptocode.decrypt(i.password, user_psw)
-        i.email_login = cryptocode.decrypt(i.email_login, user_psw)
+def get_common_context():
+    today = datetime.date.today()
+    month = today + datetime.timedelta(days=31)
+    week = today + datetime.timedelta(days=7)
+    month_ago = today - datetime.timedelta(days=31)
+
+    last_dt = Pay.objects.filter(
+        status='active',
+        paid_up_to__gte=today,
+        paid_up_to__lte=week,
+    ).order_by('paid_up_to')[:5]
+
+    # Sidebar: only overdue items for the last 31 days.
+    not_paid = Pay.objects.filter(
+        status='active',
+        paid_up_to__lt=today,
+        paid_up_to__gte=month_ago,
+    ).order_by('paid_up_to')[:5]
+
+    return {
+        'week': week,
+        'today': today,
+        'last_dt': last_dt,
+        'not_paid': not_paid,
+        'month': month,
+        'month_ago': month_ago,
+    }
 
 
-def decrypt_cabinet(object_k):  # decrypt psw adn log in cabinet
-    user_psw = User.objects.get(username='admin')
-    for i in object_k:
-        i.password = cryptocode.decrypt(i.password, user_psw.password)
-        i.email_password = cryptocode.decrypt(i.email_password, user_psw.password)
+def get_default_statuses_for_mode(mode):
+    if mode == PAY_MODE_OVERDUE:
+        return ['active', 'not active']
+    return ['active']
+
+
+def get_pay_base_url_name(mode):
+    if mode == PAY_MODE_UPCOMING:
+        return 'app:filter_by_date'
+    if mode == PAY_MODE_OVERDUE:
+        return 'app:overdue_payments'
+    return 'app:index'
+
+
+def get_pay_base_url(mode):
+    url_name = get_pay_base_url_name(mode)
+    if url_name in {'app:filter_by_date', 'app:overdue_payments'}:
+        return reverse(url_name, args=('1',))
+    return reverse(url_name)
+
+
+def build_pay_list_url(
+    *,
+    mode=PAY_MODE_ALL,
+    statuses=None,
+    q='',
+    sort='',
+    pay_sys='',
+    type_source='',
+):
+    statuses = statuses or []
+    params = {}
+
+    if mode != PAY_MODE_ALL:
+        params['mode'] = mode
+    if q:
+        params['q'] = q
+    if sort and sort != PAY_SORT_DEFAULT:
+        params['sort'] = sort
+    if pay_sys:
+        params['pay_sys'] = pay_sys
+    if type_source:
+        params['type_source'] = type_source
+    if statuses:
+        params['status'] = list(statuses)
+
+    base_url = get_pay_base_url(mode)
+    query_string = urlencode(params, doseq=True)
+    return f'{base_url}?{query_string}' if query_string else base_url
+
+
+def get_pay_list_state(request, default_mode=PAY_MODE_ALL, overrides=None):
+    query_data = request.GET.copy()
+    overrides = overrides or {}
+
+    for key, value in overrides.items():
+        if isinstance(value, (list, tuple)):
+            query_data.setlist(key, [str(item) for item in value])
+        elif value is None:
+            query_data.pop(key, None)
+        else:
+            query_data[key] = str(value)
+
+    mode = (query_data.get('mode') or default_mode or PAY_MODE_ALL).strip().lower()
+    if mode not in PAY_MODES:
+        mode = default_mode if default_mode in PAY_MODES else PAY_MODE_ALL
+
+    selected_statuses = [
+        status
+        for status in query_data.getlist('status')
+        if status in {'active', 'not active'}
+    ]
+    if not selected_statuses:
+        selected_statuses = get_default_statuses_for_mode(mode)
+
+    search_query = (query_data.get('q') or '').strip()
+
+    current_sort = (query_data.get('sort') or PAY_SORT_DEFAULT).strip()
+    if current_sort not in PAY_SORT_MAP:
+        current_sort = PAY_SORT_DEFAULT
+
+    selected_pay_sys = (query_data.get('pay_sys') or '').strip()
+    selected_type_source = (query_data.get('type_source') or '').strip()
+
+    return {
+        'mode': mode,
+        'selected_statuses': selected_statuses,
+        'search_query': search_query,
+        'current_sort': current_sort,
+        'selected_pay_sys': selected_pay_sys,
+        'selected_type_source': selected_type_source,
+    }
+
+
+def get_pay_sort_url(state, field_name):
+    asc_sort = f'{field_name}_asc'
+    desc_sort = f'{field_name}_desc'
+    next_sort = desc_sort if state['current_sort'] == asc_sort else asc_sort
+    return build_pay_list_url(
+        mode=state['mode'],
+        statuses=state['selected_statuses'],
+        q=state['search_query'],
+        sort=next_sort,
+        pay_sys=state['selected_pay_sys'],
+        type_source=state['selected_type_source'],
+    )
+
+
+def build_pay_queryset(request, default_mode=PAY_MODE_ALL, overrides=None):
+    state = get_pay_list_state(request, default_mode=default_mode, overrides=overrides)
+    context_dates = get_common_context()
+    today = context_dates['today']
+    week = context_dates['week']
+
+    queryset = Pay.objects.all()
+
+    if state['mode'] == PAY_MODE_UPCOMING:
+        queryset = queryset.filter(
+            paid_up_to__gte=today,
+            paid_up_to__lte=week,
+        )
+    elif state['mode'] == PAY_MODE_OVERDUE:
+        queryset = queryset.filter(
+            paid_up_to__lt=today,
+        )
+
+    queryset = queryset.filter(status__in=state['selected_statuses'])
+
+    if state['search_query']:
+        q = state['search_query']
+        queryset = queryset.filter(
+            Q(groups__icontains=q)
+            | Q(service__icontains=q)
+            | Q(type_source__icontains=q)
+            | Q(pay_sys__icontains=q)
+            | Q(status__icontains=q)
+            | Q(currency__icontains=q)
+            | Q(ip__icontains=q)
+            | Q(note_pay__icontains=q)
+        )
+
+    if state['selected_pay_sys']:
+        queryset = queryset.filter(pay_sys=state['selected_pay_sys'])
+
+    if state['selected_type_source']:
+        queryset = queryset.filter(type_source=state['selected_type_source'])
+
+    queryset = queryset.order_by(*PAY_SORT_MAP[state['current_sort']])
+    return queryset, state, context_dates
+
+
+def get_pay_sidebar_context(state):
+    pay_sys_options = ['BTC', 'WM', 'BTC|WM']
+    type_source_options = ['VPS', 'site', 'proxy']
+
+    return {
+        'pay_current_mode': state['mode'],
+        'pay_search_query': state['search_query'],
+        'pay_sort': state['current_sort'],
+        'selected_statuses': state['selected_statuses'],
+        'selected_pay_sys': state['selected_pay_sys'],
+        'selected_type_source': state['selected_type_source'],
+        'pay_list_base_url': get_pay_base_url(state['mode']),
+        'pay_reset_url': get_pay_base_url(state['mode']),
+        'pay_upcoming_url': build_pay_list_url(
+            mode=PAY_MODE_UPCOMING,
+            statuses=state['selected_statuses'],
+            q=state['search_query'],
+            sort=state['current_sort'],
+            pay_sys=state['selected_pay_sys'],
+            type_source=state['selected_type_source'],
+        ),
+        'pay_overdue_url': build_pay_list_url(
+            mode=PAY_MODE_OVERDUE,
+            statuses=state['selected_statuses'],
+            q=state['search_query'],
+            sort=state['current_sort'],
+            pay_sys=state['selected_pay_sys'],
+            type_source=state['selected_type_source'],
+        ),
+        'pay_sort_groups_url': get_pay_sort_url(state, 'groups'),
+        'pay_sort_create_date_url': get_pay_sort_url(state, 'create_date'),
+        'pay_sort_service_url': get_pay_sort_url(state, 'service'),
+        'pay_sort_type_source_url': get_pay_sort_url(state, 'type_source'),
+        'pay_sort_price_per_month_url': get_pay_sort_url(state, 'price_per_month'),
+        'pay_sort_currency_url': get_pay_sort_url(state, 'currency'),
+        'pay_sort_pay_sys_url': get_pay_sort_url(state, 'pay_sys'),
+        'pay_sort_paid_up_to_url': get_pay_sort_url(state, 'paid_up_to'),
+        'pay_sort_email_login_url': get_pay_sort_url(state, 'email_login'),
+        'pay_sys_links': [
+            {
+                'value': item,
+                'url': build_pay_list_url(
+                    mode=state['mode'],
+                    statuses=state['selected_statuses'],
+                    q=state['search_query'],
+                    sort=state['current_sort'],
+                    pay_sys='' if state['selected_pay_sys'] == item else item,
+                    type_source=state['selected_type_source'],
+                ),
+                'selected': state['selected_pay_sys'] == item,
+            }
+            for item in pay_sys_options
+        ],
+        'type_source_links': [
+            {
+                'value': item,
+                'url': build_pay_list_url(
+                    mode=state['mode'],
+                    statuses=state['selected_statuses'],
+                    q=state['search_query'],
+                    sort=state['current_sort'],
+                    pay_sys=state['selected_pay_sys'],
+                    type_source='' if state['selected_type_source'] == item else item,
+                ),
+                'selected': state['selected_type_source'] == item,
+            }
+            for item in type_source_options
+        ],
+    }
+
+
+def get_default_pay_context(request, default_mode=PAY_MODE_ALL, overrides=None):
+    state = get_pay_list_state(request, default_mode=default_mode, overrides=overrides)
+    return get_pay_sidebar_context(state)
+
+
+def render_pay_list(request, default_mode=PAY_MODE_ALL, overrides=None):
+    object_l, state, context_dates = build_pay_queryset(
+        request,
+        default_mode=default_mode,
+        overrides=overrides,
+    )
+    content = {'object_l': object_l}
+    content.update(context_dates)
+    content.update(get_pay_sidebar_context(state))
+    return render(request, 'index.html', content)
+
+
+def build_cabinet_page_url(q="", has_active=False, has_inactive=False, no_services=False, tag_ids=None, sort=""):
+    params = {}
+    if q:
+        params['q'] = q
+    if has_active:
+        params['has_active'] = '1'
+    if has_inactive:
+        params['has_inactive'] = '1'
+    if no_services:
+        params['no_services'] = '1'
+    if tag_ids:
+        params['tag_id'] = [str(tag_id) for tag_id in tag_ids]
+    if sort:
+        params['sort'] = sort
+
+    base_url = reverse('app:cabinet_page')
+    query_string = urlencode(params, doseq=True)
+    return f"{base_url}?{query_string}" if query_string else base_url
+
+
+def get_cabinet_sort_url(search_query, has_active, has_inactive, no_services, tag_ids, current_sort, field_name):
+    asc_sort = f"{field_name}_asc"
+    desc_sort = f"{field_name}_desc"
+    next_sort = desc_sort if current_sort == asc_sort else asc_sort
+    return build_cabinet_page_url(
+        q=search_query,
+        has_active=has_active,
+        has_inactive=has_inactive,
+        no_services=no_services,
+        tag_ids=tag_ids,
+        sort=next_sort,
+    )
+
+
+def get_cabinet_sidebar_context(search_query="", has_active=False, has_inactive=False, no_services=False, current_sort="", tag_ids=None):
+    tag_ids = [int(tag_id) for tag_id in (tag_ids or [])]
+
+    cabinet_stats = Cabinet.objects.annotate(
+        services_count=Count('pay', distinct=True),
+        active_services_count=Count('pay', filter=Q(pay__status='active'), distinct=True),
+        inactive_services_count=Count('pay', filter=Q(pay__status='not active'), distinct=True),
+        tags_count=Count('cabinet_tags__tag', distinct=True),
+    )
+
+    selected_tags = Tag.objects.filter(id__in=tag_ids).order_by('name')
+
+    tag_options = Tag.objects.annotate(
+        cabinets_count=Count('cabinet_tags__cabinet', distinct=True),
+    ).order_by('name')
+
+    return {
+        'cabinet_search_query': search_query,
+        'cabinet_has_active': has_active,
+        'cabinet_has_inactive': has_inactive,
+        'cabinet_no_services': no_services,
+        'cabinet_sort': current_sort,
+        'cabinet_selected_tag_ids': tag_ids,
+        'cabinet_selected_tags': selected_tags,
+        'cabinet_tag_options': tag_options,
+        'cabinet_total': cabinet_stats.count(),
+        'cabinets_with_active': cabinet_stats.filter(active_services_count__gt=0).count(),
+        'cabinets_with_inactive': cabinet_stats.filter(inactive_services_count__gt=0).count(),
+        'cabinets_without_services': cabinet_stats.filter(services_count=0).count(),
+        'cabinet_reset_url': reverse('app:cabinet_page'),
+        'cabinet_login_sort_url': get_cabinet_sort_url(search_query, has_active, has_inactive, no_services, tag_ids, current_sort, 'login'),
+        'cabinet_link_sort_url': get_cabinet_sort_url(search_query, has_active, has_inactive, no_services, tag_ids, current_sort, 'link'),
+        'cabinet_email_sort_url': get_cabinet_sort_url(search_query, has_active, has_inactive, no_services, tag_ids, current_sort, 'email_login'),
+        'cabinet_note_sort_url': get_cabinet_sort_url(search_query, has_active, has_inactive, no_services, tag_ids, current_sort, 'note'),
+        'cabinet_services_sort_asc_url': build_cabinet_page_url(
+            q=search_query,
+            has_active=has_active,
+            has_inactive=has_inactive,
+            no_services=no_services,
+            tag_ids=tag_ids,
+            sort='services_asc',
+        ),
+        'cabinet_services_sort_desc_url': build_cabinet_page_url(
+            q=search_query,
+            has_active=has_active,
+            has_inactive=has_inactive,
+            no_services=no_services,
+            tag_ids=tag_ids,
+            sort='services_desc',
+        ),
+        'cabinet_tags_sort_asc_url': build_cabinet_page_url(
+            q=search_query,
+            has_active=has_active,
+            has_inactive=has_inactive,
+            no_services=no_services,
+            tag_ids=tag_ids,
+            sort='tags_asc',
+        ),
+        'cabinet_tags_sort_desc_url': build_cabinet_page_url(
+            q=search_query,
+            has_active=has_active,
+            has_inactive=has_inactive,
+            no_services=no_services,
+            tag_ids=tag_ids,
+            sort='tags_desc',
+        ),
+    }
 
 
 @require_POST
 @login_required
 def decrypt_item(request):
-    """
-    One endpoint for all.
-    Request JSON:
-      {
-        "model": "pay" | "cabinet",
-        "id": <int>,
-        "field": "password" | "email_login" | "email_password"
-      }
-
-    Response JSON:
-      { "value": "<decrypted>" }
-    """
     try:
-        payload = json.loads(request.body.decode("utf-8") or "{}")
+        payload = json.loads(request.body.decode('utf-8') or '{}')
     except Exception:
-        return JsonResponse({"error": "Invalid JSON"}, status=400)
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
-    model = (payload.get("model") or "").strip().lower()
-    field = (payload.get("field") or "").strip()
-    obj_id = payload.get("id")
+    model = (payload.get('model') or '').strip().lower()
+    field = (payload.get('field') or '').strip()
+    obj_id = payload.get('id')
 
-    # Whitelist models + fields (no funny business)
     allowed = {
-        "pay": {
-            "cls": Pay,
-            "fields": {"password", "email_login"},
-        },
-        "cabinet": {
-            "cls": Cabinet,
-            "fields": {"password", "email_password", "email_login"},
-        }
+        'pay': {'cls': Pay, 'fields': {'password', 'email_login'}},
+        'cabinet': {'cls': Cabinet, 'fields': {'password', 'email_password', 'email_login'}},
     }
 
     if model not in allowed:
-        return JsonResponse({"error": "Invalid model"}, status=400)
-    if field not in allowed[model]["fields"]:
-        return JsonResponse({"error": "Invalid field"}, status=400)
+        return JsonResponse({'error': 'Invalid model'}, status=400)
+    if field not in allowed[model]['fields']:
+        return JsonResponse({'error': 'Invalid field'}, status=400)
 
     try:
         obj_id = int(obj_id)
     except Exception:
-        return JsonResponse({"error": "Invalid id"}, status=400)
+        return JsonResponse({'error': 'Invalid id'}, status=400)
 
-    obj = get_object_or_404(allowed[model]["cls"], pk=obj_id)
-
+    obj = get_object_or_404(allowed[model]['cls'], pk=obj_id)
     encrypted_value = getattr(obj, field, None)
     if not encrypted_value:
-        return JsonResponse({"error": "Empty value"}, status=400)
+        return JsonResponse({'error': 'Empty value'}, status=400)
 
     user_psw = User.objects.get(username='admin').password
     decrypted_value = cryptocode.decrypt(encrypted_value, user_psw)
-    if decrypted_value is False or decrypted_value is None or decrypted_value == "":
-        return JsonResponse({"error": "Decryption failed"}, status=400)
+    if decrypted_value is False or decrypted_value is None or decrypted_value == '':
+        return JsonResponse({'error': 'Decryption failed'}, status=400)
 
-    return JsonResponse({"value": decrypted_value})
+    return JsonResponse({'value': decrypted_value})
 
 
 @login_required
 def pay_new(request):
+    context_dates = get_common_context()
     group_options = list(
         Pay.objects.exclude(groups__isnull=True)
         .exclude(groups__exact='')
@@ -118,7 +470,7 @@ def pay_new(request):
         .distinct()
     )
 
-    if request.method == "POST":
+    if request.method == 'POST':
         form_pay = PayForm(request.POST)
         if form_pay.is_valid():
             post = form_pay.save(commit=False)
@@ -127,49 +479,147 @@ def pay_new(request):
     else:
         if Cabinet.objects.all().count() > 0:
             lst_id = Cabinet.objects.all().last().id
-            form_pay = PayForm(initial={"cabinet": lst_id, 'create_date': today})
+            form_pay = PayForm(initial={'cabinet': lst_id, 'create_date': context_dates['today']})
         else:
             form_pay = PayForm()
 
     content = {'form_pay': form_pay, 'group_options': group_options}
-    content.update(cont)
-    return render(request, 'add_pay.html', content)
-
-
-def cabinet_new(request):
-    if request.method == "POST":
-        form_pay = PayForm(request.POST)
-        form_cabinet = CabinetForm(request.POST)
-        if form_cabinet.is_valid():
-            post = form_cabinet.save(commit=False)
-            post.save()
-            return redirect('app:pay_new')
-    else:
-        form_cabinet = CabinetForm()
-        form_pay = PayForm()
-    content = {'form_cabinet': form_cabinet, 'form_pay': form_pay}
-    content.update(cont)
+    content.update(context_dates)
+    content.update(get_default_pay_context(request))
     return render(request, 'add_pay.html', content)
 
 
 @login_required
-@cache_page(CACHE_TIME)
+def cabinet_new(request):
+    context_dates = get_common_context()
+    if request.method == 'POST':
+        submit_action = request.POST.get('submit_action')
+
+        if submit_action == 'create_tag':
+            form_pay = PayForm()
+            tag_form = TagForm(request.POST, prefix='new_tag')
+
+            selected_tag_ids = []
+            for raw_tag_id in request.POST.getlist('selected_tags'):
+                try:
+                    selected_tag_ids.append(int(raw_tag_id))
+                except (TypeError, ValueError):
+                    continue
+
+            cabinet_form_data = {}
+            for key, value in request.POST.items():
+                if key.startswith('cabinet_'):
+                    cabinet_form_data[key.replace('cabinet_', '', 1)] = value
+
+            form_cabinet = CabinetForm(cabinet_form_data or None)
+
+            if tag_form.is_valid():
+                new_tag = tag_form.save()
+                selected_tag_ids = sorted(set(selected_tag_ids + [new_tag.id]))
+                tag_assign_form = CabinetTagAssignForm(initial={'tags': selected_tag_ids})
+                tag_form = TagForm(prefix='new_tag')
+            else:
+                tag_assign_form = CabinetTagAssignForm(initial={'tags': selected_tag_ids})
+
+        else:
+            form_pay = PayForm()
+            form_cabinet = CabinetForm(request.POST)
+            tag_assign_form = CabinetTagAssignForm(request.POST)
+            tag_form = TagForm(prefix='new_tag')
+
+            if form_cabinet.is_valid() and tag_assign_form.is_valid():
+                post = form_cabinet.save(commit=False)
+                post.save()
+
+                CabinetTag.objects.bulk_create([
+                    CabinetTag(cabinet=post, tag=tag)
+                    for tag in tag_assign_form.cleaned_data['tags']
+                ])
+                return redirect('app:pay_new')
+    else:
+        form_pay = PayForm()
+        form_cabinet = CabinetForm()
+        tag_assign_form = CabinetTagAssignForm()
+        tag_form = TagForm(prefix='new_tag')
+
+    content = {
+        'form_cabinet': form_cabinet,
+        'form_pay': form_pay,
+        'tag_assign_form': tag_assign_form,
+        'tag_form': tag_form,
+    }
+    content.update(context_dates)
+    content.update(get_default_pay_context(request))
+    return render(request, 'add_pay.html', content)
+
+
+@login_required
 def cabinet_edit(request, id):
-    # EDIT view: тут дешифрування лишаємо, бо форма має показувати значення
     post = get_object_or_404(Cabinet, pk=id)
     user_psw = User.objects.get(username='admin').password
     post.password = cryptocode.decrypt(post.password, user_psw)
     post.email_password = cryptocode.decrypt(post.email_password, user_psw)
-    if request.method == "POST":
+
+    selected_tag_ids = list(
+        CabinetTag.objects.filter(cabinet=post).values_list('tag_id', flat=True)
+    )
+
+    if request.method == 'POST':
         form_cabinet_edit = CabinetForm(request.POST, instance=post)
-        if form_cabinet_edit.is_valid():
-            post = form_cabinet_edit.save(commit=False)
-            post.save()
-            return redirect('app:cabinet_page')
+        tag_assign_form = CabinetTagAssignForm(request.POST)
+        tag_form = TagForm(request.POST, prefix='new_tag')
+
+        submit_action = request.POST.get('submit_action')
+
+        if submit_action == 'save_tags':
+            tag_form = TagForm(prefix='new_tag')
+            if form_cabinet_edit.is_valid() and tag_assign_form.is_valid():
+                post = form_cabinet_edit.save(commit=False)
+                post.save()
+
+                CabinetTag.objects.filter(cabinet=post).delete()
+                CabinetTag.objects.bulk_create([
+                    CabinetTag(cabinet=post, tag=tag)
+                    for tag in tag_assign_form.cleaned_data['tags']
+                ])
+                return redirect('app:cabinet_page')
+
+        elif submit_action == 'create_tag':
+            if tag_form.is_valid():
+                new_tag = tag_form.save()
+                merged_ids = set(
+                    CabinetTag.objects.filter(cabinet=post).values_list('tag_id', flat=True)
+                )
+                merged_ids.add(new_tag.id)
+                form_cabinet_edit = CabinetForm(request.POST, instance=post)
+                tag_assign_form = CabinetTagAssignForm(initial={'tags': list(merged_ids)})
+            else:
+                form_cabinet_edit = CabinetForm(request.POST, instance=post)
+                tag_assign_form = CabinetTagAssignForm(initial={'tags': selected_tag_ids})
+        else:
+            tag_form = TagForm(prefix='new_tag')
+            if form_cabinet_edit.is_valid() and tag_assign_form.is_valid():
+                post = form_cabinet_edit.save(commit=False)
+                post.save()
+
+                CabinetTag.objects.filter(cabinet=post).delete()
+                CabinetTag.objects.bulk_create([
+                    CabinetTag(cabinet=post, tag=tag)
+                    for tag in tag_assign_form.cleaned_data['tags']
+                ])
+                return redirect('app:cabinet_page')
     else:
         form_cabinet_edit = CabinetForm(instance=post)
-    content = {'form_cabinet_edit': form_cabinet_edit}
-    content.update(cont)
+        tag_assign_form = CabinetTagAssignForm(initial={'tags': selected_tag_ids})
+        tag_form = TagForm(prefix='new_tag')
+
+    content = {
+        'form_cabinet_edit': form_cabinet_edit,
+        'tag_assign_form': tag_assign_form,
+        'tag_form': tag_form,
+    }
+    content.update(get_cabinet_sidebar_context())
+    content.update(get_common_context())
     return render(request, 'cabinet.html', content)
 
 
@@ -185,7 +635,7 @@ def pay_edit(request, id):
     post_cabinet.password = cryptocode.decrypt(post_cabinet.password, user_psw)
     post_cabinet.email_password = cryptocode.decrypt(post_cabinet.email_password, user_psw)
 
-    if request.method == "POST":
+    if request.method == 'POST':
         form_edit_pay = PayForm(request.POST, instance=post)
         form_edit_cabinet = CabinetForm(request.POST, instance=post_cabinet)
 
@@ -203,158 +653,217 @@ def pay_edit(request, id):
         form_edit_cabinet = CabinetForm(instance=post_cabinet)
 
     content = {'form_edit_pay': form_edit_pay, 'form_edit_cabinet': form_edit_cabinet}
-    content.update(cont)
+    content.update(get_common_context())
+    content.update(get_default_pay_context(request))
     return render(request, 'index.html', content)
 
 
 @login_required
-@cache_page(CACHE_TIME)
 def home_page(request):
-    object_l = Pay.objects.all().order_by('id')
-    # LAZY: не дешифруємо тут
-    content = {'object_l': object_l}
-    content.update(cont)
-    return render(request, 'index.html', content)
+    return render_pay_list(request, default_mode=PAY_MODE_ALL)
 
 
 @login_required
 def home_page_with_cabinet(request, id):
-    # LAZY: не дешифруємо тут
     object_l = Pay.objects.filter(id=id)
     cabinet_obj = Pay.objects.filter(id=id)
     content = {'object_l': object_l, 'cabinet_obj': cabinet_obj}
-    content.update(cont)
+    content.update(get_common_context())
+    content.update(get_default_pay_context(request))
     return render(request, 'index.html', content)
 
 
 @login_required
-@cache_page(CACHE_TIME)
 def cabinet_page(request):
-    object_k = Cabinet.objects.all().order_by('id')
-    # LAZY: не дешифруємо тут
-    content = {'object_k': object_k}
-    content.update(cont)
+    search_query = (request.GET.get('q') or '').strip()
+    has_active = request.GET.get('has_active') == '1'
+    has_inactive = request.GET.get('has_inactive') == '1'
+    no_services = request.GET.get('no_services') == '1'
+    current_sort = (request.GET.get('sort') or '').strip()
+    tag_ids_raw = request.GET.getlist('tag_id')
+    highlight_id = request.GET.get('highlight')
+
+    try:
+        highlight_id = int(highlight_id) if highlight_id else None
+    except ValueError:
+        highlight_id = None
+
+    tag_ids = []
+    for raw_tag_id in tag_ids_raw:
+        try:
+            tag_ids.append(int(raw_tag_id))
+        except (TypeError, ValueError):
+            continue
+
+    object_k = Cabinet.objects.all()
+
+    if search_query:
+        service_match_ids = Pay.objects.filter(service__icontains=search_query).values_list('cabinet_id', flat=True)
+        tag_match_ids = CabinetTag.objects.filter(tag__name__icontains=search_query).values_list('cabinet_id', flat=True)
+        object_k = object_k.filter(
+            Q(login__icontains=search_query)
+            | Q(link__icontains=search_query)
+            | Q(email_login__icontains=search_query)
+            | Q(note__icontains=search_query)
+            | Q(id__in=service_match_ids)
+            | Q(id__in=tag_match_ids)
+        ).distinct()
+
+    object_k = object_k.annotate(
+        services_count=Count('pay', distinct=True),
+        active_services_count=Count('pay', filter=Q(pay__status='active'), distinct=True),
+        inactive_services_count=Count('pay', filter=Q(pay__status='not active'), distinct=True),
+        tags_count=Count('cabinet_tags__tag', distinct=True),
+    ).prefetch_related('pay_set', 'cabinet_tags__tag')
+
+    selected_filter = Q()
+    has_any_filter = False
+
+    if has_active:
+        selected_filter |= Q(active_services_count__gt=0)
+        has_any_filter = True
+    if has_inactive:
+        selected_filter |= Q(inactive_services_count__gt=0)
+        has_any_filter = True
+    if no_services:
+        selected_filter |= Q(services_count=0)
+        has_any_filter = True
+
+    if has_any_filter:
+        object_k = object_k.filter(selected_filter)
+
+    if tag_ids:
+        object_k = object_k.filter(cabinet_tags__tag_id__in=tag_ids)
+
+    sort_map = {
+        'login_asc': ('login', 'id'),
+        'login_desc': ('-login', 'id'),
+        'link_asc': ('link', 'id'),
+        'link_desc': ('-link', 'id'),
+        'email_login_asc': ('email_login', 'id'),
+        'email_login_desc': ('-email_login', 'id'),
+        'note_asc': ('note', 'id'),
+        'note_desc': ('-note', 'id'),
+        'services_asc': ('services_count', 'id'),
+        'services_desc': ('-services_count', 'id'),
+        'tags_asc': ('tags_count', 'login', 'id'),
+        'tags_desc': ('-tags_count', 'login', 'id'),
+    }
+    object_k = object_k.order_by(*sort_map.get(current_sort, ('id',))).distinct()
+
+    content = {'object_k': object_k, 'highlight_id': highlight_id}
+    content.update(get_cabinet_sidebar_context(
+        search_query=search_query,
+        has_active=has_active,
+        has_inactive=has_inactive,
+        no_services=no_services,
+        current_sort=current_sort,
+        tag_ids=tag_ids,
+    ))
+    content.update(get_common_context())
     return render(request, 'cabinet.html', content)
 
 
 @login_required
 def sort_by_name(request, name):
-    sort_groups = Pay.objects.all().order_by(name)
-    # LAZY
-    content = {'object_l': sort_groups}
-    content.update(cont)
-    return render(request, 'index.html', content)
+    legacy_sort = f'{name}_asc'
+    if legacy_sort not in PAY_SORT_MAP:
+        legacy_sort = PAY_SORT_DEFAULT
+    default_mode = request.GET.get('mode') or PAY_MODE_ALL
+    return render_pay_list(request, default_mode=default_mode, overrides={'sort': legacy_sort})
 
 
+@login_required
 def sort_by_name_cabinet(request, name):
-    sort_cabinet = Cabinet.objects.all().order_by(name)
-    # LAZY
+    sort_cabinet = Cabinet.objects.annotate(
+        services_count=Count('pay', distinct=True),
+        active_services_count=Count('pay', filter=Q(pay__status='active'), distinct=True),
+        inactive_services_count=Count('pay', filter=Q(pay__status='not active'), distinct=True),
+        tags_count=Count('cabinet_tags__tag', distinct=True),
+    ).prefetch_related('pay_set', 'cabinet_tags__tag').order_by(name)
+
     content = {'object_k': sort_cabinet}
-    content.update(cont)
+    content.update(get_cabinet_sidebar_context())
+    content.update(get_common_context())
     return render(request, 'cabinet.html', content)
 
 
+@login_required
 def filter_by_date(request, name):
-    dt = Pay.objects.filter(Q(status='active') & Q(paid_up_to__range=weeks)).order_by('paid_up_to')
-    # LAZY
-    content = {'object_l': dt}
-    content.update(cont)
-    return render(request, 'index.html', content)
+    return render_pay_list(request, default_mode=PAY_MODE_UPCOMING)
 
 
+@login_required
 def overdue_payments(request, name):
-    dt = Pay.objects.filter(Q(status='active') & Q(paid_up_to__range=nt_pds)).order_by('paid_up_to')
-    # LAZY
-    content = {'object_l': dt}
-    content.update(cont)
-    return render(request, 'index.html', content)
+    return render_pay_list(request, default_mode=PAY_MODE_OVERDUE)
 
 
+@login_required
 def filter_by_pay_sys(request, name):
-    pay_sys = Pay.objects.filter(pay_sys=name)
-    # LAZY
-    content = {'object_l': pay_sys}
-    content.update(cont)
-    return render(request, 'index.html', content)
+    default_mode = request.GET.get('mode') or PAY_MODE_ALL
+    return render_pay_list(request, default_mode=default_mode, overrides={'pay_sys': name})
 
 
+@login_required
 def filter_by_type_source(request, name):
-    pay_type_source = Pay.objects.filter(type_source=name)
-    # LAZY
-    content = {'object_l': pay_type_source}
-    content.update(cont)
-    return render(request, 'index.html', content)
+    default_mode = request.GET.get('mode') or PAY_MODE_ALL
+    return render_pay_list(request, default_mode=default_mode, overrides={'type_source': name})
 
 
+@login_required
 def filter_by_active(request, name):
-    active = Pay.objects.filter(status=name)
-    # LAZY
-    content = {'object_l': active}
-    content.update(cont)
-    return render(request, 'index.html', content)
+    default_mode = request.GET.get('mode') or PAY_MODE_ALL
+    return render_pay_list(request, default_mode=default_mode, overrides={'status': [name]})
 
 
+@login_required
 def searching(request, name):
-    name = request.GET.get("g")
-    filter_items = Pay.objects.filter(
-        Q(ip__contains=name) | Q(service=name)
-        | Q(ip=name) | Q(type_source=name)
-        | Q(pay_sys=name) | Q(status=name)
-        | Q(currency=name) | Q(groups=name)
-    )
-    # LAZY
-    content = {'object_l': filter_items}
-    content.update(cont)
-    return render(request, 'index.html', content)
+    q = (request.GET.get('g') or request.GET.get('q') or '').strip()
+    default_mode = request.GET.get('mode') or PAY_MODE_ALL
+    return render_pay_list(request, default_mode=default_mode, overrides={'q': q})
 
 
-def update_date(request, name):
-    name = request.GET.get("q")
-    pay_type_source = Pay.objects.filter(paid_up_to=name)
-    # LAZY
-    content = {'object_l': pay_type_source}
-    content.update(cont)
-    return render(request, 'index.html', content)
 
-
+@login_required
 def edit_dt(request, id):
-    # EDIT view: дешифрування лишаємо для форми
     try:
         item = Pay.objects.get(id=id)
         user_psw = User.objects.get(username='admin')
         item.password = cryptocode.decrypt(item.password, user_psw.password)
         item.email_login = cryptocode.decrypt(item.email_login, user_psw.password)
-        if request.method == "POST":
+        if request.method == 'POST':
             item.paid_up_to = request.POST.get('paid_up_to')
             item.save()
-            return HttpResponseRedirect("/")
-        else:
-            return render(request, "edit_dt.html", {"object_l": item})
+            return redirect('app:index')
+        content = {'object_l': item}
+        content.update(get_common_context())
+        content.update(get_default_pay_context(request))
+        return render(request, 'edit_dt.html', content)
     except Pay.DoesNotExist:
-        return HttpResponseNotFound("<h2> not found</h2>")
+        return HttpResponseNotFound('<h2> not found</h2>')
 
 
+@login_required
 def edit_page(request):
     object_l = Pay.objects.all().order_by('id')
-    # LAZY: тут теж не дешифруємо
     cabinet = Cabinet.objects.all()
     content = {'object_l': object_l, 'cabinet': cabinet}
-    content.update(cont)
+    content.update(get_common_context())
     return render(request, 'edit_page.html', content)
 
 
+@login_required
 def edit_table(request, id):
-    # EDIT view: дешифрування лишаємо для форми
     try:
         item = Pay.objects.get(id=id)
         user_psw = User.objects.get(username='admin')
         item.password = cryptocode.decrypt(item.password, user_psw.password)
         item.email_login = cryptocode.decrypt(item.email_login, user_psw.password)
-        if request.method == "POST":
+        if request.method == 'POST':
             item.groups = request.POST.get('groups')
             item.service = request.POST.get('service')
             item.create_date = request.POST.get('create_date')
-            item.type_source = request.POST.get("type_source")
+            item.type_source = request.POST.get('type_source')
             item.price_per_month = request.POST.get('price_per_month')
             item.currency = request.POST.get('currency')
             item.pay_sys = request.POST.get('pay_sys')
@@ -364,30 +873,29 @@ def edit_table(request, id):
             item.password = request.POST.get('password')
             item.ip = request.POST.get('ip')
             item.save()
-            content = {'object_l': item}
-            content.update(cont)
-            return HttpResponseRedirect("/edit_page/", content)
-        else:
-            return render(request, "edit_table.html", {"object_l": item})
+            return redirect('app:edit_page')
+        return render(request, 'edit_table.html', {'object_l': item})
     except Pay.DoesNotExist:
-        return HttpResponseNotFound("<h2> not found</h2>")
+        return HttpResponseNotFound('<h2> not found</h2>')
 
 
+@login_required
 def delete(request, id):
     try:
         item = Pay.objects.get(id=id)
         item.delete()
-        return HttpResponseRedirect("/edit_page/")
+        return redirect('app:edit_page')
     except Pay.DoesNotExist:
-        return HttpResponseNotFound("<h2>Pay not found</h2>")
+        return HttpResponseNotFound('<h2>Pay not found</h2>')
 
 
+@login_required
 def delete_cabinet(request, id):
     try:
         item = get_object_or_404(Cabinet, id=id)
         item.delete()
-        return HttpResponseRedirect("/cabinet/")
+        return redirect('app:cabinet_page')
     except IntegrityError:
-        return HttpResponseNotFound("<h2>Дане поле неможливо видалити!! Поле зв'язане із елементом у іншій таблиці</h2>")
+        return HttpResponseNotFound('<h2>Дане поле неможливо видалити!! Поле зв\\\'язане із елементом у іншій таблиці</h2>')
     except Cabinet.DoesNotExist:
-        return HttpResponseNotFound("<h2>Pay not found</h2>")
+        return HttpResponseNotFound('<h2>Pay not found</h2>')

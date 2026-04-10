@@ -1,32 +1,31 @@
 {% extends 'index.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="ua">
-<head>
-    {% block title %}
-            <title>Change date</title>
-    {% endblock %}
-</head>
-{% block table %}
-<body class="container">
-    <form method="POST" class="main">
-        {% csrf_token %}
-        <table >
-            <tr class='colMS'>
-                <td bgcolor="#00ffff">{{ forloop.counter}}</td>
-                <td bgcolor="#00ffff">{{object_l.paid_up_to|date:"d.m.Y"}}
-                    <label>
-                        <input type="date" name="paid_up_to" value="{{object_l.paid_up_to|date:"d.m.Y"}}">
-                            <button type="submit" class="btn_add" onclick="alert('Дату успішно змінено')">Save</button>
-                    </label>
-                </td>
-            </tr>
-        </table>
 
-    </form>
-    {% block cabinet %}
-    {% endblock %}
+{% block title %}
+  <title>Change date</title>
 {% endblock %}
-</body>
-</html>
 
+{% block table %}
+  <section class="form-card form-card--narrow">
+    <div class="table-card__header table-card__header--compact">
+      <div>
+        <h2 class="section-title">Оновити дату оплати</h2>
+        <p class="section-subtitle">Поточна дата: <strong>{{ object_l.paid_up_to|date:"d.m.Y" }}</strong></p>
+      </div>
+    </div>
+
+    <form method="POST" class="date-edit-form date-edit-form--card">
+      {% csrf_token %}
+      <div class="form-inline-row">
+        <label class="form-field form-field--inline" for="id_paid_up_to">
+          <span>Нова дата</span>
+          <input id="id_paid_up_to" type="date" name="paid_up_to" value="{{ object_l.paid_up_to|date:'Y-m-d' }}">
+        </label>
+        <button type="submit" class="btn_add">Save</button>
+      </div>
+    </form>
+  </section>
+{% endblock %}
+
+{% block edit_forms %}{% endblock %}
+{% block cabinet %}{% endblock %}

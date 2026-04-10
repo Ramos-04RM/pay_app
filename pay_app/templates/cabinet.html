@@ -3,176 +3,383 @@
 {% load crispy_forms_filters %}
 
 {% block title %}
-  <meta charset="UTF-8">
   <title>Cabinet</title>
 {% endblock %}
 
-{% block table %}
-<div class="main">
+{% block sidebar %}
+  {% url 'admin:index' as admin_url %}
+  <div class="sidenav">
+    {% if request.user.username == 'admin' %}
+      <div class="sidebar-topbar">
+        <div>
+          <p class="eyebrow">Admin</p>
+          <h2 class="sidebar-title">Hello</h2>
+        </div>
+        <a href="{{ admin_url }}" class="btn_pay btn-linklike">{{ request.user.username }}</a>
+      </div>
+    {% endif %}
 
-  {% if not form_cabinet_edit %}
-
-  <table class="home-table" border="5">
-    <thead bgcolor="#7fff00">
-      <tr>
-        <td>
-          <a href="{% url 'app:cabinet_new' %}">
-            <button class="btn_pay">+</button>
-          </a>
-        </td>
-        <td>
-          <a href='{% url "app:sort_by_name_cabinet" "login" %}'>Логін</a>
-        </td>
-        <td>
-          <a href='{% url "app:sort_by_name_cabinet" "link" %}'>Посилання</a>
-        </td>
-        <td>Пароль</td>
-        <td>
-          <a href='{% url "app:sort_by_name_cabinet" "email_login" %}'>Email</a>
-        </td>
-        <td>Email password</td>
-        <td>
-          <a href='{% url "app:sort_by_name_cabinet" "note" %}'>Примітки</a>
-        </td>
-        <td>Сервіси</td>
-        <td>Видалити</td>
-      </tr>
-    </thead>
-
-    <tbody>
-    {% for j in object_k %}
-     <tr
-         id="cabinet-{{ j.id }}"
-         tabindex="0"
-         class="{% if highlight_id and j.id == highlight_id %}cabinet-highlight{% endif %}">
-
-        <!-- index -->
-        <td bgcolor="#7fff00">
-          <a href="{% url 'app:cabinet_edit' j.id %}">
-            <div class="all_cell">{{ forloop.counter }}</div>
-          </a>
-        </td>
-
-        <!-- login (НЕ криптований) -->
-        <td>{{ j.login }}</td>
-
-        <!-- link -->
-        <td>
-          <a href="{{ j.link }}" target="_blank">{{ j.link }}</a>
-        </td>
-
-        <!-- PASSWORD : LAZY decrypt + copy -->
-        <td bgcolor="#fbfd02">
-          <button
-            type="button"
-            class="btn_pay_yellow"
-            id="cabinet-password-btn-{{ j.id }}"
-            onclick="decryptAndCopy({id: {{ j.id }}, model: 'cabinet', field: 'password'})">
-            Show
+    <section class="sidebar-section">
+      <h3 class="check-field-label">Пошук по кабінетах</h3>
+      <form class="example sidebar-search" action="{% url 'app:cabinet_page' %}" method="get">
+        {% if cabinet_has_active %}<input type="hidden" name="has_active" value="1">{% endif %}
+        {% if cabinet_has_inactive %}<input type="hidden" name="has_inactive" value="1">{% endif %}
+        {% if cabinet_no_services %}<input type="hidden" name="no_services" value="1">{% endif %}
+        {% for selected_tag_id in cabinet_selected_tag_ids %}
+          <input type="hidden" name="tag_id" value="{{ selected_tag_id }}">
+        {% endfor %}
+        {% if cabinet_sort %}<input type="hidden" name="sort" value="{{ cabinet_sort }}">{% endif %}
+        <label>
+          <input
+            name="q"
+            type="text"
+            value="{{ cabinet_search_query }}"
+            placeholder="login / note / email / service / tag">
+          <button type="submit" class="search-submit" aria-label="Search cabinets">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
           </button>
+        </label>
+      </form>
+    </section>
 
-          <span
-            id="cabinet-password-val-{{ j.id }}"
-            data-visible="0"
-            data-decrypted=""
-            style="margin-left:8px">
-            *****
-          </span>
-        </td>
+    <section class="sidebar-section">
+      <form method="get" action="{% url 'app:cabinet_page' %}" class="sidebar-form">
+        {% if cabinet_search_query %}<input type="hidden" name="q" value="{{ cabinet_search_query }}">{% endif %}
+        {% if cabinet_sort %}<input type="hidden" name="sort" value="{{ cabinet_sort }}">{% endif %}
 
-        <!-- email_login (НЕ криптований у тебе, лишаємо як є) -->
-        <td>{{ j.email_login }}</td>
+        <h3 class="check-field-label">Сервіси</h3>
 
-        <!-- EMAIL PASSWORD : LAZY decrypt + copy -->
-        <td bgcolor="#fbfd02">
-          <button
-            type="button"
-            class="btn_pay_yellow"
-            id="cabinet-email_password-btn-{{ j.id }}"
-            onclick="decryptAndCopy({id: {{ j.id }}, model: 'cabinet', field: 'email_password'})">
-            Show
-          </button>
+        <label class="sidebar-checkbox">
+          <input type="checkbox" name="no_services" value="1" {% if cabinet_no_services %}checked{% endif %}>
+          <span>Без сервісів <strong>({{ cabinets_without_services }})</strong></span>
+        </label>
 
-          <span
-            id="cabinet-email_password-val-{{ j.id }}"
-            data-visible="0"
-            data-decrypted=""
-            style="margin-left:8px">
-            *****
-          </span>
-        </td>
+        <label class="sidebar-checkbox">
+          <input type="checkbox" name="has_active" value="1" {% if cabinet_has_active %}checked{% endif %}>
+          <span>Є активні <strong>({{ cabinets_with_active }})</strong></span>
+        </label>
 
-        <!-- note -->
-        <td>{{ j.note }}</td>
+        <label class="sidebar-checkbox">
+          <input type="checkbox" name="has_inactive" value="1" {% if cabinet_has_inactive %}checked{% endif %}>
+          <span>Є неактивні <strong>({{ cabinets_with_inactive }})</strong></span>
+        </label>
 
-        <!-- services (старий my_func — тут ОК) -->
-        <td>
-          <h5 style="background-color:#ffffff">{{ j.pay_set.count }}</h5>
-
-          {% if j.pay_set.count > 0 %}
-            <button
-              type="button"
-              class="btn_pay_yellow"
-              onclick='my_func("{{ j.id }}")'
-              id="btn{{ j.id }}">
-              Show
-            </button>
-          {% endif %}
-
-          <div style="display:none" id="remove-heli-{{ j.id }}">
-            {% for s in j.pay_set.all %}
-              <a href="{% url 'app:home_page_with_cabinet' s.id %}" target="_blank">
-                <h3 style="background-color:#7dff97;margin-top:1px">
-                  {{ s }}
-                </h3>
-              </a>
+        {% if cabinet_tag_options %}
+          <h3 class="check-field-label">Теги</h3>
+          <div class="sidebar-tag-list">
+            {% for tag in cabinet_tag_options %}
+              <label class="sidebar-checkbox">
+                <input
+                  type="checkbox"
+                  name="tag_id"
+                  value="{{ tag.id }}"
+                  {% if tag.id in cabinet_selected_tag_ids %}checked{% endif %}>
+                <span>{{ tag.name }} <strong>({{ tag.cabinets_count }})</strong></span>
+              </label>
             {% endfor %}
           </div>
-        </td>
+        {% endif %}
 
-        <!-- delete -->
-        <td>
-          {% if j.pay_set.count == 0 %}
-            <a href="{% url 'app:delete_cabinet' j.id %}">
-              <button class="btn_pay_red" onclick="return proverka();">
-                Delete
-              </button>
-            </a>
-          {% else %}
-            <button class="btn_pay_red" onclick="return delete_item()">
-              Delete
-            </button>
+        <div class="page-actions page-actions--stacked">
+          <button type="submit" class="btn_pay">Apply</button>
+          <a href="{{ cabinet_reset_url }}" class="btn_pay_red btn-linklike">Reset</a>
+        </div>
+      </form>
+    </section>
+
+    <section class="sidebar-section sidebar-section--muted">
+      {% if cabinet_search_query or cabinet_has_active or cabinet_has_inactive or cabinet_no_services or cabinet_sort or cabinet_selected_tags %}
+        <div class="context-stack">
+          <span class="context-title">Поточний контекст</span>
+          {% if cabinet_search_query %}
+            <span class="context-chip">Пошук: {{ cabinet_search_query }}</span>
           {% endif %}
-        </td>
-
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-
-  {% endif %}
-
-  {% if form_cabinet_edit %}
-    <form method="POST" class="form_cabinet">
-      {% csrf_token %}
-      {{ form_cabinet_edit|crispy }}
-      <button type="submit" class="btn_pay">Save</button>
-    </form>
-  {% endif %}
-
-</div>
+          {% if cabinet_has_active %}
+            <span class="context-chip">active services</span>
+          {% endif %}
+          {% if cabinet_has_inactive %}
+            <span class="context-chip">not active services</span>
+          {% endif %}
+          {% if cabinet_no_services %}
+            <span class="context-chip">without services</span>
+          {% endif %}
+          {% for selected_tag in cabinet_selected_tags %}
+            <span class="context-chip">Тег: {{ selected_tag.name }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </section>
+  </div>
 {% endblock %}
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const highlightId = "{{ highlight_id|default:'' }}";
-    if (!highlightId) return;
 
-    const row = document.getElementById(`cabinet-${highlightId}`);
-    if (!row) return;
+{% block table %}
+  <div class="main" data-highlight-id="{{ highlight_id|default:'' }}">
+    {% if not form_cabinet_edit %}
+      <section class="table-card table-card--wide">
+        <div class="table-card__header table-card__header--with-hint">
+          <div>
+            <div class="section-title-row">
+              <h2 class="section-title">Кабінети</h2>
+              <span class="metric-pill">Знайдено: {{ object_k|length }}</span>
+            </div>
+{#            <p class="section-subtitle">Широка таблиця залишилась у card-контейнері: заголовки липкі, а перегляд колонок відбувається через горизонтальний скрол усередині блоку.</p>#}
+          </div>
+          <div class="table-scroll-hint">
+            <i class="fa-solid fa-left-right" aria-hidden="true"></i>
+            <span>Гортайте таблицю по горизонталі</span>
+          </div>
+        </div>
 
-    row.scrollIntoView({ behavior: "smooth", block: "center" });
+        <div class="table-responsive table-responsive--wide">
+          <table class="home-table">
+            <thead>
+              <tr>
+                <th>
+                  <a href="{% url 'app:cabinet_new' %}" class="btn_pay btn-linklike">+</a>
+                </th>
+                <th>
+                  <a href="{{ cabinet_login_sort_url }}">
+                    Логін
+                    {% if cabinet_sort == 'login_asc' %}↑{% elif cabinet_sort == 'login_desc' %}↓{% endif %}
+                  </a>
+                </th>
+                <th>
+                  <a href="{{ cabinet_link_sort_url }}">
+                    Посилання
+                    {% if cabinet_sort == 'link_asc' %}↑{% elif cabinet_sort == 'link_desc' %}↓{% endif %}
+                  </a>
+                </th>
+                <th>Пароль</th>
+                <th>
+                  <a href="{{ cabinet_email_sort_url }}">
+                    Email
+                    {% if cabinet_sort == 'email_login_asc' %}↑{% elif cabinet_sort == 'email_login_desc' %}↓{% endif %}
+                  </a>
+                </th>
+                <th>Email password</th>
+                <th>
+                  <a href="{{ cabinet_note_sort_url }}">
+                    Примітки
+                    {% if cabinet_sort == 'note_asc' %}↑{% elif cabinet_sort == 'note_desc' %}↓{% endif %}
+                  </a>
+                </th>
+                <th>
+                  Сервіси
+                  <a href="{{ cabinet_services_sort_asc_url }}">↑</a>
+                  <a href="{{ cabinet_services_sort_desc_url }}">↓</a>
+                </th>
+                <th>
+                  Теги
+                  <a href="{{ cabinet_tags_sort_asc_url }}">↑</a>
+                  <a href="{{ cabinet_tags_sort_desc_url }}">↓</a>
+                </th>
+                <th>Видалити</th>
+              </tr>
+            </thead>
 
-    row.classList.add("cabinet-pulse");
-    setTimeout(() => row.classList.remove("cabinet-pulse"), 2000);
-  });
-</script>
+            <tbody>
+              {% for j in object_k %}
+                <tr
+                  id="cabinet-{{ j.id }}"
+                  tabindex="0"
+                  class="{% if highlight_id and j.id == highlight_id %}cabinet-highlight{% endif %}">
+
+                  <td class="table-index-cell">
+                    <a href="{% url 'app:cabinet_edit' j.id %}">
+                      <div class="all_cell">{{ forloop.counter }}</div>
+                    </a>
+                  </td>
+
+                  <td>{{ j.login }}</td>
+
+                  <td>
+                    {% if j.link %}
+                      <a href="{{ j.link }}" target="_blank" rel="noopener noreferrer">{{ j.link }}</a>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+
+                  <td class="masked-cell masked-cell--warning">
+                    <div class="masked-cell__content">
+                      <button
+                        type="button"
+                        class="btn_pay_yellow icon-btn js-decrypt-btn"
+                        id="cabinet-password-btn-{{ j.id }}"
+                        data-action="decrypt-copy"
+                        data-id="{{ j.id }}"
+                        data-model="cabinet"
+                        data-field="password"
+                        data-show-label="Показати та скопіювати пароль"
+                        data-hide-label="Сховати пароль">
+                        <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                        <span class="visually-hidden">Показати та скопіювати пароль</span>
+                      </button>
+                      <span
+                        id="cabinet-password-val-{{ j.id }}"
+                        data-visible="0"
+                        data-decrypted=""
+                        class="masked-value">
+                        *****
+                      </span>
+                    </div>
+                  </td>
+
+                  <td>{{ j.email_login|default:'-' }}</td>
+
+                  <td class="masked-cell masked-cell--warning">
+                    <div class="masked-cell__content">
+                      <button
+                        type="button"
+                        class="btn_pay_yellow icon-btn js-decrypt-btn"
+                        id="cabinet-email_password-btn-{{ j.id }}"
+                        data-action="decrypt-copy"
+                        data-id="{{ j.id }}"
+                        data-model="cabinet"
+                        data-field="email_password"
+                        data-show-label="Показати та скопіювати email password"
+                        data-hide-label="Сховати email password">
+                        <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                        <span class="visually-hidden">Показати та скопіювати email password</span>
+                      </button>
+                      <span
+                        id="cabinet-email_password-val-{{ j.id }}"
+                        data-visible="0"
+                        data-decrypted=""
+                        class="masked-value">
+                        *****
+                      </span>
+                    </div>
+                  </td>
+
+                  <td>{{ j.note|default:'-' }}</td>
+
+                  <td>
+                    <div class="cabinet-service-summary">
+                      <h5 class="cabinet-service-count">{{ j.services_count }}</h5>
+
+                      {% if j.services_count > 0 %}
+                        <button
+                          type="button"
+                          class="btn_pay_yellow icon-btn icon-btn--ghost"
+                          id="btn{{ j.id }}"
+                          data-action="toggle-block"
+                          data-target-id="remove-heli-{{ j.id }}"
+                          data-show-label="Показати сервіси"
+                          data-hide-label="Сховати сервіси"
+                          aria-controls="remove-heli-{{ j.id }}"
+                          aria-expanded="false">
+                          <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                          <span class="visually-hidden">Показати сервіси</span>
+                        </button>
+                      {% endif %}
+                    </div>
+
+                    <div class="cabinet-service-list" id="remove-heli-{{ j.id }}" hidden>
+                      {% for s in j.pay_set.all %}
+                        <a href="{% url 'app:home_page_with_cabinet' s.id %}" target="_blank">
+                          <h3 class="cabinet-service-item {% if s.status == 'active' %}cabinet-service-item--active{% else %}cabinet-service-item--inactive{% endif %}">
+                            {{ s }}
+                          </h3>
+                        </a>
+                      {% endfor %}
+                    </div>
+                  </td>
+
+                  <td>
+                    <div class="chip-list">
+                      {% for rel in j.cabinet_tags.all %}
+                        <span class="cabinet-tag-chip">{{ rel.tag.name }}</span>
+                      {% empty %}
+                        <span class="muted-text">-</span>
+                      {% endfor %}
+                    </div>
+                  </td>
+
+                  <td>
+                    {% if j.services_count == 0 %}
+                      <a
+                        href="{% url 'app:delete_cabinet' j.id %}"
+                        class="btn_pay_red btn-linklike"
+                        data-action="confirm-navigation"
+                        data-confirm-message="Видалити дане поле?">
+                        Delete
+                      </a>
+                    {% else %}
+                      <button
+                        type="button"
+                        class="btn_pay_red"
+                        data-action="alert"
+                        data-alert-message="Видалити неможливо! Даний кабінет використовується.">
+                        Delete
+                      </button>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="10" class="table-empty">Нічого не знайдено по поточних фільтрах.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    {% endif %}
+
+    {% if form_cabinet_edit %}
+      <section class="page-section-card">
+        <div class="page-header-row page-header-row--compact">
+          <div>
+            <p class="eyebrow">Редагування</p>
+            <h2 class="section-title">Змінити кабінет</h2>
+          </div>
+        </div>
+
+        <div class="forms-grid">
+          <form method="POST" class="form_cabinet form-card">
+            {% csrf_token %}
+            <div class="form-card__header">
+              <h3 class="form-section-title">Дані кабінету</h3>
+            </div>
+            {{ form_cabinet_edit|crispy }}
+
+            <div class="form-subsection">
+              <h4 class="form-section-title">Теги кабінету</h4>
+              <div class="tag-option-grid">
+                {% for checkbox in tag_assign_form.tags %}
+                  <label for="{{ checkbox.id_for_label }}" class="tag-option">
+                    <input
+                      type="checkbox"
+                      name="{{ checkbox.data.name }}"
+                      value="{{ checkbox.data.value }}"
+                      id="{{ checkbox.id_for_label }}"
+                      {% if checkbox.data.selected %}checked{% endif %}>
+                    <span>{{ checkbox.choice_label }}</span>
+                  </label>
+                {% empty %}
+                  <span class="empty-state-inline">Тегів ще немає.</span>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="page-actions">
+              <button type="submit" name="submit_action" value="save_tags" class="btn_pay">Save</button>
+            </div>
+          </form>
+
+          <form method="POST" class="form_cabinet form-card">
+            {% csrf_token %}
+            <div class="form-card__header">
+              <h4 class="form-section-title">Додати новий тег</h4>
+            </div>
+            {{ tag_form.as_p }}
+            <div class="page-actions">
+              <button type="submit" name="submit_action" value="create_tag" class="btn_pay">Add tag</button>
+            </div>
+          </form>
+        </div>
+      </section>
+    {% endif %}
+  </div>
+{% endblock %}

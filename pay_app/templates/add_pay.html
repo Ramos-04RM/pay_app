@@ -1,77 +1,114 @@
-{% extends "index.html" %}
+{% extends 'index.html' %}
 {% load crispy_forms_filters %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="ua">
-<head>
-  <meta charset="UTF-8">
-  {% block title %}
-    <title>new_item</title>
-  {% endblock %}
-</head>
-
-{% block table %}
+{% block title %}
+  <title>New item</title>
 {% endblock %}
 
-{% block cabinet %}
-<body>
-  <div class="main">
+{% block table %}{% endblock %}
 
-    {# Top actions #}
-    {% if form_pay and not form_cabinet %}
-      <a href="{% url 'app:cabinet_new' %}">
-        <button class="btn_pay" type="button">ADD CABINET</button>
-      </a>
-    {% elif form_pay and form_cabinet %}
-      <a href="{% url 'app:pay_new' %}">
-        <button class="btn_pay" type="button">Back</button>
-      </a>
-    {% endif %}
+{% block cabinet %}
+  <section class="page-section-card">
+    <div class="page-header-row page-header-row--compact page-header-row--stretch">
+      <div>
+        <p class="eyebrow">Створення</p>
+        <h2 class="section-title">Новий запис</h2>
+        <p class="section-subtitle">Форми оплати та кабінету стилістично уніфіковані, але серверна логіка не змінена.</p>
+      </div>
+
+      <div class="page-actions page-actions--compact">
+        {% if form_pay and not form_cabinet %}
+          <a href="{% url 'app:cabinet_new' %}" class="btn_pay btn-linklike">ADD CABINET</a>
+        {% elif form_pay and form_cabinet %}
+          <a href="{% url 'app:pay_new' %}" class="btn_pay btn-linklike">Back</a>
+        {% endif %}
+      </div>
+    </div>
 
     <div class="forms-grid">
-
-      {# Pay form #}
       <form method="POST" class="form_pay form-card">
-          {% csrf_token %}
-          {% if form_pay %}
-              <ul>
-                  {% for field in form_pay %}
-                      <li>
-                          {{ field.label_tag }}
-                          {{ field }}
-                          {% if field.name == 'groups' %}
-                              <datalist id="groups-list">
-                                  {% for group in group_options %}
-                                      <option value="{{ group }}"></option>
-                                  {% endfor %}
-                              </datalist>
-                          {% endif %}
-                          {{ field.errors }}
-                      </li>
-                  {% endfor %}
-              </ul>
-          {% endif %}
-          {% if form_pay and not form_cabinet %}
-              <button type="submit" class="btn_pay">Save</button>
-          {% endif %}
-      </form>
+        {% csrf_token %}
+        {% if form_pay %}
+          <div class="form-card__header">
+            <h3 class="form-section-title">Новий платіж</h3>
+          </div>
 
-      {# Cabinet form (optional) #}
-      <form method="POST" class="form_cabinet form-card">
-        {% if form_cabinet %}
-          <label style="display:block; font-weight:700; margin-bottom:10px;">
-            New cabinet
-          </label>
-          {% csrf_token %}
-          {{ form_cabinet.as_ul }}
-          <button type="submit" class="btn_pay">Save</button>
+          <ul class="form-list">
+            {% for field in form_pay %}
+              <li class="form-field">
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.name == 'groups' %}
+                  <datalist id="groups-list">
+                    {% for group in group_options %}
+                      <option value="{{ group }}"></option>
+                    {% endfor %}
+                  </datalist>
+                {% endif %}
+                {{ field.errors }}
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+        {% if form_pay and not form_cabinet %}
+          <div class="page-actions">
+            <button type="submit" class="btn_pay">Save</button>
+          </div>
         {% endif %}
       </form>
 
-    </div>
+      <div class="stack-column">
+        <form method="POST" class="form_cabinet form-card" id="cabinet-create-form">
+          {% if form_cabinet %}
+            <div class="form-card__header">
+              <h3 class="form-section-title">New cabinet</h3>
+            </div>
+            {% csrf_token %}
+            <div class="form-as-list">{{ form_cabinet.as_ul }}</div>
 
-  </div>
-</body>
+            {% if tag_assign_form %}
+              <div class="form-subsection">
+                <h4 class="form-section-title">Теги кабінету</h4>
+                <div class="tag-option-grid">
+                  {% for checkbox in tag_assign_form.tags %}
+                    <label for="{{ checkbox.id_for_label }}" class="tag-option">
+                      <input
+                        type="checkbox"
+                        name="{{ checkbox.data.name }}"
+                        value="{{ checkbox.data.value }}"
+                        id="{{ checkbox.id_for_label }}"
+                        {% if checkbox.data.selected %}checked{% endif %}>
+                      <span>{{ checkbox.choice_label }}</span>
+                    </label>
+                  {% empty %}
+                    <span class="empty-state-inline">Тегів ще немає.</span>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+
+            <div class="page-actions">
+              <button type="submit" name="submit_action" value="save_cabinet" class="btn_pay">Save</button>
+            </div>
+          {% endif %}
+        </form>
+
+        {% if form_cabinet %}
+          <form method="POST" class="form_cabinet form-card" id="cabinet-tag-create-form">
+            {% csrf_token %}
+            <div class="form-card__header">
+              <h4 class="form-section-title">Додати новий тег</h4>
+            </div>
+            {{ tag_form.as_p }}
+            <div id="cabinet-selected-tags-hidden-container"></div>
+            <div class="page-actions">
+              <button type="submit" name="submit_action" value="create_tag" class="btn_pay">Add tag</button>
+            </div>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </section>
 {% endblock %}
-</html>

@@ -1,134 +1,165 @@
 {% extends 'base.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    {% block title %}
-      <title>Edit page</title>
-    {% endblock %}
-  </head>
+{% block title %}
+  <title>Edit page</title>
+{% endblock %}
 
-  <body>
-    {% block content %}
-      {% if request.user.is_authenticated %}
-        <li class="admin_class">
-          <a class="button-container" href="{% url 'app:index' %}">
-            <button class="btn_pay">Home</button>
-          </a>
-          {{ request.user.username }}, ви авторизовані!
-          <a href="{% url 'logout' %}">
-            <button class="btn_pay">Вийти</button>
-          </a>
-        </li>
+{% block content %}
+  {% if request.user.is_authenticated %}
+    <div class="page-shell page-shell--wide">
+      <header class="page-header-card">
+        <div class="page-header-row">
+          <div>
+            <p class="eyebrow">Адміністрування</p>
+            <h1 class="page-title">Редагування платежів</h1>
+            <p class="page-subtitle">Табличне редагування без зміни існуючих URL, JS-hooks і серверної логіки.</p>
+          </div>
 
-        <!-- JS потрібен тут, бо це extends base.html (може не підключати index.js) -->
-        <script src="{% static 'js/app.pay.js' %}"></script>
+          <div class="toolbar-actions">
+            <a class="btn_pay btn-linklike" href="{% url 'app:index' %}">Платежі</a>
+            <a class="btn_pay btn-linklike" href="{% url 'app:pay_new' %}">Додати</a>
+            <a href="{% url 'logout' %}" class="btn_pay_red btn-linklike">Вийти</a>
+          </div>
+        </div>
 
-        <div>
-          <table class="table_pay" border="5">
+        <div class="page-header-row page-header-row--compact">
+          <div class="user-chip">
+            <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
+            <span>{{ request.user.username }}, ви авторизовані</span>
+          </div>
+          <div class="toolbar-meta">
+            <span class="metric-pill">Усього записів: {{ object_l.count }}</span>
+          </div>
+        </div>
+      </header>
+
+      <section class="table-card table-card--wide">
+        <div class="table-card__header table-card__header--with-hint">
+          <div>
+            <h2 class="section-title">Список платежів</h2>
+            <p class="section-subtitle">Edit, delete та перегляд замаскованих значень працюють через ті самі hooks.</p>
+          </div>
+          <div class="table-scroll-hint">
+            <i class="fa-solid fa-left-right" aria-hidden="true"></i>
+            <span>Гортайте таблицю по горизонталі</span>
+          </div>
+        </div>
+
+        <div class="table-responsive table-responsive--wide">
+          <table class="table_pay">
             <thead>
-              <tr bgcolor="#7fff00">
-                <td>
-                  <button class="btn_add">
-                    <a href="{% url 'app:pay_new' %}">Додати</a>
-                  </button>
-                </td>
-                <td>№</td>
-                <td>Група</td>
-                <td>Дата створення</td>
-                <td>Сервіс</td>
-                <td>Тип ресурсу</td>
-                <td>Ціна на місяць</td>
-                <td>Валюта</td>
-                <td>Платіжна система</td>
-                <td>Проплачено до</td>
-                <td>Стан</td>
-                <td>Логін</td>
-                <td>IP/Port</td>
-                <td>Пароль</td>
-                <td>Видалити</td>
+              <tr>
+                <th>
+                  <a href="{% url 'app:pay_new' %}" class="btn_add btn-linklike">Додати</a>
+                </th>
+                <th>№</th>
+                <th>Група</th>
+                <th>Дата створення</th>
+                <th>Сервіс</th>
+                <th>Тип ресурсу</th>
+                <th>Ціна на місяць</th>
+                <th>Валюта</th>
+                <th>Платіжна система</th>
+                <th>Проплачено до</th>
+                <th>Стан</th>
+                <th>Логін</th>
+                <th>IP/Port</th>
+                <th>Пароль</th>
+                <th>Видалити</th>
               </tr>
             </thead>
 
             <tbody>
-              {% if object_l.count > 0 %}
-                {% for i in object_l %}
-                  <tr tabindex="0">
-                    <td bgcolor="#7fff00">
-                      <a class="btn_pay_edit" href="{% url 'app:edit_tb' i.id %}">
-                        Edit<i class="fa fa-cog fa-spin fa-1x fa-fw" aria-hidden="true"></i>
-                      </a>
-                    </td>
+              {% for i in object_l %}
+                <tr tabindex="0">
+                  <td class="table-index-cell">
+                    <a class="btn_pay_edit btn-linklike" href="{% url 'app:edit_table' i.id %}">
+                      Edit <i class="fa fa-cog fa-spin fa-1x fa-fw" aria-hidden="true"></i>
+                    </a>
+                  </td>
+                  <td class="table-count-cell">{{ forloop.counter }}</td>
+                  <td>{{ i.groups }}</td>
+                  <td>{{ i.create_date|date:"d.m.Y" }}</td>
+                  <td>{{ i.service }}</td>
+                  <td>{{ i.type_source }}</td>
+                  <td>{{ i.price_per_month }}</td>
+                  <td>{{ i.currency }}</td>
+                  <td>{{ i.pay_sys }}</td>
+                  <td>{{ i.paid_up_to|date:"d.m.Y" }}</td>
+                  <td>{{ i.status }}</td>
 
-                    <td bgcolor="#00ffff">{{ forloop.counter }}</td>
-
-                    <td>{{ i.groups }}</td>
-                    <td>{{ i.create_date|date:"d.m.Y" }}</td>
-                    <td>{{ i.service }}</td>
-                    <td>{{ i.type_source }}</td>
-                    <td>{{ i.price_per_month }}</td>
-                    <td>{{ i.currency }}</td>
-                    <td>{{ i.pay_sys }}</td>
-                    <td>{{ i.paid_up_to|date:"d.m.Y" }}</td>
-                    <td>{{ i.status }}</td>
-
-                    <!-- LAZY: email_login -->
-                    <td bgcolor="#fbfd02">
+                  <td class="masked-cell masked-cell--warning">
+                    <div class="masked-cell__content">
                       <button
                         type="button"
-                        class="btn_pay_yellow"
+                        class="btn_pay_yellow icon-btn js-decrypt-btn"
                         id="pay-email_login-btn-{{ i.id }}"
-                        onclick="decryptAndCopy({id: {{ i.id }}, model: 'pay', field: 'email_login'})"
-                      >
-                        Show
+                        data-action="decrypt-copy"
+                        data-id="{{ i.id }}"
+                        data-model="pay"
+                        data-field="email_login"
+                        data-show-label="Показати та скопіювати логін"
+                        data-hide-label="Сховати логін">
+                        <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                        <span class="visually-hidden">Показати та скопіювати логін</span>
                       </button>
-
                       <span
                         id="pay-email_login-val-{{ i.id }}"
                         data-visible="0"
                         data-decrypted=""
-                        style="margin-left:8px;"
-                      >
+                        class="masked-value">
                         *****
                       </span>
-                    </td>
+                    </div>
+                  </td>
 
-                    <td>{{ i.ip }}</td>
+                  <td>{{ i.ip }}</td>
 
-                    <!-- LAZY: password -->
-                    <td typeof="password" bgcolor="#fbfd02">
+                  <td class="masked-cell masked-cell--warning">
+                    <div class="masked-cell__content">
                       <button
                         type="button"
-                        class="btn_pay_yellow"
+                        class="btn_pay_yellow icon-btn js-decrypt-btn"
                         id="pay-password-btn-{{ i.id }}"
-                        onclick="decryptAndCopy({id: {{ i.id }}, model: 'pay', field: 'password'})"
-                      >
-                        Show
+                        data-action="decrypt-copy"
+                        data-id="{{ i.id }}"
+                        data-model="pay"
+                        data-field="password"
+                        data-show-label="Показати та скопіювати пароль"
+                        data-hide-label="Сховати пароль">
+                        <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                        <span class="visually-hidden">Показати та скопіювати пароль</span>
                       </button>
-
                       <span
                         id="pay-password-val-{{ i.id }}"
                         data-visible="0"
                         data-decrypted=""
-                        style="margin-left:8px;"
-                      >
+                        class="masked-value">
                         *****
                       </span>
-                    </td>
+                    </div>
+                  </td>
 
-                    <td>
-                      <a class="btn_pay_red" href="{% url 'app:delete' i.id %}">
-                        <button class="btn_pay_red" onclick="return proverka();">Delete</button>
-                      </a>
-                    </td>
-                  </tr>
-                {% endfor %}
-              {% endif %}
+                  <td>
+                    <a
+                      href="{% url 'app:delete' i.id %}"
+                      class="btn_pay_red btn-linklike"
+                      data-action="confirm-navigation"
+                      data-confirm-message="Видалити дане поле?">
+                      Delete
+                    </a>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="15" class="table-empty">Нічого не знайдено.</td>
+                </tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
-      {% endif %}
-    {% endblock %}
-  </body>
-</html>
+      </section>
+    </div>
+  {% endif %}
+{% endblock %}
