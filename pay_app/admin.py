@@ -20,15 +20,15 @@ class CabinetAdmin(admin.ModelAdmin):
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'slug', 'note')
-    search_fields = ('name', 'slug')
+    list_display = ('id', 'name', 'note')
+    search_fields = ('name',)
 
 
 @admin.register(CabinetTag)
 class CabinetTagAdmin(admin.ModelAdmin):
     list_display = ('id', 'cabinet', 'tag', 'created_at')
     list_filter = ('tag',)
-    search_fields = ('cabinet__login', 'tag__name', 'tag__slug')
+    search_fields = ('cabinet__login', 'tag__name')
 
 
 admin.site.register(Pay, PayAdmin)

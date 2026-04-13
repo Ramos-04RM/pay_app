@@ -58,24 +58,17 @@ class CabinetForm(ModelForm):
 class TagForm(ModelForm):
     class Meta:
         model = Tag
-        fields = ['name', 'slug', 'note']
+        fields = ['name', 'note']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Напр. Немає сервісів'}),
-            'slug': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Напр. no-services'}),
             'note': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Необовʼязково'}),
         }
 
-    def clean_slug(self):
-        slug = (self.cleaned_data.get('slug') or '').strip()
-        if not slug:
-            raise forms.ValidationError('Slug обовʼязковий.')
-
-        qs = Tag.objects.filter(slug=slug)
-        if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise forms.ValidationError('Такий slug вже існує.')
-        return slug
+    def clean_name(self):
+        name = (self.cleaned_data.get('name') or '').strip()
+        if not name:
+            raise forms.ValidationError('Назва тегу обовʼязкова.')
+        return name
 
 
 class CabinetTagAssignForm(forms.Form):

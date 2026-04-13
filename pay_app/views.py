@@ -732,8 +732,17 @@ def cabinet_page(request):
     if has_any_filter:
         object_k = object_k.filter(selected_filter)
 
+    # if tag_ids:  # OR
+    #     object_k = object_k.filter(cabinet_tags__tag_id__in=tag_ids)
+
     if tag_ids:
-        object_k = object_k.filter(cabinet_tags__tag_id__in=tag_ids)
+        object_k = object_k.annotate(
+            matched_tag_count=Count(
+                'cabinet_tags__tag',
+                filter=Q(cabinet_tags__tag_id__in=tag_ids),
+                distinct=True,
+            )
+        ).filter(matched_tag_count=len(tag_ids))
 
     sort_map = {
         'login_asc': ('login', 'id'),
@@ -887,6 +896,65 @@ def delete(request, id):
         return redirect('app:edit_page')
     except Pay.DoesNotExist:
         return HttpResponseNotFound('<h2>Pay not found</h2>')
+
+@login_required
+def tags_page(request):
+    tags = Tag.objects.annotate(
+        cabinets_count=Count('cabinet_tags__cabinet', distinct=True),
+    ).order_by('name')
+
+    content = {'tags': tags}
+    content.update(get_common_context())
+    content.update(get_default_pay_context(request))
+    return render(request, 'tags/tag_list.html', content)
+
+
+@login_required
+def tag_create(request):
+    if request.method == 'POST':
+        form = TagForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('app:tags_page')
+    else:
+        form = TagForm()
+
+    content = {'form': form}
+    content.update(get_common_context())
+    content.update(get_default_pay_context(request))
+    return render(request, 'tags/tag_form.html', content)
+
+
+@login_required
+def tag_edit(request, id):
+    tag = get_object_or_404(Tag, pk=id)
+
+    if request.method == 'POST':
+        form = TagForm(request.POST, instance=tag)
+        if form.is_valid():
+            form.save()
+            return redirect('app:tags_page')
+    else:
+        form = TagForm(instance=tag)
+
+    content = {'form': form, 'tag': tag}
+    content.update(get_common_context())
+    content.update(get_default_pay_context(request))
+    return render(request, 'tags/tag_form.html', content)
+
+
+@login_required
+def tag_delete(request, id):
+    tag = get_object_or_404(Tag, pk=id)
+
+    if request.method == 'POST':
+        tag.delete()
+        return redirect('app:tags_page')
+
+    content = {'tag': tag}
+    content.update(get_common_context())
+    content.update(get_default_pay_context(request))
+    return render(request, 'tags/tag_confirm_delete.html', content)
 
 
 @login_required

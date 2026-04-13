@@ -84,7 +84,6 @@ class Cabinet(models.Model):
 
 class Tag(models.Model):
     name = models.CharField(max_length=120, unique=True, verbose_name='Назва тегу')
-    slug = models.SlugField(max_length=140, unique=True, verbose_name='Slug')
     note = models.CharField(max_length=255, blank=True, verbose_name='Опис')
 
     class Meta:

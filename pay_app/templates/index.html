@@ -10,6 +10,7 @@
   {% url 'admin:index' as admin_url %}
   {% url 'app:index' as app_index_url %}
   {% url 'app:cabinet_page' as cabinet_page_url %}
+  {% url 'app:tags_page' as tags_page_url %}
 
   {% if request.user.is_authenticated %}
     <div class="page-shell page-shell--wide">
@@ -32,6 +33,11 @@
                 href="{{ cabinet_page_url }}"
                 class="btn_pay btn-linklike {% if request.path == cabinet_page_url %}is-selected{% endif %}">
                 Кабінети
+              </a>
+              <a
+                href="{{ tags_page_url }}"
+                class="btn_pay btn-linklike {% if request.path == tags_page_url %}is-selected{% endif %}">
+                Теги
               </a>
             </nav>
 

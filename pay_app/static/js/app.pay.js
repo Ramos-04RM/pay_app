@@ -299,23 +299,84 @@ function attachPasswordGenerators() {
   });
 }
 
-function toggleTargetBlock(button) {
-  const targetId = button.dataset.targetId;
-  if (!targetId) return;
-  const target = document.getElementById(targetId);
-  if (!target) return;
-
-  const shouldShow = target.hasAttribute("hidden") || target.style.display === "none" || target.style.display === "";
-  if (shouldShow) {
-    target.hidden = false;
-    target.style.removeProperty("display");
-    setIconButtonState(button, true);
-    return;
-  }
-
+function closeToggleTarget(button, target) {
+  if (!button || !target) return;
   target.hidden = true;
   target.style.display = "none";
   setIconButtonState(button, false);
+}
+
+function openToggleTarget(button, target) {
+  if (!button || !target) return;
+  target.hidden = false;
+  target.style.removeProperty("display");
+  setIconButtonState(button, true);
+}
+
+function closeAllCabinetServiceLists(exceptTargetId = null) {
+  document.querySelectorAll('[data-action="toggle-block"]').forEach((button) => {
+    const targetId = button.dataset.targetId;
+    if (!targetId || targetId === exceptTargetId) return;
+
+    const target = document.getElementById(targetId);
+    if (!target) return;
+
+    const isOpen = !target.hasAttribute("hidden") && target.style.display !== "none";
+    if (isOpen) {
+      closeToggleTarget(button, target);
+    }
+  });
+}
+
+function restoreToggleStateFromHistory(state) {
+  const targetId = state && state.payAppToggleOpen ? state.payAppToggleTargetId : null;
+
+  closeAllCabinetServiceLists(targetId);
+
+  if (!targetId) return;
+
+  const button = document.querySelector(
+    `[data-action="toggle-block"][data-target-id="${targetId}"]`
+  );
+  const target = document.getElementById(targetId);
+
+  if (!button || !target) return;
+
+  openToggleTarget(button, target);
+}
+
+function toggleTargetBlock(button) {
+  const targetId = button.dataset.targetId;
+  if (!targetId) return;
+
+  const target = document.getElementById(targetId);
+  if (!target) return;
+
+  const isOpen = !target.hasAttribute("hidden") && target.style.display !== "none";
+
+  if (isOpen) {
+    closeToggleTarget(button, target);
+
+    if (history.state && history.state.payAppToggleOpen && history.state.payAppToggleTargetId === targetId) {
+      history.back();
+    }
+    return;
+  }
+
+  closeAllCabinetServiceLists(targetId);
+  openToggleTarget(button, target);
+
+  const url = new URL(window.location.href);
+  url.hash = targetId;
+
+  history.pushState(
+    {
+      payAppToggleOpen: true,
+      payAppToggleTargetId: targetId,
+    },
+    "",
+    url
+  );
 }
 
 function syncCabinetSelectedTags() {
@@ -414,6 +475,7 @@ document.addEventListener("click", async (event) => {
     return;
   }
 
+
   const confirmLink = event.target.closest('[data-action="confirm-navigation"]');
   if (confirmLink) {
     const message = confirmLink.dataset.confirmMessage || "Видалити дане поле?";
@@ -431,9 +493,14 @@ document.addEventListener("click", async (event) => {
   }
 });
 
+window.addEventListener("popstate", (event) => {
+  restoreToggleStateFromHistory(event.state);
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   attachPasswordGenerators();
   syncCabinetSelectedTags();
   initCabinetHighlight();
   initIconButtons();
+  restoreToggleStateFromHistory(history.state);
 });
