@@ -4,13 +4,18 @@
       <div class="table-card__header table-card__header--with-hint">
         <div>
           <div class="section-title-row">
-            <h2 class="section-title">Платежі</h2>
+            <h2 class="section-title">Сервіси</h2>
             <span class="metric-pill">Знайдено: {{ object_l|length }}</span>
           </div>
 {#          <p class="section-subtitle">Широка таблиця не розпирає layout: перегляд усіх колонок відбувається через горизонтальний скрол всередині card-контейнера.</p>#}
         </div>
         <div class="table-scroll-hint">
-          <i class="fa-solid fa-left-right" aria-hidden="true"></i>
+          <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M3 8h18"></path>
+  <path d="M7 4 3 8l4 4"></path>
+  <path d="M21 16H3"></path>
+  <path d="m17 12 4 4-4 4"></path>
+</svg>
           <span>Гортайте таблицю по горизонталі</span>
         </div>
       </div>
@@ -55,7 +60,13 @@
                         <span class="service-link__label">{{ i.service }}</span>
 {#                        <span class="service-link__hint">деталі</span>#}
                       </span>
-                      <i class="fa-solid fa-arrow-up-right-from-square service-link__icon" aria-hidden="true"></i>
+                      <span class="service-link__icon" aria-hidden="true">
+  <svg class="icon-svg" viewBox="0 0 24 24" focusable="false">
+    <path d="M14 5h5v5"></path>
+    <path d="M10 14 19 5"></path>
+    <path d="M19 14v5H5V5h5"></path>
+  </svg>
+</span>
                     </a>
                   </td>
                 {% else %}
@@ -65,7 +76,13 @@
                         <span class="service-link__label">{{ i.service }}</span>
 {#                        <span class="service-link__hint">деталі</span>#}
                       </span>
-                      <i class="fa-solid fa-arrow-up-right-from-square service-link__icon" aria-hidden="true"></i>
+                      <span class="service-link__icon" aria-hidden="true">
+  <svg class="icon-svg" viewBox="0 0 24 24" focusable="false">
+    <path d="M14 5h5v5"></path>
+    <path d="M10 14 19 5"></path>
+    <path d="M19 14v5H5V5h5"></path>
+  </svg>
+</span>
                     </a>
                   </td>
                 {% endif %}
@@ -119,7 +136,10 @@
                       data-field="email_login"
                       data-show-label="Показати та скопіювати логін"
                       data-hide-label="Сховати логін">
-                      <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                      <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+  <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+</svg>
                       <span class="visually-hidden">Показати та скопіювати логін</span>
                     </button>
                     <span
@@ -146,7 +166,10 @@
                       data-field="password"
                       data-show-label="Показати та скопіювати пароль"
                       data-hide-label="Сховати пароль">
-                      <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                      <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+  <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+</svg>
                       <span class="visually-hidden">Показати та скопіювати пароль</span>
                     </button>
                     <span

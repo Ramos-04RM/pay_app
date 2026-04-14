@@ -14,13 +14,35 @@
       <dl class="detail-grid">
         <div class="detail-row">
           <dt>Логін</dt>
-          <dd>{{ j.cabinet.login }}</dd>
+          <dd>
+            {% if j.cabinet.login %}
+              <span
+                class="copy-inline-btn"
+                data-action="copy-text"
+                data-copy-text="{{ j.cabinet.login }}"
+                title="Скопіювати логін"
+                role="button"
+                tabindex="0">{{ j.cabinet.login }}</span>
+            {% else %}
+              -
+            {% endif %}
+          </dd>
         </div>
 
         <div class="detail-row">
           <dt>Посилання</dt>
           <dd>
-            <a href="{{ j.cabinet.link }}" target="_blank" rel="noopener noreferrer">{{ j.cabinet.link }}</a>
+            {% if j.cabinet.link %}
+              <span
+                class="copy-inline-btn"
+                data-action="copy-text"
+                data-copy-text="{{ j.cabinet.link }}"
+                title="Скопіювати посилання"
+                role="button"
+                tabindex="0">{{ j.cabinet.link }}</span>
+            {% else %}
+              -
+            {% endif %}
           </dd>
         </div>
 
@@ -38,7 +60,10 @@
                 data-field="password"
                 data-show-label="Показати та скопіювати пароль"
                 data-hide-label="Сховати пароль">
-                <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+  <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+</svg>
                 <span class="visually-hidden">Показати та скопіювати пароль</span>
               </button>
               <span
@@ -54,7 +79,19 @@
 
         <div class="detail-row">
           <dt>Email</dt>
-          <dd>{{ j.cabinet.email_login }}</dd>
+          <dd>
+            {% if j.cabinet.email_login %}
+              <span
+                class="copy-inline-btn"
+                data-action="copy-text"
+                data-copy-text="{{ j.cabinet.email_login }}"
+                title="Скопіювати email"
+                role="button"
+                tabindex="0">{{ j.cabinet.email_login }}</span>
+            {% else %}
+              -
+            {% endif %}
+          </dd>
         </div>
 
         <div class="detail-row">
@@ -71,7 +108,10 @@
                 data-field="email_password"
                 data-show-label="Показати та скопіювати email password"
                 data-hide-label="Сховати email password">
-                <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+  <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+</svg>
                 <span class="visually-hidden">Показати та скопіювати email password</span>
               </button>
               <span

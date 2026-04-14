@@ -6,6 +6,55 @@ function showDeleteBlocked() {
   alert("Видалити неможливо! Даний кабінет використовується.");
 }
 
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+const ICON_PATHS = {
+  eye: [
+    { d: "M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z" },
+    { d: "M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z" },
+  ],
+  "eye-off": [
+    { d: "M3 3l18 18" },
+    { d: "M10.6 5.2A12.7 12.7 0 0 1 12 5c7 0 10.5 7 10.5 7a19.6 19.6 0 0 1-4.1 4.8" },
+    { d: "M6.1 6.1A19.5 19.5 0 0 0 1.5 12s3.5 7 10.5 7c1.8 0 3.4-.4 4.8-1" },
+    { d: "M9.9 9.9A3 3 0 0 0 9 12a3 3 0 0 0 3 3c.8 0 1.5-.3 2.1-.9" },
+  ],
+  key: [
+    { d: "M14.5 3a6.5 6.5 0 1 0 4.7 11l1.8 1.8h2v2h2v2h2v-3.2l-4.7-4.7A6.5 6.5 0 0 0 14.5 3Z" },
+    { d: "M8.5 12.5h.01" },
+  ],
+};
+
+function createSvgIcon(name, extraClass = "") {
+  const paths = ICON_PATHS[name];
+  if (!paths) return document.createTextNode("");
+
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+  svg.setAttribute("class", extraClass ? `icon-svg ${extraClass}` : "icon-svg");
+
+  paths.forEach((pathDef) => {
+    const path = document.createElementNS(SVG_NS, "path");
+    Object.entries(pathDef).forEach(([key, value]) => {
+      path.setAttribute(key, value);
+    });
+    svg.appendChild(path);
+  });
+
+  return svg;
+}
+
+function replaceButtonIcon(button, iconName) {
+  if (!button) return;
+
+  const oldIcon = button.querySelector(".icon-svg, i");
+  if (oldIcon) oldIcon.remove();
+
+  button.prepend(createSvgIcon(iconName));
+}
+
 function my_func(i) {
   const target = document.getElementById("remove-heli-" + i);
   const button = document.getElementById("btn" + i);
@@ -74,15 +123,8 @@ function setIconButtonState(button, isActive) {
   const showLabel = button.dataset.showLabel || "Показати";
   const hideLabel = button.dataset.hideLabel || "Сховати";
   const label = isActive ? hideLabel : showLabel;
-  const iconClass = isActive ? "fa-regular fa-eye-slash" : "fa-regular fa-eye";
-
-  let icon = button.querySelector("i");
-  if (!icon) {
-    icon = document.createElement("i");
-    icon.setAttribute("aria-hidden", "true");
-    button.prepend(icon);
-  }
-  icon.className = iconClass;
+  const iconName = isActive ? "eye-off" : "eye";
+  replaceButtonIcon(button, iconName);
 
   let hiddenText = button.querySelector(".visually-hidden");
   if (!hiddenText) {
@@ -277,7 +319,12 @@ function attachPasswordGenerators() {
     button.className = "btn_pay_yellow pay-gen-btn icon-btn";
     button.title = "Згенерувати пароль";
     button.setAttribute("aria-label", `Generate ${input.name}`);
-    button.innerHTML = '<i class="fa-solid fa-key" aria-hidden="true"></i><span class="visually-hidden">Згенерувати пароль</span>';
+    button.appendChild(createSvgIcon("key"));
+
+    const hiddenText = document.createElement("span");
+    hiddenText.className = "visually-hidden";
+    hiddenText.textContent = "Згенерувати пароль";
+    button.appendChild(hiddenText);
 
     wrap.appendChild(button);
 
@@ -460,6 +507,20 @@ document.addEventListener("click", async (event) => {
     });
     return;
   }
+
+ const copyBtn = event.target.closest('[data-action="copy-text"]');
+ if (copyBtn) {
+   event.preventDefault();
+   const text = (copyBtn.dataset.copyText || "").trim();
+   if (!text) return;
+
+   const copied = await copyToClipboard(text);
+   showToast(
+     copied ? "Скопійовано в буфер обміну" : "Не вдалося скопіювати",
+     !copied
+   );
+   return;
+ }
 
   const toggleBtn = event.target.closest('[data-action="toggle-block"]');
   if (toggleBtn) {

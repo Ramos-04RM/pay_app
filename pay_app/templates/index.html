@@ -18,7 +18,7 @@
         <div class="page-header-row page-header-row--top">
           <div>
             <p class="eyebrow">Pay app</p>
-            <h1 class="page-title">Платежі та кабінети</h1>
+            <h1 class="page-title">Сервіси та кабінети</h1>
             <p class="page-subtitle">Єдиний простір для керування оплатами, сервісами та повʼязаними кабінетами.</p>
           </div>
 
@@ -27,7 +27,7 @@
               <a
                 href="{{ app_index_url }}"
                 class="btn_pay btn-linklike {% if request.path == app_index_url %}is-selected{% endif %}">
-                Платежі
+                Сервіси
               </a>
               <a
                 href="{{ cabinet_page_url }}"
@@ -55,7 +55,11 @@
 
         <div class="page-header-row page-header-row--compact">
           <div class="user-chip">
-            <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
+            <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z"></path>
+  <path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path>
+  <path d="M18 8.5 21 10v3.5c0 2.9-1.9 5.6-4.5 6.5-2.6-.9-4.5-3.6-4.5-6.5V10l3-1.5Z"></path>
+</svg>
             <span>{{ request.user.username }}, ви авторизовані</span>
           </div>
         </div>

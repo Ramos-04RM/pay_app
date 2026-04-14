@@ -36,7 +36,10 @@
             value="{{ cabinet_search_query }}"
             placeholder="login / note / email / service / tag">
           <button type="submit" class="search-submit" aria-label="Search cabinets">
-            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z"></path>
+  <path d="M20 20l-4.2-4.2"></path>
+</svg>
           </button>
         </label>
       </form>
@@ -125,7 +128,12 @@
 {#            <p class="section-subtitle">Широка таблиця залишилась у card-контейнері: заголовки липкі, а перегляд колонок відбувається через горизонтальний скрол усередині блоку.</p>#}
           </div>
           <div class="table-scroll-hint">
-            <i class="fa-solid fa-left-right" aria-hidden="true"></i>
+            <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M3 8h18"></path>
+  <path d="M7 4 3 8l4 4"></path>
+  <path d="M21 16H3"></path>
+  <path d="m17 12 4 4-4 4"></path>
+</svg>
             <span>Гортайте таблицю по горизонталі</span>
           </div>
         </div>
@@ -190,7 +198,17 @@
                     </a>
                   </td>
 
-                  <td>{{ j.login }}</td>
+                  <td>
+                    {% if j.login %}
+                      <span
+                        class="copy-inline-btn"
+                        data-action="copy-text"
+                        data-copy-text="{{ j.login }}"
+                        title="Скопіювати email"
+                        role="button"
+                        tabindex="0">{{ j.login }}</span>
+                    {% else %}-{% endif %}
+                  </td>
 
                   <td>
                     {% if j.link %}
@@ -212,7 +230,10 @@
                         data-field="password"
                         data-show-label="Показати та скопіювати пароль"
                         data-hide-label="Сховати пароль">
-                        <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                        <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+  <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+</svg>
                         <span class="visually-hidden">Показати та скопіювати пароль</span>
                       </button>
                       <span
@@ -224,8 +245,17 @@
                       </span>
                     </div>
                   </td>
-
-                  <td>{{ j.email_login|default:'-' }}</td>
+                  <td>
+                    {% if j.email_login %}
+                      <span
+                        class="copy-inline-btn"
+                        data-action="copy-text"
+                        data-copy-text="{{ j.email_login }}"
+                        title="Скопіювати email"
+                        role="button"
+                        tabindex="0">{{ j.email_login }}</span>
+                    {% else %}-{% endif %}
+                  </td>
 
                   <td class="masked-cell masked-cell--warning">
                     <div class="masked-cell__content">
@@ -239,7 +269,10 @@
                         data-field="email_password"
                         data-show-label="Показати та скопіювати email password"
                         data-hide-label="Сховати email password">
-                        <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                        <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+  <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+</svg>
                         <span class="visually-hidden">Показати та скопіювати email password</span>
                       </button>
                       <span
@@ -269,7 +302,10 @@
                           data-hide-label="Сховати сервіси"
                           aria-controls="remove-heli-{{ j.id }}"
                           aria-expanded="false">
-                          <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                          <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+  <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+</svg>
                           <span class="visually-hidden">Показати сервіси</span>
                         </button>
                       {% endif %}

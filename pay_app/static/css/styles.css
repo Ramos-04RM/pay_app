@@ -414,12 +414,37 @@ textarea:disabled {
 .example label {
   display: flex;
   align-items: center;
+  width: 100%;
+  max-width: 100%;
   gap: var(--space-2);
+}
+
+.sidebar-search label input,
+.example label input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
 }
 
 .sidebar-search button,
 .example button {
   flex: 0 0 auto;
+}
+
+.sidebar-search label .search-submit,
+.example label .search-submit,
+.sidebar-search label .search-submit-btn,
+.example label .search-submit-btn {
+  margin-left: var(--space-2);
+}
+
+@supports (gap: 1rem) {
+  .sidebar-search label .search-submit,
+  .example label .search-submit,
+  .sidebar-search label .search-submit-btn,
+  .example label .search-submit-btn {
+    margin-left: 0;
+  }
 }
 
 .sidebar-checkbox,
@@ -466,8 +491,18 @@ textarea:disabled {
   color: var(--text);
 }
 
-.search-submit-btn i {
-  font-size: 0.96rem;
+.icon-svg {
+  width: 1rem;
+  height: 1rem;
+  display: inline-block;
+  flex: 0 0 auto;
+  vertical-align: middle;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
 }
 
 .btn_pay,
@@ -593,12 +628,6 @@ textarea:disabled {
   border-radius: 10px;
   box-shadow: none;
   flex: 0 0 auto;
-}
-
-.btn_icon i,
-.icon-btn i {
-  font-size: 0.85rem;
-  pointer-events: none;
 }
 
 .btn_icon--secondary,
@@ -765,11 +794,38 @@ textarea {
 .field-with-link {
   display: flex;
   align-items: stretch;
+  width: 100%;
+  max-width: 100%;
   gap: var(--space-2);
 }
 
 .field-with-link > :first-child {
   flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+}
+
+.field-with-link select,
+.field-with-link input,
+.field-with-link .form-control {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+}
+
+.field-with-link .field-link-button,
+.field-with-link > a,
+.field-with-link > button {
+  flex: 0 0 auto;
+  margin-left: var(--space-2);
+}
+
+@supports (gap: 1rem) {
+  .field-with-link .field-link-button,
+  .field-with-link > a,
+  .field-with-link > button {
+    margin-left: 0;
+  }
 }
 
 .field-link-button {
@@ -1316,10 +1372,6 @@ textarea {
   transform: translateY(-1px);
 }
 
-.search-submit i {
-  pointer-events: none;
-}
-
 .toolbar-cluster {
   display: flex;
   flex-direction: column;
@@ -1416,6 +1468,19 @@ textarea {
 
 .service-link__icon {
   opacity: 0.72;
+}
+
+.copy-inline-btn {
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.16em;
+  text-decoration-color: rgba(22, 32, 50, 0.18);
+}
+
+.copy-inline-btn:hover,
+.copy-inline-btn:focus {
+  text-decoration-color: currentColor;
 }
 
 .logout-form {

@@ -12,12 +12,12 @@
         <div class="page-header-row">
           <div>
             <p class="eyebrow">Адміністрування</p>
-            <h1 class="page-title">Редагування платежів</h1>
+            <h1 class="page-title">Редагування сервісів</h1>
             <p class="page-subtitle">Табличне редагування без зміни існуючих URL, JS-hooks і серверної логіки.</p>
           </div>
 
           <div class="toolbar-actions">
-            <a class="btn_pay btn-linklike" href="{% url 'app:index' %}">Платежі</a>
+            <a class="btn_pay btn-linklike" href="{% url 'app:index' %}">Сервіси</a>
             <a class="btn_pay btn-linklike" href="{% url 'app:pay_new' %}">Додати</a>
             <a href="{% url 'logout' %}" class="btn_pay_red btn-linklike">Вийти</a>
           </div>
@@ -25,7 +25,11 @@
 
         <div class="page-header-row page-header-row--compact">
           <div class="user-chip">
-            <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
+            <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z"></path>
+  <path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path>
+  <path d="M18 8.5 21 10v3.5c0 2.9-1.9 5.6-4.5 6.5-2.6-.9-4.5-3.6-4.5-6.5V10l3-1.5Z"></path>
+</svg>
             <span>{{ request.user.username }}, ви авторизовані</span>
           </div>
           <div class="toolbar-meta">
@@ -37,11 +41,16 @@
       <section class="table-card table-card--wide">
         <div class="table-card__header table-card__header--with-hint">
           <div>
-            <h2 class="section-title">Список платежів</h2>
+            <h2 class="section-title">Список сервісів</h2>
             <p class="section-subtitle">Edit, delete та перегляд замаскованих значень працюють через ті самі hooks.</p>
           </div>
           <div class="table-scroll-hint">
-            <i class="fa-solid fa-left-right" aria-hidden="true"></i>
+            <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M3 8h18"></path>
+  <path d="M7 4 3 8l4 4"></path>
+  <path d="M21 16H3"></path>
+  <path d="m17 12 4 4-4 4"></path>
+</svg>
             <span>Гортайте таблицю по горизонталі</span>
           </div>
         </div>
@@ -75,7 +84,11 @@
                 <tr tabindex="0">
                   <td class="table-index-cell">
                     <a class="btn_pay_edit btn-linklike" href="{% url 'app:edit_table' i.id %}">
-                      Edit <i class="fa fa-cog fa-spin fa-1x fa-fw" aria-hidden="true"></i>
+                      Edit
+                      <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M12 8.75A3.25 3.25 0 1 0 12 15.25 3.25 3.25 0 1 0 12 8.75Z"></path>
+  <path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1 1 0 0 1 0 1.4l-1.2 1.2a1 1 0 0 1-1.4 0l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a1 1 0 0 1-1 1h-1.6a1 1 0 0 1-1-1v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1 1 0 0 1-1.4 0l-1.2-1.2a1 1 0 0 1 0-1.4l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a1 1 0 0 1-1-1v-1.6a1 1 0 0 1 1-1h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1 1 0 0 1 0-1.4l1.2-1.2a1 1 0 0 1 1.4 0l.1.1a1 1 0 0 0 1.1.2 1 1 0 0 0 .6-.9V4a1 1 0 0 1 1-1h1.6a1 1 0 0 1 1 1v.2a1 1 0 0 0 .6.9 1 1 0 0 0 1.1-.2l.1-.1a1 1 0 0 1 1.4 0l1.2 1.2a1 1 0 0 1 0 1.4l-.1.1a1 1 0 0 0-.2 1.1 1 1 0 0 0 .9.6H20a1 1 0 0 1 1 1v1.6a1 1 0 0 1-1 1h-.2a1 1 0 0 0-.9.6Z"></path>
+</svg>
                     </a>
                   </td>
                   <td class="table-count-cell">{{ forloop.counter }}</td>
@@ -101,7 +114,10 @@
                         data-field="email_login"
                         data-show-label="Показати та скопіювати логін"
                         data-hide-label="Сховати логін">
-                        <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                        <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+  <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+</svg>
                         <span class="visually-hidden">Показати та скопіювати логін</span>
                       </button>
                       <span
@@ -128,7 +144,10 @@
                         data-field="password"
                         data-show-label="Показати та скопіювати пароль"
                         data-hide-label="Сховати пароль">
-                        <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                        <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+  <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+</svg>
                         <span class="visually-hidden">Показати та скопіювати пароль</span>
                       </button>
                       <span
