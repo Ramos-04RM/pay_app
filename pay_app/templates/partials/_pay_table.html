@@ -31,8 +31,8 @@
               <th><a href="{{ pay_sort_create_date_url|default:'#' }}">Дата створення</a></th>
               <th><a href="{{ pay_sort_service_url|default:'#' }}">Умовна назва сервісу</a></th>
               <th><a href="{{ pay_sort_type_source_url|default:'#' }}">Тип ресурсу</a></th>
-              <th><a href="{{ pay_sort_price_per_month_url|default:'#' }}">Ціна на місяць</a></th>
-              <th><a href="{{ pay_sort_currency_url|default:'#' }}">Валюта</a></th>
+              <th><a href="{{ pay_sort_price_per_month_url|default:'#' }}">Ціна на місяць/ баланс</a></th>
+{#              <th><a href="{{ pay_sort_currency_url|default:'#' }}">Валюта</a></th>#}
               <th><a href="{{ pay_sort_pay_sys_url|default:'#' }}">Платіжна система</a></th>
               <th><a href="{{ pay_sort_paid_up_to_url|default:'#' }}">Проплачено до</a></th>
               <th><a href="{{ pay_sort_email_login_url|default:'#' }}">Логін</a></th>
@@ -88,8 +88,8 @@
                 {% endif %}
 
                 <td>{{ i.type_source }}</td>
-                <td>{{ i.price_per_month }}</td>
-                <td>{{ i.currency }}</td>
+                <td>{{ i.price_per_month|floatformat:1  }} / {{ i.cabinet.balance|floatformat:1|default:"0" }} {{ i.currency }}</td>
+{#                <td>{{ i.currency }}</td>#}
                 <td>{{ i.pay_sys }}</td>
 
                 {% if i.paid_up_to < today and i.status == "active" %}

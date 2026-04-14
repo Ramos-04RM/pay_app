@@ -52,6 +52,8 @@ class CabinetForm(ModelForm):
         widgets = {
             'link': forms.URLInput(attrs={'class': 'form-control'}),
             'email_login': forms.EmailInput(attrs={'class': 'form-control'}),
+            'balance': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'currency': forms.Select(attrs={'class': 'form-control'}),
         }
 
 

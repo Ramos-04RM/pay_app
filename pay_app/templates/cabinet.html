@@ -24,7 +24,11 @@
       <form class="example sidebar-search" action="{% url 'app:cabinet_page' %}" method="get">
         {% if cabinet_has_active %}<input type="hidden" name="has_active" value="1">{% endif %}
         {% if cabinet_has_inactive %}<input type="hidden" name="has_inactive" value="1">{% endif %}
+        {% if cabinet_without_active %}<input type="hidden" name="without_active" value="1">{% endif %}
         {% if cabinet_no_services %}<input type="hidden" name="no_services" value="1">{% endif %}
+        {% if cabinet_selected_currency %}<input type="hidden" name="currency" value="{{ cabinet_selected_currency }}">{% endif %}
+        {% if cabinet_balance_min != '' %}<input type="hidden" name="balance_min" value="{{ cabinet_balance_min }}">{% endif %}
+        {% if cabinet_balance_max != '' %}<input type="hidden" name="balance_max" value="{{ cabinet_balance_max }}">{% endif %}
         {% for selected_tag_id in cabinet_selected_tag_ids %}
           <input type="hidden" name="tag_id" value="{{ selected_tag_id }}">
         {% endfor %}
@@ -51,6 +55,10 @@
         {% if cabinet_sort %}<input type="hidden" name="sort" value="{{ cabinet_sort }}">{% endif %}
 
         <h3 class="check-field-label">Сервіси</h3>
+        <label class="sidebar-checkbox">
+          <input type="checkbox" name="without_active" value="1" {% if cabinet_without_active %}checked{% endif %}>
+          <span>Без активних сервісів <strong>({{ cabinets_without_active }})</strong></span>
+        </label>
 
         <label class="sidebar-checkbox">
           <input type="checkbox" name="no_services" value="1" {% if cabinet_no_services %}checked{% endif %}>
@@ -83,6 +91,30 @@
           </div>
         {% endif %}
 
+        <label class="sidebar-filter-field">
+          <span class="sidebar-filter-label">Фільтр по валюті</span>
+          <select name="currency" class="form-control">
+            <option value="">усі</option>
+            {% for currency_item in cabinet_currency_options %}
+              <option value="{{ currency_item }}" {% if currency_item == cabinet_selected_currency %}selected{% endif %}>
+                {{ currency_item }}
+              </option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <h3 class="check-field-label">Баланс</h3>
+        <div class="sidebar-balance-grid">
+          <label class="sidebar-filter-field">
+            <span class="sidebar-filter-label">Мінімум</span>
+            <input type="number" name="balance_min" value="{{ cabinet_balance_min }}" step="0.01" class="form-control">
+          </label>
+          <label class="sidebar-filter-field">
+            <span class="sidebar-filter-label">Максимум</span>
+            <input type="number" name="balance_max" value="{{ cabinet_balance_max }}" step="0.01" class="form-control">
+          </label>
+        </div>
+
         <div class="page-actions page-actions--stacked">
           <button type="submit" class="btn_pay">Apply</button>
           <a href="{{ cabinet_reset_url }}" class="btn_pay_red btn-linklike">Reset</a>
@@ -91,7 +123,8 @@
     </section>
 
     <section class="sidebar-section sidebar-section--muted">
-      {% if cabinet_search_query or cabinet_has_active or cabinet_has_inactive or cabinet_no_services or cabinet_sort or cabinet_selected_tags %}
+      {% if cabinet_search_query or cabinet_has_active or cabinet_has_inactive or cabinet_without_active or cabinet_no_services or cabinet_sort or cabinet_selected_tags or cabinet_selected_currency or cabinet_balance_min != '' or cabinet_balance_max != '' %}
+         <div class="context-stack">
         <div class="context-stack">
           <span class="context-title">Поточний контекст</span>
           {% if cabinet_search_query %}
@@ -103,12 +136,24 @@
           {% if cabinet_has_inactive %}
             <span class="context-chip">not active services</span>
           {% endif %}
+          {% if cabinet_without_active %}
+            <span class="context-chip">without active services</span>
+          {% endif %}
           {% if cabinet_no_services %}
             <span class="context-chip">without services</span>
           {% endif %}
           {% for selected_tag in cabinet_selected_tags %}
             <span class="context-chip">Тег: {{ selected_tag.name }}</span>
           {% endfor %}
+                  {% if cabinet_selected_currency %}
+            <span class="context-chip">Валюта: {{ cabinet_selected_currency }}</span>
+          {% endif %}
+          {% if cabinet_balance_min != '' %}
+            <span class="context-chip">Баланс від: {{ cabinet_balance_min }}</span>
+          {% endif %}
+          {% if cabinet_balance_max != '' %}
+            <span class="context-chip">Баланс до: {{ cabinet_balance_max }}</span>
+          {% endif %}
         </div>
       {% endif %}
     </section>
@@ -176,6 +221,16 @@
                   <a href="{{ cabinet_services_sort_asc_url }}">↑</a>
                   <a href="{{ cabinet_services_sort_desc_url }}">↓</a>
                 </th>
+                <th>
+                  Баланс
+                  <a href="{{ cabinet_balance_sort_asc_url }}">↑</a>
+                  <a href="{{ cabinet_balance_sort_desc_url }}">↓</a>
+                </th>
+{#                <th>#}
+{#                  Валюта#}
+{#                  <a href="{{ cabinet_currency_sort_asc_url }}">↑</a>#}
+{#                  <a href="{{ cabinet_currency_sort_desc_url }}">↓</a>#}
+{#                </th>#}
                 <th>
                   Теги
                   <a href="{{ cabinet_tags_sort_asc_url }}">↑</a>
@@ -324,6 +379,12 @@
 
                   <td>
                     <div class="chip-list">
+                      {{ j.balance_value|floatformat:1 }} {{ j.currency|default:'' }}
+                    </div>
+                  </td>
+
+                  <td>
+                    <div class="chip-list">
                       {% for rel in j.cabinet_tags.all %}
                         <span class="cabinet-tag-chip">{{ rel.tag.name }}</span>
                       {% empty %}
@@ -354,7 +415,7 @@
                 </tr>
               {% empty %}
                 <tr>
-                  <td colspan="10" class="table-empty">Нічого не знайдено по поточних фільтрах.</td>
+                   <td colspan="12" class="table-empty">Нічого не знайдено по поточних фільтрах.</td>
                 </tr>
               {% endfor %}
             </tbody>

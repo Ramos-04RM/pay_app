@@ -125,10 +125,18 @@
           </dd>
         </div>
 
+        <div class="detail-row">
+          <dt>Баланс</dt>
+          <dd>{{ j.cabinet.balance|default_if_none:0|floatformat:1 }} {{ j.cabinet.currency|default:'' }}</dd>
+        </div>
+
+
         <div class="detail-row detail-row--full">
           <dt>Примітки</dt>
           <dd>{{ j.cabinet.note|default:'-' }}</dd>
         </div>
+
+
       </dl>
     {% endfor %}
   </section>

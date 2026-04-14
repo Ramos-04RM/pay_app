@@ -459,6 +459,24 @@ textarea:disabled {
   color: var(--text);
 }
 
+.sidebar-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sidebar-filter-label {
+  font-size: 0.86rem;
+  color: var(--text-soft);
+}
+
+.sidebar-balance-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+
 .sidebar-checkbox:hover,
 .tag-option:hover {
   border-color: var(--border-strong);
@@ -946,7 +964,7 @@ textarea {
 
 .home-table,
 .home-table_cabinet {
-  min-width: 1180px;
+  min-width: 1320px;
 }
 
 .table_pay thead th,

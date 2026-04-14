@@ -61,12 +61,16 @@ class Pay(models.Model):
 
 
 class Cabinet(models.Model):
+    CHOICES_CURRENCY = Pay.CHOICES_CURRENCY
+
     id = models.BigAutoField(primary_key=True, auto_created=True, serialize=False, verbose_name='ID')
     link = models.URLField(max_length=200, blank=True, verbose_name='Посилання')
     login = models.CharField(max_length=260, unique=False, verbose_name='Логін')
     password = models.CharField(max_length=260,  verbose_name='Пароль')
     email_login = models.EmailField(max_length=260, unique=False, blank=True, verbose_name='Email')
     email_password = models.CharField(max_length=260, unique=False, verbose_name='Email_password')
+    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, verbose_name='Баланс')
+    currency = models.CharField(max_length=8, choices=CHOICES_CURRENCY, default='', verbose_name='Валюта')
     note = models.CharField(max_length=340, null=True, blank=True, verbose_name='Примітка')
 
     def save(self, *args, **kwargs):

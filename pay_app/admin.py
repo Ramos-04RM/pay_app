@@ -15,7 +15,8 @@ class CabinetTagInline(admin.TabularInline):
 @admin.register(Cabinet)
 class CabinetAdmin(admin.ModelAdmin):
     inlines = [CabinetTagInline]
-    list_display = ('id', 'login', 'link', 'email_login')
+    list_display = ('id', 'login', 'link', 'email_login', 'balance', 'currency')
+    list_filter = ('currency',)
 
 
 @admin.register(Tag)
