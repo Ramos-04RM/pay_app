@@ -1,4 +1,5 @@
 .venv
+.env
 pay_app/migrations/__pycache__/
 pay_app/migrations
 .idea

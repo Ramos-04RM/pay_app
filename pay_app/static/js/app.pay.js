@@ -496,6 +496,20 @@ function initIconButtons() {
   });
 }
 
+function initStatisticsFilters() {
+  const periodSelector = document.getElementById("statistics-period-selector");
+  const customWrap = document.getElementById("statistics-custom-period");
+  if (!periodSelector || !customWrap) return;
+
+  const sync = () => {
+    const isCustom = periodSelector.value === "custom";
+    customWrap.hidden = !isCustom;
+  };
+
+  periodSelector.addEventListener("change", sync);
+  sync();
+}
+
 document.addEventListener("click", async (event) => {
   const decryptBtn = event.target.closest('[data-action="decrypt-copy"]');
   if (decryptBtn) {
@@ -563,5 +577,6 @@ document.addEventListener("DOMContentLoaded", () => {
   syncCabinetSelectedTags();
   initCabinetHighlight();
   initIconButtons();
+  initStatisticsFilters();
   restoreToggleStateFromHistory(history.state);
 });

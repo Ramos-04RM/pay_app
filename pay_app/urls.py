@@ -24,6 +24,7 @@ urlpatterns = [
     path("tags/new/", views.tag_create, name="tag_create"),
     path("tags/<int:id>/edit/", views.tag_edit, name="tag_edit"),
     path("tags/<int:id>/delete/", views.tag_delete, name="tag_delete"),
+    path("statistics/", views.statistics_page, name="statistics"),
     # Cabinet list helpers
     path("sort_cabinet/<str:name>", views.sort_by_name_cabinet, name="sort_by_name_cabinet"),
 

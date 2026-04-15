@@ -11,6 +11,7 @@
   {% url 'app:index' as app_index_url %}
   {% url 'app:cabinet_page' as cabinet_page_url %}
   {% url 'app:tags_page' as tags_page_url %}
+  {% url 'app:statistics' as statistics_url %}
 
   {% if request.user.is_authenticated %}
     <div class="page-shell page-shell--wide">
@@ -38,6 +39,11 @@
                 href="{{ tags_page_url }}"
                 class="btn_pay btn-linklike {% if request.path == tags_page_url %}is-selected{% endif %}">
                 Теги
+              </a>
+              <a
+                href="{{ statistics_url }}"
+                class="btn_pay btn-linklike {% if request.path == statistics_url %}is-selected{% endif %}">
+                Statistics
               </a>
             </nav>
 
