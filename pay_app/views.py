@@ -1,4 +1,5 @@
 import json
+import calendar
 import datetime
 import cryptocode
 from urllib.parse import urlencode
@@ -52,6 +53,11 @@ PAY_SORT_MAP = {
 }
 PAY_SORT_DEFAULT = 'id_asc'
 
+def add_one_month(value):
+    year = value.year + (1 if value.month == 12 else 0)
+    month = 1 if value.month == 12 else value.month + 1
+    day = min(value.day, calendar.monthrange(year, month)[1])
+    return datetime.date(year, month, day)
 
 def get_common_context():
     today = datetime.date.today()
@@ -112,6 +118,7 @@ def build_pay_list_url(
     pay_sys='',
     type_source='',
     balance_gt_payment=None,
+    daily_payment=None,
 ):
     statuses = statuses or []
     params = {}
@@ -126,6 +133,7 @@ def build_pay_list_url(
         params['pay_sys'] = pay_sys
     if type_source:
         params['type_source'] = type_source
+
     balance_gt_payment = balance_gt_payment or []
     normalized_balance_gt_payment = [
         item
@@ -134,6 +142,16 @@ def build_pay_list_url(
     ]
     if normalized_balance_gt_payment:
         params['balance_gt_payment'] = normalized_balance_gt_payment
+
+    daily_payment = daily_payment or []
+    normalized_daily_payment = [
+        item
+        for item in daily_payment
+        if item in {'yes', 'no'}
+    ]
+    if normalized_daily_payment:
+        params['daily_payment'] = normalized_daily_payment
+
     if statuses:
         params['status'] = list(statuses)
 
@@ -183,6 +201,14 @@ def get_pay_list_state(request, default_mode=PAY_MODE_ALL, overrides=None):
     if not balance_gt_payment:
         balance_gt_payment = ['yes', 'no']
 
+    daily_payment = [
+        item.strip().lower()
+        for item in query_data.getlist('daily_payment')
+        if item.strip().lower() in {'yes', 'no'}
+    ]
+    if not daily_payment:
+        daily_payment = ['yes', 'no']
+
     return {
         'mode': mode,
         'selected_statuses': selected_statuses,
@@ -191,6 +217,7 @@ def get_pay_list_state(request, default_mode=PAY_MODE_ALL, overrides=None):
         'selected_pay_sys': selected_pay_sys,
         'selected_type_source': selected_type_source,
         'balance_gt_payment': balance_gt_payment,
+        'daily_payment': daily_payment,
     }
 
 
@@ -206,10 +233,31 @@ def get_pay_sort_url(state, field_name):
         pay_sys=state['selected_pay_sys'],
         type_source=state['selected_type_source'],
         balance_gt_payment=state['balance_gt_payment'],
+        daily_payment=state['daily_payment'],
     )
 
 
 def toggle_balance_gt_payment_filter(selected_values, value):
+    normalized = [
+        item
+        for item in (selected_values or [])
+        if item in {'yes', 'no'}
+    ]
+
+    if value in normalized:
+        normalized = [item for item in normalized if item != value]
+    else:
+        normalized.append(value)
+
+    ordered = []
+    for item in ['yes', 'no']:
+        if item in normalized:
+            ordered.append(item)
+
+    return ordered
+
+
+def toggle_daily_payment_filter(selected_values, value):
     normalized = [
         item
         for item in (selected_values or [])
@@ -283,11 +331,16 @@ def build_pay_queryset(request, default_mode=PAY_MODE_ALL, overrides=None):
         queryset = queryset.filter(type_source=state['selected_type_source'])
 
     balance_filter_values = set(state['balance_gt_payment'])
-
     if balance_filter_values == {'yes'}:
         queryset = queryset.filter(cabinet_balance_for_sort__gte=F('price_per_month'))
     elif balance_filter_values == {'no'}:
         queryset = queryset.filter(cabinet_balance_for_sort__lt=F('price_per_month'))
+
+    daily_payment_values = set(state['daily_payment'])
+    if daily_payment_values == {'yes'}:
+        queryset = queryset.filter(cabinet__is_daily_payment=True)
+    elif daily_payment_values == {'no'}:
+        queryset = queryset.filter(cabinet__is_daily_payment=False)
 
     queryset = queryset.order_by(*PAY_SORT_MAP[state['current_sort']])
     return queryset, state, context_dates
@@ -305,6 +358,7 @@ def get_pay_sidebar_context(state):
         'selected_pay_sys': state['selected_pay_sys'],
         'selected_type_source': state['selected_type_source'],
         'balance_gt_payment': state['balance_gt_payment'],
+        'daily_payment': state['daily_payment'],
         'pay_list_base_url': get_pay_base_url(state['mode']),
         'pay_reset_url': get_pay_base_url(state['mode']),
         'pay_upcoming_url': build_pay_list_url(
@@ -315,6 +369,7 @@ def get_pay_sidebar_context(state):
             pay_sys=state['selected_pay_sys'],
             type_source=state['selected_type_source'],
             balance_gt_payment=state['balance_gt_payment'],
+            daily_payment=state['daily_payment'],
         ),
         'pay_overdue_url': build_pay_list_url(
             mode=PAY_MODE_OVERDUE,
@@ -324,6 +379,7 @@ def get_pay_sidebar_context(state):
             pay_sys=state['selected_pay_sys'],
             type_source=state['selected_type_source'],
             balance_gt_payment=state['balance_gt_payment'],
+            daily_payment=state['daily_payment'],
         ),
         'pay_sort_groups_url': get_pay_sort_url(state, 'groups'),
         'pay_sort_create_date_url': get_pay_sort_url(state, 'create_date'),
@@ -345,6 +401,7 @@ def get_pay_sidebar_context(state):
                     pay_sys='' if state['selected_pay_sys'] == item else item,
                     type_source=state['selected_type_source'],
                     balance_gt_payment=state['balance_gt_payment'],
+                    daily_payment=state['daily_payment'],
                 ),
                 'selected': state['selected_pay_sys'] == item,
             }
@@ -361,6 +418,7 @@ def get_pay_sidebar_context(state):
                     pay_sys=state['selected_pay_sys'],
                     type_source='' if state['selected_type_source'] == item else item,
                     balance_gt_payment=state['balance_gt_payment'],
+                    daily_payment=state['daily_payment'],
                 ),
                 'selected': state['selected_type_source'] == item,
             }
@@ -379,6 +437,7 @@ def get_pay_sidebar_context(state):
                 state['balance_gt_payment'],
                 'yes',
             ),
+            daily_payment=state['daily_payment'],
         ),
         'pay_balance_gt_payment_no_url': build_pay_list_url(
             mode=state['mode'],
@@ -389,6 +448,35 @@ def get_pay_sidebar_context(state):
             type_source=state['selected_type_source'],
             balance_gt_payment=toggle_balance_gt_payment_filter(
                 state['balance_gt_payment'],
+                'no',
+            ),
+            daily_payment=state['daily_payment'],
+        ),
+        'pay_daily_payment_yes_selected': 'yes' in state['daily_payment'],
+        'pay_daily_payment_no_selected': 'no' in state['daily_payment'],
+        'pay_daily_payment_yes_url': build_pay_list_url(
+            mode=state['mode'],
+            statuses=state['selected_statuses'],
+            q=state['search_query'],
+            sort=state['current_sort'],
+            pay_sys=state['selected_pay_sys'],
+            type_source=state['selected_type_source'],
+            balance_gt_payment=state['balance_gt_payment'],
+            daily_payment=toggle_daily_payment_filter(
+                state['daily_payment'],
+                'yes',
+            ),
+        ),
+        'pay_daily_payment_no_url': build_pay_list_url(
+            mode=state['mode'],
+            statuses=state['selected_statuses'],
+            q=state['search_query'],
+            sort=state['current_sort'],
+            pay_sys=state['selected_pay_sys'],
+            type_source=state['selected_type_source'],
+            balance_gt_payment=state['balance_gt_payment'],
+            daily_payment=toggle_daily_payment_filter(
+                state['daily_payment'],
                 'no',
             ),
         ),
@@ -418,12 +506,13 @@ def build_cabinet_page_url(
     has_inactive=False,
     without_active=False,
     no_services=False,
+    daily_payment_yes=False,
+    daily_payment_no=False,
     tag_ids=None,
     sort="",
     currency="",
     balance_min="",
     balance_max="",
-
 ):
     params = {}
     if q:
@@ -436,6 +525,10 @@ def build_cabinet_page_url(
         params['without_active'] = '1'
     if no_services:
         params['no_services'] = '1'
+    if daily_payment_yes:
+        params['daily_payment_yes'] = '1'
+    if daily_payment_no:
+        params['daily_payment_no'] = '1'
     if tag_ids:
         params['tag_id'] = [str(tag_id) for tag_id in tag_ids]
     if sort:
@@ -457,6 +550,8 @@ def get_cabinet_sort_url(
     has_inactive,
     without_active,
     no_services,
+    daily_payment_yes,
+    daily_payment_no,
     tag_ids,
     current_sort,
     field_name,
@@ -473,6 +568,8 @@ def get_cabinet_sort_url(
         has_inactive=has_inactive,
         without_active=without_active,
         no_services=no_services,
+        daily_payment_yes=daily_payment_yes,
+        daily_payment_no=daily_payment_no,
         tag_ids=tag_ids,
         sort=next_sort,
         currency=currency,
@@ -487,6 +584,8 @@ def get_cabinet_sidebar_context(
     has_inactive=False,
     without_active=False,
     no_services=False,
+    daily_payment_yes=False,
+    daily_payment_no=False,
     current_sort="",
     tag_ids=None,
     currency="",
@@ -521,6 +620,8 @@ def get_cabinet_sidebar_context(
         'cabinet_has_inactive': has_inactive,
         'cabinet_without_active': without_active,
         'cabinet_no_services': no_services,
+        'cabinet_daily_payment_yes': daily_payment_yes,
+        'cabinet_daily_payment_no': daily_payment_no,
         'cabinet_sort': current_sort,
         'cabinet_selected_tag_ids': tag_ids,
         'cabinet_selected_tags': selected_tags,
@@ -534,17 +635,21 @@ def get_cabinet_sidebar_context(
         'cabinets_with_inactive': cabinet_stats.filter(inactive_services_count__gt=0).count(),
         'cabinets_without_active': cabinet_stats.filter(active_services_count=0).count(),
         'cabinets_without_services': cabinet_stats.filter(services_count=0).count(),
+        'cabinets_daily_payment_yes_count': cabinet_stats.filter(is_daily_payment=True).count(),
+        'cabinets_daily_payment_no_count': cabinet_stats.filter(is_daily_payment=False).count(),
         'cabinet_reset_url': reverse('app:cabinet_page'),
-        'cabinet_login_sort_url': get_cabinet_sort_url(search_query, has_active, has_inactive, without_active, no_services, tag_ids, current_sort, 'login', currency, balance_min, balance_max),
-        'cabinet_link_sort_url': get_cabinet_sort_url(search_query, has_active, has_inactive, without_active, no_services, tag_ids, current_sort, 'link', currency, balance_min, balance_max),
-        'cabinet_email_sort_url': get_cabinet_sort_url(search_query, has_active, has_inactive, without_active, no_services, tag_ids, current_sort, 'email_login', currency, balance_min, balance_max),
-        'cabinet_note_sort_url': get_cabinet_sort_url(search_query, has_active, has_inactive, without_active, no_services, tag_ids, current_sort, 'note', currency, balance_min, balance_max),
+        'cabinet_login_sort_url': get_cabinet_sort_url(search_query, has_active, has_inactive, without_active, no_services, daily_payment_yes, daily_payment_no, tag_ids, current_sort, 'login', currency, balance_min, balance_max),
+        'cabinet_link_sort_url': get_cabinet_sort_url(search_query, has_active, has_inactive, without_active, no_services, daily_payment_yes, daily_payment_no, tag_ids, current_sort, 'link', currency, balance_min, balance_max),
+        'cabinet_email_sort_url': get_cabinet_sort_url(search_query, has_active, has_inactive, without_active, no_services, daily_payment_yes, daily_payment_no, tag_ids, current_sort, 'email_login', currency, balance_min, balance_max),
+        'cabinet_note_sort_url': get_cabinet_sort_url(search_query, has_active, has_inactive, without_active, no_services, daily_payment_yes, daily_payment_no, tag_ids, current_sort, 'note', currency, balance_min, balance_max),
         'cabinet_services_sort_asc_url': build_cabinet_page_url(
             q=search_query,
             has_active=has_active,
             has_inactive=has_inactive,
             without_active=without_active,
             no_services=no_services,
+            daily_payment_yes=daily_payment_yes,
+            daily_payment_no=daily_payment_no,
             tag_ids=tag_ids,
             sort='services_asc',
             currency=currency,
@@ -557,6 +662,8 @@ def get_cabinet_sidebar_context(
             has_inactive=has_inactive,
             without_active=without_active,
             no_services=no_services,
+            daily_payment_yes=daily_payment_yes,
+            daily_payment_no=daily_payment_no,
             tag_ids=tag_ids,
             sort='services_desc',
             currency=currency,
@@ -569,6 +676,8 @@ def get_cabinet_sidebar_context(
             has_inactive=has_inactive,
             without_active=without_active,
             no_services=no_services,
+            daily_payment_yes=daily_payment_yes,
+            daily_payment_no=daily_payment_no,
             tag_ids=tag_ids,
             sort='balance_asc',
             currency=currency,
@@ -581,19 +690,22 @@ def get_cabinet_sidebar_context(
             has_inactive=has_inactive,
             without_active=without_active,
             no_services=no_services,
+            daily_payment_yes=daily_payment_yes,
+            daily_payment_no=daily_payment_no,
             tag_ids=tag_ids,
             sort='balance_desc',
             currency=currency,
             balance_min=balance_min,
             balance_max=balance_max,
         ),
-
         'cabinet_tags_sort_asc_url': build_cabinet_page_url(
             q=search_query,
             has_active=has_active,
             has_inactive=has_inactive,
             without_active=without_active,
             no_services=no_services,
+            daily_payment_yes=daily_payment_yes,
+            daily_payment_no=daily_payment_no,
             tag_ids=tag_ids,
             sort='tags_asc',
             currency=currency,
@@ -606,6 +718,8 @@ def get_cabinet_sidebar_context(
             has_inactive=has_inactive,
             without_active=without_active,
             no_services=no_services,
+            daily_payment_yes=daily_payment_yes,
+            daily_payment_no=daily_payment_no,
             tag_ids=tag_ids,
             sort='tags_desc',
             currency=currency,
@@ -675,9 +789,16 @@ def pay_new(request):
     else:
         if Cabinet.objects.all().count() > 0:
             lst_id = Cabinet.objects.all().last().id
-            form_pay = PayForm(initial={'cabinet': lst_id, 'create_date': context_dates['today']})
+            form_pay = PayForm(initial={
+                    'cabinet': lst_id,
+                    'create_date': context_dates['today'],
+                    'paid_up_to': add_one_month(context_dates['today']),
+                })
         else:
-            form_pay = PayForm()
+            form_pay = PayForm(initial={
+                'create_date': context_dates['today'],
+                'paid_up_to': add_one_month(context_dates['today']),
+            })
 
     content = {'form_pay': form_pay, 'group_options': group_options}
     content.update(context_dates)
@@ -876,6 +997,8 @@ def cabinet_page(request):
     has_inactive = request.GET.get('has_inactive') == '1'
     without_active = request.GET.get('without_active') == '1'
     no_services = request.GET.get('no_services') == '1'
+    daily_payment_yes = request.GET.get('daily_payment_yes') == '1'
+    daily_payment_no = request.GET.get('daily_payment_no') == '1'
     current_sort = (request.GET.get('sort') or '').strip()
     selected_currency = (request.GET.get('currency') or '').strip()
     balance_min_raw = (request.GET.get('balance_min') or '').strip()
@@ -938,12 +1061,15 @@ def cabinet_page(request):
     if no_services:
         selected_filter |= Q(services_count=0)
         has_any_filter = True
+    if daily_payment_yes:
+        selected_filter |= Q(is_daily_payment=True)
+        has_any_filter = True
+    if daily_payment_no:
+        selected_filter |= Q(is_daily_payment=False)
+        has_any_filter = True
 
     if has_any_filter:
         object_k = object_k.filter(selected_filter)
-
-    # if tag_ids:  # OR
-    #     object_k = object_k.filter(cabinet_tags__tag_id__in=tag_ids)
 
     if tag_ids:
         object_k = object_k.annotate(
@@ -998,6 +1124,8 @@ def cabinet_page(request):
         has_inactive=has_inactive,
         without_active=without_active,
         no_services=no_services,
+        daily_payment_yes=daily_payment_yes,
+        daily_payment_no=daily_payment_no,
         current_sort=current_sort,
         tag_ids=tag_ids,
         currency=selected_currency,
@@ -1067,7 +1195,6 @@ def searching(request, name):
     return render_pay_list(request, default_mode=default_mode, overrides={'q': q})
 
 
-
 @login_required
 def edit_dt(request, id):
     try:
@@ -1131,6 +1258,7 @@ def delete(request, id):
         return redirect('app:edit_page')
     except Pay.DoesNotExist:
         return HttpResponseNotFound('<h2>Pay not found</h2>')
+
 
 @login_required
 def tags_page(request):

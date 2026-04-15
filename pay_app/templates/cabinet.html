@@ -26,6 +26,8 @@
         {% if cabinet_has_inactive %}<input type="hidden" name="has_inactive" value="1">{% endif %}
         {% if cabinet_without_active %}<input type="hidden" name="without_active" value="1">{% endif %}
         {% if cabinet_no_services %}<input type="hidden" name="no_services" value="1">{% endif %}
+        {% if cabinet_daily_payment_yes %}<input type="hidden" name="daily_payment_yes" value="1">{% endif %}
+        {% if cabinet_daily_payment_no %}<input type="hidden" name="daily_payment_no" value="1">{% endif %}
         {% if cabinet_selected_currency %}<input type="hidden" name="currency" value="{{ cabinet_selected_currency }}">{% endif %}
         {% if cabinet_balance_min != '' %}<input type="hidden" name="balance_min" value="{{ cabinet_balance_min }}">{% endif %}
         {% if cabinet_balance_max != '' %}<input type="hidden" name="balance_max" value="{{ cabinet_balance_max }}">{% endif %}
@@ -73,6 +75,17 @@
         <label class="sidebar-checkbox">
           <input type="checkbox" name="has_inactive" value="1" {% if cabinet_has_inactive %}checked{% endif %}>
           <span>Є неактивні <strong>({{ cabinets_with_inactive }})</strong></span>
+        </label>
+
+        <h3 class="check-field-label">Поденна оплата</h3>
+        <label class="sidebar-checkbox">
+          <input type="checkbox" name="daily_payment_yes" value="1" {% if cabinet_daily_payment_yes %}checked{% endif %}>
+          <span>Так <strong>({{ cabinets_daily_payment_yes_count }})</strong></span>
+        </label>
+
+        <label class="sidebar-checkbox">
+          <input type="checkbox" name="daily_payment_no" value="1" {% if cabinet_daily_payment_no %}checked{% endif %}>
+          <span>Ні <strong>({{ cabinets_daily_payment_no_count }})</strong></span>
         </label>
 
         {% if cabinet_tag_options %}
@@ -123,7 +136,7 @@
     </section>
 
     <section class="sidebar-section sidebar-section--muted">
-      {% if cabinet_search_query or cabinet_has_active or cabinet_has_inactive or cabinet_without_active or cabinet_no_services or cabinet_sort or cabinet_selected_tags or cabinet_selected_currency or cabinet_balance_min != '' or cabinet_balance_max != '' %}
+      {% if cabinet_search_query or cabinet_has_active or cabinet_has_inactive or cabinet_without_active or cabinet_no_services or cabinet_daily_payment_yes or cabinet_daily_payment_no or cabinet_sort or cabinet_selected_tags or cabinet_selected_currency or cabinet_balance_min != '' or cabinet_balance_max != '' %}
          <div class="context-stack">
         <div class="context-stack">
           <span class="context-title">Поточний контекст</span>
@@ -142,10 +155,16 @@
           {% if cabinet_no_services %}
             <span class="context-chip">without services</span>
           {% endif %}
+          {% if cabinet_daily_payment_yes %}
+            <span class="context-chip">Поденна оплата: так</span>
+          {% endif %}
+          {% if cabinet_daily_payment_no %}
+            <span class="context-chip">Поденна оплата: ні</span>
+          {% endif %}
           {% for selected_tag in cabinet_selected_tags %}
             <span class="context-chip">Тег: {{ selected_tag.name }}</span>
           {% endfor %}
-                  {% if cabinet_selected_currency %}
+          {% if cabinet_selected_currency %}
             <span class="context-chip">Валюта: {{ cabinet_selected_currency }}</span>
           {% endif %}
           {% if cabinet_balance_min != '' %}

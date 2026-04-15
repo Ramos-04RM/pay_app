@@ -46,6 +46,7 @@
       {% if selected_pay_sys %}<input type="hidden" name="pay_sys" value="{{ selected_pay_sys }}">{% endif %}
       {% if selected_type_source %}<input type="hidden" name="type_source" value="{{ selected_type_source }}">{% endif %}
       {% for item in balance_gt_payment %}<input type="hidden" name="balance_gt_payment" value="{{ item }}">{% endfor %}
+      {% for item in daily_payment %}<input type="hidden" name="daily_payment" value="{{ item }}">{% endfor %}
 
       <div class="sidebar-button-group">
         <label class="sidebar-checkbox">
@@ -84,6 +85,7 @@
       {% if selected_pay_sys %}<input type="hidden" name="pay_sys" value="{{ selected_pay_sys }}">{% endif %}
       {% if selected_type_source %}<input type="hidden" name="type_source" value="{{ selected_type_source }}">{% endif %}
       {% for status in selected_statuses %}<input type="hidden" name="status" value="{{ status }}">{% endfor %}
+      {% for item in daily_payment %}<input type="hidden" name="daily_payment" value="{{ item }}">{% endfor %}
 
       <div class="sidebar-button-group">
         <label class="sidebar-checkbox">
@@ -93,6 +95,45 @@
 
         <label class="sidebar-checkbox">
           <input type="checkbox" name="balance_gt_payment" value="no" {% if pay_balance_gt_payment_no_selected %}checked{% endif %} onchange="this.form.submit()">
+          <span>Ні</span>
+        </label>
+      </div>
+    </form>
+  </section>
+
+  <section class="sidebar-section">
+    <h5 class="check-field-label">Поденна оплата</h5>
+    <form
+      method="get"
+      action="{{ pay_list_base_url|default:'/' }}"
+      class="sidebar-form"
+      id="pay-daily-payment-filter-form">
+      <input type="hidden" name="mode" value="{{ pay_current_mode|default:'all' }}">
+      {% if pay_search_query %}<input type="hidden" name="q" value="{{ pay_search_query }}">{% endif %}
+      {% if pay_sort %}<input type="hidden" name="sort" value="{{ pay_sort }}">{% endif %}
+      {% if selected_pay_sys %}<input type="hidden" name="pay_sys" value="{{ selected_pay_sys }}">{% endif %}
+      {% if selected_type_source %}<input type="hidden" name="type_source" value="{{ selected_type_source }}">{% endif %}
+      {% for status in selected_statuses %}<input type="hidden" name="status" value="{{ status }}">{% endfor %}
+      {% for item in balance_gt_payment %}<input type="hidden" name="balance_gt_payment" value="{{ item }}">{% endfor %}
+
+      <div class="sidebar-button-group">
+        <label class="sidebar-checkbox">
+          <input
+            type="checkbox"
+            name="daily_payment"
+            value="yes"
+            {% if pay_daily_payment_yes_selected %}checked{% endif %}
+            onchange="this.form.submit()">
+          <span>Так</span>
+        </label>
+
+        <label class="sidebar-checkbox">
+          <input
+            type="checkbox"
+            name="daily_payment"
+            value="no"
+            {% if pay_daily_payment_no_selected %}checked{% endif %}
+            onchange="this.form.submit()">
           <span>Ні</span>
         </label>
       </div>
@@ -113,6 +154,9 @@
       {% for item in balance_gt_payment %}
         <input type="hidden" name="balance_gt_payment" value="{{ item }}">
       {% endfor %}
+      {% for item in daily_payment %}
+        <input type="hidden" name="daily_payment" value="{{ item }}">
+      {% endfor %}
 
       <h5 class="check-field-label">Пошук</h5>
       <label>
@@ -127,7 +171,7 @@
     </form>
   </section>
 
-    {% if pay_current_mode != 'all' or pay_search_query or selected_pay_sys or selected_type_source or balance_gt_payment or pay_sort != 'id_asc' %}
+    {% if pay_current_mode != 'all' or pay_search_query or selected_pay_sys or selected_type_source or balance_gt_payment or daily_payment or pay_sort != 'id_asc' %}
       <a href="{{ pay_reset_url|default:'/' }}" class="btn_pay_red btn-linklike">Reset filters</a>
     {% endif %}
 

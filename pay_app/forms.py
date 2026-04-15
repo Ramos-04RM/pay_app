@@ -16,6 +16,7 @@ class PayForm(ModelForm):
             'autocomplete': 'off',
             'placeholder': 'Натисніть ↓ для вибору зі списку',
         })
+        self.fields['cabinet'].queryset = Cabinet.objects.order_by('id')
 
     class Meta:
         model = Pay
