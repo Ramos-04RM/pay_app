@@ -1,0 +1,28 @@
+{% extends 'layouts/base.html' %}
+{% block content %}
+  {% url 'app:index' as app_index_url %}
+  {% url 'app:cabinet_page' as cabinet_page_url %}
+  {% url 'app:tags_page' as tags_page_url %}
+  {% url 'app:statistics' as statistics_url %}
+  {% if request.user.is_authenticated %}
+    <div class="page-shell page-shell--wide">
+      <header class="page-header-card">
+        <div class="page-header-row page-header-row--top">
+          <div><p class="eyebrow">Pay app</p><h1 class="page-title">Сервіси та кабінети</h1></div>
+          <nav class="toolbar-nav" aria-label="Навігація по застосунку">
+            <a href="{{ app_index_url }}" class="btn_pay btn-linklike {% if request.path == app_index_url %}is-selected{% endif %}">Сервіси</a>
+            <a href="{{ cabinet_page_url }}" class="btn_pay btn-linklike {% if request.path == cabinet_page_url %}is-selected{% endif %}">Кабінети</a>
+            <a href="{{ tags_page_url }}" class="btn_pay btn-linklike {% if request.path == tags_page_url %}is-selected{% endif %}">Теги</a>
+            <a href="{{ statistics_url }}" class="btn_pay btn-linklike {% if request.path == statistics_url %}is-selected{% endif %}">Statistics</a>
+          </nav>
+        </div>
+      </header>
+      <div class="workspace">
+        <aside class="workspace__sidebar">{% block sidebar %}{% endblock %}</aside>
+        <section class="workspace__content">{% block table %}{% endblock %}{% block edit_forms %}{% endblock %}{% block cabinet %}{% endblock %}</section>
+      </div>
+    </div>
+  {% else %}
+    <div class="auth-warning-shell"><a href="{% url 'login' %}" class="auth-warning"><span class="btn_pay">Ввійти</span></a></div>
+  {% endif %}
+{% endblock %}

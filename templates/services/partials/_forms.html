@@ -1,0 +1,55 @@
+{% if form_edit_pay %}
+  <section class="page-section-card">
+    <div class="page-header-row page-header-row--compact">
+      <div>
+        <p class="eyebrow">Редагування</p>
+        <h2 class="section-title">Сервіс і повʼязаний кабінет</h2>
+      </div>
+    </div>
+
+    <div class="forms-grid">
+      <form method="POST" class="form_cabinet form-card">
+        {% csrf_token %}
+        <div class="form-card__header">
+          <h3 class="form-section-title">Сервіс</h3>
+        </div>
+        <ul class="form-list">
+          {% for field in form_edit_pay %}
+            <li class="form-field">
+              {{ field.label_tag }}
+
+              {% if field.name == 'cabinet' %}
+                <div class="field-with-link">
+                  {{ field }}
+                  <a
+                    class="btn_pay field-link-button"
+                    href="{% url 'app:cabinet_page' %}?highlight={{ form_edit_pay.instance.cabinet.id }}#cabinet-{{ form_edit_pay.instance.cabinet.id }}">
+                    →
+                  </a>
+                </div>
+              {% else %}
+                {{ field }}
+              {% endif %}
+
+              {{ field.errors }}
+            </li>
+          {% endfor %}
+        </ul>
+        <div class="page-actions">
+          <button type="submit" class="btn_add">Save</button>
+        </div>
+      </form>
+
+      <form method="POST" class="form_cabinet form-card">
+        {% csrf_token %}
+        <div class="form-card__header">
+          <h3 class="form-section-title">Кабінет</h3>
+        </div>
+        <div class="form-as-list">{{ form_edit_cabinet.as_ul }}</div>
+        <div class="page-actions">
+          <button type="submit" class="btn_pay">Save</button>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endif %}
