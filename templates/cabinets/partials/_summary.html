@@ -1,0 +1,143 @@
+{% if not form_edit_pay and cabinet_obj %}
+  <section class="summary-card">
+    {% for j in cabinet_obj %}
+      <header class="summary-card__header">
+        <div>
+          <p class="eyebrow">Повʼязаний кабінет</p>
+          <h2 class="section-title">{{ j.service }}</h2>
+        </div>
+        <a href="{% url 'app:cabinet_page' %}?highlight={{ j.cabinet.id }}#cabinet-{{ j.cabinet.id }}" class="btn_pay btn-linklike">
+          Кабінет №{{ j.cabinet.id }}
+        </a>
+      </header>
+
+      <dl class="detail-grid">
+        <div class="detail-row">
+          <dt>Логін</dt>
+          <dd>
+            {% if j.cabinet.login %}
+              <span
+                class="copy-inline-btn"
+                data-action="copy-text"
+                data-copy-text="{{ j.cabinet.login }}"
+                title="Скопіювати логін"
+                role="button"
+                tabindex="0">{{ j.cabinet.login }}</span>
+            {% else %}
+              -
+            {% endif %}
+          </dd>
+        </div>
+
+        <div class="detail-row">
+          <dt>Посилання</dt>
+          <dd>
+            {% if j.cabinet.link %}
+              <span
+                class="copy-inline-btn"
+                data-action="copy-text"
+                data-copy-text="{{ j.cabinet.link }}"
+                title="Скопіювати посилання"
+                role="button"
+                tabindex="0">{{ j.cabinet.link }}</span>
+            {% else %}
+              -
+            {% endif %}
+          </dd>
+        </div>
+
+        <div class="detail-row">
+          <dt>Пароль</dt>
+          <dd class="detail-row__value detail-row__value--warning">
+            <div class="masked-cell__content">
+              <button
+                type="button"
+                class="btn_pay_yellow icon-btn js-decrypt-btn"
+                id="cabinet-password-btn-{{ j.cabinet.id }}"
+                data-action="decrypt-copy"
+                data-id="{{ j.cabinet.id }}"
+                data-model="cabinet"
+                data-field="password"
+                data-show-label="Показати та скопіювати пароль"
+                data-hide-label="Сховати пароль">
+                <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+  <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+</svg>
+                <span class="visually-hidden">Показати та скопіювати пароль</span>
+              </button>
+              <span
+                id="cabinet-password-val-{{ j.cabinet.id }}"
+                data-visible="0"
+                data-decrypted=""
+                class="masked-value">
+                *****
+              </span>
+            </div>
+          </dd>
+        </div>
+
+        <div class="detail-row">
+          <dt>Email</dt>
+          <dd>
+            {% if j.cabinet.email_login %}
+              <span
+                class="copy-inline-btn"
+                data-action="copy-text"
+                data-copy-text="{{ j.cabinet.email_login }}"
+                title="Скопіювати email"
+                role="button"
+                tabindex="0">{{ j.cabinet.email_login }}</span>
+            {% else %}
+              -
+            {% endif %}
+          </dd>
+        </div>
+
+        <div class="detail-row">
+          <dt>Email password</dt>
+          <dd class="detail-row__value detail-row__value--warning">
+            <div class="masked-cell__content">
+              <button
+                type="button"
+                class="btn_pay_yellow icon-btn js-decrypt-btn"
+                id="cabinet-email_password-btn-{{ j.cabinet.id }}"
+                data-action="decrypt-copy"
+                data-id="{{ j.cabinet.id }}"
+                data-model="cabinet"
+                data-field="email_password"
+                data-show-label="Показати та скопіювати email password"
+                data-hide-label="Сховати email password">
+                <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+  <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+</svg>
+                <span class="visually-hidden">Показати та скопіювати email password</span>
+              </button>
+              <span
+                id="cabinet-email_password-val-{{ j.cabinet.id }}"
+                data-visible="0"
+                data-decrypted=""
+                class="masked-value">
+                *****
+              </span>
+            </div>
+          </dd>
+        </div>
+
+        <div class="detail-row">
+          <dt>Баланс</dt>
+          <dd>{{ j.cabinet.balance|default_if_none:0|floatformat:1 }} {{ j.cabinet.currency|default:'' }}</dd>
+        </div>
+
+
+        <div class="detail-row detail-row--full">
+          <dt>Примітки</dt>
+          <dd>{{ j.cabinet.note|default:'-' }}</dd>
+        </div>
+
+
+      </dl>
+    {% endfor %}
+  </section>
+{% endif %}
