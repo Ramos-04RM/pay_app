@@ -24,13 +24,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'crispy_forms',
     'pay_app.apps.PayAppConfig',
-    'apps.core.apps.CoreConfig',
-    'apps.common.apps.CommonConfig',
-    'apps.services.apps.ServicesConfig',
-    'apps.cabinets.apps.CabinetsConfig',
-    'apps.tags.apps.TagsConfig',
-    'apps.statistics.apps.StatisticsConfig',
-    'apps.security.apps.SecurityConfig',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
@@ -59,7 +52,7 @@ ROOT_URLCONF = 'd1.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -76,9 +69,17 @@ WSGI_APPLICATION = 'd1.wsgi.application'
 
 if env_bool('USE_SQLITE', default=DEBUG):
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+        # 'default': {  # for local sqllite
+        #     'ENGINE': 'django.db.backends.sqlite3',
+        #     'NAME': BASE_DIR / 'db.sqlite3',
+        # }
+        "default": {
+            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "NAME": "app_pay_db",  # 'app_pay_db_after_backup'
+            "USER":  "admin",
+            "PASSWORD": "admin", # "fR1209Gd@kl#12",
+            "HOST": "127.0.0.1",
+            "PORT": "5433" # "5432"
         }
     }
 else:
@@ -87,9 +88,9 @@ else:
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
             'NAME': os.getenv('POSTGRES_DB', 'app_pay_db'),
             'USER': os.getenv('POSTGRES_USER', 'admin'),
-            'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'admin'),
             'HOST': os.getenv('POSTGRES_HOST', '127.0.0.1'),
-            'PORT': os.getenv('POSTGRES_PORT', '5432'),
+            'PORT': os.getenv('POSTGRES_PORT', '5433'),
         }
     }
 
