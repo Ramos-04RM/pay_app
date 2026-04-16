@@ -1,8 +1,8 @@
-from django.contrib.auth.models import User
 from django.db import models
 import datetime
 import calendar
-import cryptocode
+
+from .security import encrypt_value
 
 
 def add_one_month(value):
@@ -52,9 +52,8 @@ class Pay(models.Model):
     note_pay = models.CharField(max_length=340, blank=True, null=True, verbose_name='Примітка')
 
     def save(self, *args, **kwargs):
-        user_psw = User.objects.get(username='admin').password
-        self.password = cryptocode.encrypt(self.password, user_psw)
-        self.email_login = cryptocode.encrypt(self.email_login, user_psw)
+        self.password = encrypt_value(self.password)
+        self.email_login = encrypt_value(self.email_login)
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -76,9 +75,8 @@ class Cabinet(models.Model):
     note = models.CharField(max_length=340, null=True, blank=True, verbose_name='Примітка')
 
     def save(self, *args, **kwargs):
-        user_psw = User.objects.get(username='admin').password
-        self.password = cryptocode.encrypt(self.password, user_psw)
-        self.email_password = cryptocode.encrypt(self.email_password, user_psw)
+        self.password = encrypt_value(self.password)
+        self.email_password = encrypt_value(self.email_password)
         super().save(*args, **kwargs)
 
     def __str__(self):

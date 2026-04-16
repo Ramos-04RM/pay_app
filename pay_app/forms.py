@@ -1,3 +1,5 @@
+from decimal import Decimal, InvalidOperation
+
 from django.forms import ModelForm
 from django import forms
 from pay_app.models import Pay, Cabinet, Tag
@@ -17,6 +19,17 @@ class PayForm(ModelForm):
             'placeholder': 'Натисніть ↓ для вибору зі списку',
         })
         self.fields['cabinet'].queryset = Cabinet.objects.order_by('id')
+
+
+    def clean_price_per_month(self):
+        raw_value = self.cleaned_data.get('price_per_month')
+        try:
+            value = Decimal(str(raw_value)).quantize(Decimal('0.01'))
+        except (InvalidOperation, TypeError, ValueError):
+            raise forms.ValidationError('Вкажіть коректну суму.')
+        if value <= 0:
+            raise forms.ValidationError('Сума має бути більшою за 0.')
+        return float(value)
 
     class Meta:
         model = Pay

@@ -4,6 +4,7 @@ from pay_app import views
 app_name = "app"
 
 urlpatterns = [
+    path("healthz/", views.healthz, name="healthz"),
     path("", views.home_page, name="index"),
     path("cabinet/<int:id>", views.home_page_with_cabinet, name="home_page_with_cabinet"),
     path("cabinet/", views.cabinet_page, name="cabinet_page"),

@@ -1,15 +1,15 @@
 import json
 import calendar
 import datetime
-import cryptocode
+import logging
 from decimal import Decimal
 from urllib.parse import urlencode
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.db.models import Q, Count, F, Value, DecimalField, Sum
 from django.db.models.functions import Coalesce
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseNotFound, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -17,7 +17,10 @@ from django.views.decorators.http import require_POST
 
 from .forms import PayForm, CabinetForm, TagForm, CabinetTagAssignForm
 from .models import Pay, Cabinet, Tag, CabinetTag
+from .security import decrypt_value
 
+
+logger = logging.getLogger(__name__)
 
 PAY_MODE_ALL = 'all'
 PAY_MODE_UPCOMING = 'upcoming'
@@ -846,11 +849,14 @@ def decrypt_item(request):
     if not encrypted_value:
         return JsonResponse({'error': 'Empty value'}, status=400)
 
-    user_psw = User.objects.get(username='admin').password
-    decrypted_value = cryptocode.decrypt(encrypted_value, user_psw)
+    if not (request.user.is_staff or request.user.is_superuser):
+        raise PermissionDenied('You do not have permission to decrypt secrets.')
+
+    decrypted_value = decrypt_value(encrypted_value)
     if decrypted_value is False or decrypted_value is None or decrypted_value == '':
         return JsonResponse({'error': 'Decryption failed'}, status=400)
 
+    logger.info('secret_decrypt user=%s model=%s object_id=%s field=%s', request.user.id, model, obj_id, field)
     return JsonResponse({'value': decrypted_value})
 
 
@@ -958,9 +964,8 @@ def cabinet_new(request):
 @login_required
 def cabinet_edit(request, id):
     post = get_object_or_404(Cabinet, pk=id)
-    user_psw = User.objects.get(username='admin').password
-    post.password = cryptocode.decrypt(post.password, user_psw)
-    post.email_password = cryptocode.decrypt(post.email_password, user_psw)
+    post.password = decrypt_value(post.password)
+    post.email_password = decrypt_value(post.email_password)
 
     selected_tag_ids = list(
         CabinetTag.objects.filter(cabinet=post).values_list('tag_id', flat=True)
@@ -1262,11 +1267,10 @@ def pay_edit(request, id):
     id_pay = Cabinet.objects.get(pay__id=id).id
     post_cabinet = get_object_or_404(Cabinet, pk=id_pay)
 
-    user_psw = User.objects.get(username='admin').password
-    post.password = cryptocode.decrypt(post.password, user_psw)
-    post.email_login = cryptocode.decrypt(post.email_login, user_psw)
-    post_cabinet.password = cryptocode.decrypt(post_cabinet.password, user_psw)
-    post_cabinet.email_password = cryptocode.decrypt(post_cabinet.email_password, user_psw)
+    post.password = decrypt_value(post.password)
+    post.email_login = decrypt_value(post.email_login)
+    post_cabinet.password = decrypt_value(post_cabinet.password)
+    post_cabinet.email_password = decrypt_value(post_cabinet.email_password)
 
     if request.method == 'POST':
         form_edit_pay = PayForm(request.POST, instance=post)
@@ -1515,9 +1519,8 @@ def searching(request, name):
 def edit_dt(request, id):
     try:
         item = Pay.objects.get(id=id)
-        user_psw = User.objects.get(username='admin')
-        item.password = cryptocode.decrypt(item.password, user_psw.password)
-        item.email_login = cryptocode.decrypt(item.email_login, user_psw.password)
+        item.password = decrypt_value(item.password)
+        item.email_login = decrypt_value(item.email_login)
         if request.method == 'POST':
             item.paid_up_to = request.POST.get('paid_up_to')
             item.save()
@@ -1543,9 +1546,8 @@ def edit_page(request):
 def edit_table(request, id):
     try:
         item = Pay.objects.get(id=id)
-        user_psw = User.objects.get(username='admin')
-        item.password = cryptocode.decrypt(item.password, user_psw.password)
-        item.email_login = cryptocode.decrypt(item.email_login, user_psw.password)
+        item.password = decrypt_value(item.password)
+        item.email_login = decrypt_value(item.email_login)
         if request.method == 'POST':
             item.groups = request.POST.get('groups')
             item.service = request.POST.get('service')
@@ -1646,3 +1648,7 @@ def delete_cabinet(request, id):
         return HttpResponseNotFound('<h2>Дане поле неможливо видалити!! Поле зв\\\'язане із елементом у іншій таблиці</h2>')
     except Cabinet.DoesNotExist:
         return HttpResponseNotFound('<h2>Pay not found</h2>')
+
+
+def healthz(request):
+    return JsonResponse({'status': 'ok'})
