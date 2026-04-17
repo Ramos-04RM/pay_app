@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load crispy_forms_filters %}
+{% load static %}
+
+{% block title %}
+  <title>Login</title>
+{% endblock %}
+
+
+{% block content %}
+  <div class="auth-shell">
+    <div class="login-card">
+      <div class="login-card__header">
+        <p class="eyebrow">Pay app</p>
+        <h1 class="page-title page-title--sm">Вхід до системи</h1>
+
+        {% if form.errors %}
+          <div class="status-banner status-banner--danger" role="alert">
+            Невірний логін або пароль. Спробуйте ще раз.
+          </div>
+        {% else %}
+          <p class="page-subtitle">Введіть логін і пароль, щоб продовжити роботу.</p>
+        {% endif %}
+
+        {% if next %}
+          {% if user.is_authenticated %}
+            <div class="status-banner status-banner--warning">
+              Ваш обліковий запис не має доступу до цієї сторінки. Увійдіть під користувачем із потрібними правами.
+            </div>
+          {% else %}
+            <div class="status-banner status-banner--info">
+              Увійдіть, щоб переглянути цю сторінку.
+            </div>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      <form method="post" action="{% url 'login' %}" class="form_login form-card form-card--flat">
+        {% csrf_token %}
+
+        <div class="form-list form-list--stacked">
+          <div class="form-field">
+            <label for="{{ form.username.id_for_label }}">Username</label>
+            {{ form.username }}
+            {{ form.username.errors }}
+          </div>
+
+          <div class="form-field">
+            <label for="{{ form.password.id_for_label }}">Password</label>
+            {{ form.password }}
+            {{ form.password.errors }}
+          </div>
+        </div>
+
+        <button class="btn_pay btn_pay--wide" type="submit" value="login" id="login-button">Login</button>
+        <input type="hidden" name="next" value="{{ next }}">
+      </form>
+
+      <div class="login-card__footer">
+        <a href="{% url 'password_reset' %}" class="text-link">Lost password?</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block cabinet %}{% endblock %}
