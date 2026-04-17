@@ -4,10 +4,8 @@ from math import floor
 
 from django.utils import timezone
 
-from .models import Cabinet, Pay
-
-
-DAILY_DIVISOR = Decimal('27')
+from ..models import Cabinet, Pay
+from .constants import DAILY_DIVISOR
 
 
 def recalculate_cabinet_paid_up_to(cabinet_id: int) -> None:
