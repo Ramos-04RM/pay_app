@@ -1,15 +1,20 @@
 {% extends 'index.html' %}
+{% load i18n %}
 
 {% block title %}
-  <title>Теги</title>
+  <title>{% trans "Tags" %}</title>
+{% endblock %}
+
+{% block sidebar %}
+  {% include 'partials/_tags_sidebar.html' %}
 {% endblock %}
 
 {% block table %}
   <section class="table-card table-card--wide">
     <div class="table-card__header">
       <div class="section-title-row">
-        <h2 class="section-title">Теги</h2>
-        <a href="{% url 'app:tag_create' %}" class="btn_pay btn-linklike">Додати тег</a>
+        <h2 class="section-title">{% trans "Tags" %}</h2>
+        <a href="{% url 'app:tag_create' %}" class="btn_pay btn-linklike">{% trans "Add tag" %}</a>
       </div>
     </div>
 
@@ -18,10 +23,10 @@
         <thead>
           <tr>
             <th>#</th>
-            <th>Назва тегу</th>
-            <th>Примітка</th>
-            <th>К-сть кабінетів</th>
-            <th>Дії</th>
+            <th>{% trans "Tag name" %}</th>
+            <th>{% trans "Note" %}</th>
+            <th>{% trans "Cabinets count" %}</th>
+            <th>{% trans "Actions" %}</th>
           </tr>
         </thead>
         <tbody>
@@ -32,13 +37,13 @@
               <td>{{ tag.note|default:'-' }}</td>
               <td>{{ tag.cabinets_count }}</td>
               <td>
-                <a href="{% url 'app:tag_edit' tag.id %}" class="btn_pay btn-linklike">Редагувати</a>
-                <a href="{% url 'app:tag_delete' tag.id %}" class="btn_pay_red btn-linklike">Видалити</a>
+                <a href="{% url 'app:tag_edit' tag.id %}" class="btn_pay btn-linklike">{% trans "Edit" %}</a>
+                <a href="{% url 'app:tag_delete' tag.id %}" class="btn_pay_red btn-linklike">{% trans "Delete" %}</a>
               </td>
             </tr>
           {% empty %}
             <tr>
-              <td colspan="5" class="table-empty">Тегів ще немає.</td>
+              <td colspan="5" class="table-empty">{% trans "No tags yet." %}</td>
             </tr>
           {% endfor %}
         </tbody>

@@ -31,6 +31,7 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django_session_timeout.middleware.SessionTimeoutMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -60,6 +61,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.i18n',
             ],
         },
     },
@@ -69,18 +71,18 @@ WSGI_APPLICATION = 'd1.wsgi.application'
 
 if env_bool('USE_SQLITE', default=DEBUG):
     DATABASES = {
-        # 'default': {  # for local sqllite
-        #     'ENGINE': 'django.db.backends.sqlite3',
-        #     'NAME': BASE_DIR / 'db.sqlite3',
-        # }
-        "default": {
-            "ENGINE": "django.db.backends.postgresql_psycopg2",
-            "NAME": "app_pay_db",  # 'app_pay_db_after_backup'
-            "USER":  "admin",
-            "PASSWORD": "admin", # "fR1209Gd@kl#12",
-            "HOST": "127.0.0.1",
-            "PORT": "5433" # "5432"
+        'default': {  # for local sqllite
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
+        # "default": {
+        #     "ENGINE": "django.db.backends.postgresql_psycopg2",
+        #     "NAME": "app_pay_db",
+        #     "USER":  "admin",
+        #     "PASSWORD": "admin",
+        #     "HOST": "127.0.0.1",
+        #     "PORT": "5433"
+        # }
     }
 else:
     DATABASES = {
@@ -104,8 +106,19 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
-USE_L10N = True
+USE_L10N = False
 USE_TZ = True
+
+DATE_FORMAT = 'Y-m-d'
+TIME_FORMAT = 'H:i:s'
+DATETIME_FORMAT = 'Y-m-d H:i:s'
+
+LOCALE_PATHS = [BASE_DIR / 'locale']
+
+LANGUAGES = [
+    ('uk', 'Українська'),
+    ('en', 'English'),
+]
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'

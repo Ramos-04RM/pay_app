@@ -1,0 +1,673 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-18 11:48+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: uk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: pay_app/templates/index.html:22
+msgid "Payment control system"
+msgstr "Система контролю оплат"
+
+#: pay_app/templates/index.html:23
+msgid "Unified space for managing payments, services and related cabinets."
+msgstr ""
+"Єдиний простір для керування оплатами, сервісами та пов'язаними кабінетами."
+
+#: pay_app/templates/index.html:27
+msgid "Navigation through the application"
+msgstr "Навігація по застосунку"
+
+#: pay_app/templates/index.html:31 pay_app/templates/partials/_pay_table.html:7
+#: pay_app/templates/cabinet.html:250
+msgid "Services"
+msgstr "Сервіси"
+
+#: pay_app/templates/index.html:36 pay_app/templates/cabinet.html:189
+msgid "Cabinets"
+msgstr "Кабінети"
+
+#: pay_app/templates/index.html:41 pay_app/templates/cabinet.html:267
+#: pay_app/templates/tags/tag_list.html:6
+msgid "Tags"
+msgstr "Теги"
+
+#: pay_app/templates/index.html:46 pay_app/templates/statistics.html:86
+msgid "Statistics"
+msgstr "Статистика"
+
+#: pay_app/templates/index.html:52 pay_app/templates/tags/tag_list.html:26
+msgid "Edit"
+msgstr "Редагувати"
+
+#: pay_app/templates/index.html:56
+msgid "Logout"
+msgstr "Вийти"
+
+#: pay_app/templates/index.html:69
+msgid ", you are authorized"
+msgstr ", ви авторизовані"
+
+#: pay_app/templates/index.html:100
+msgid "You are not authorized."
+msgstr "Ви не авторизовані."
+
+#: pay_app/templates/index.html:101
+msgid "Log in to view and edit data."
+msgstr "Увійдіть, щоб переглядати та редагувати дані."
+
+#: pay_app/templates/partials/_pay_table.html:34
+#: pay_app/templates/cabinet.html:208
+#: pay_app/templates/partials/_cabinet_summary.html:17
+msgid "Login"
+msgstr "Логін"
+
+#: pay_app/templates/statistics.html:10
+msgid "Statistics filters"
+msgstr "Фільтри статистики"
+
+#: pay_app/templates/statistics.html:13
+msgid "Currency"
+msgstr "Валюта"
+
+#: pay_app/templates/statistics.html:15
+msgid "All"
+msgstr "Всі"
+
+#: pay_app/templates/statistics.html:22
+msgid "Status"
+msgstr "Статус"
+
+#: pay_app/templates/statistics.html:24
+msgid "active"
+msgstr "активний"
+
+#: pay_app/templates/statistics.html:25
+msgid "not active"
+msgstr "не активний"
+
+#: pay_app/templates/statistics.html:31
+#: pay_app/templates/partials/_pay_table.html:25
+msgid "Group"
+msgstr "Група"
+
+#: pay_app/templates/statistics.html:40
+msgid "Cabinet"
+msgstr "Кабінет"
+
+#: pay_app/templates/statistics.html:53
+msgid "Period"
+msgstr "Період"
+
+#: pay_app/templates/statistics.html:55
+msgid "Current month"
+msgstr "Поточний місяць"
+
+#: pay_app/templates/statistics.html:56
+msgid "Current year"
+msgstr "Поточний рік"
+
+#: pay_app/templates/statistics.html:57
+msgid "Last 12 months"
+msgstr "Останні 12 місяців"
+
+#: pay_app/templates/statistics.html:58
+msgid "Custom range"
+msgstr "Діапазон користувача"
+
+#: pay_app/templates/statistics.html:64
+msgid "Start"
+msgstr "Початок"
+
+#: pay_app/templates/statistics.html:68
+msgid "End"
+msgstr "Кінець"
+
+#: pay_app/templates/statistics.html:75
+msgid "Apply"
+msgstr "Застосувати"
+
+#: pay_app/templates/statistics.html:76
+msgid "Reset"
+msgstr "Скинути"
+
+#: pay_app/templates/statistics.html:87
+msgid "Period:"
+msgstr "Період:"
+
+#: pay_app/templates/statistics.html:89
+msgid ""
+"Operational dashboard based on current services state and projected "
+"recurring monthly cost from active services. No payment history is "
+"reconstructed."
+msgstr ""
+"Операційна панель на основі поточного стану сервісів та прогнозованих "
+"повторюваних місячних витрат від активних сервісів. Історія платежів не "
+"відновлюється."
+
+#: pay_app/templates/statistics.html:92
+msgid "Active services"
+msgstr "Активні сервіси"
+
+#: pay_app/templates/statistics.html:97
+msgid "Inactive services"
+msgstr "Неактивні сервіси"
+
+#: pay_app/templates/statistics.html:100
+msgid "Expired services"
+msgstr "Прострочені сервіси"
+
+#: pay_app/templates/statistics.html:104
+msgid "Expiring in 7 days"
+msgstr "Завершуються через 7 днів"
+
+#: pay_app/templates/statistics.html:108
+msgid "Expiring in 30 days"
+msgstr "Завершуються через 30 днів"
+
+#: pay_app/templates/statistics.html:112
+msgid "Cabinets in scope"
+msgstr "Кабінетів в вибірці"
+
+#: pay_app/templates/statistics.html:121
+msgid "monthly burn"
+msgstr "місячний витрата"
+
+#: pay_app/templates/statistics.html:122
+msgid "Annualized:"
+msgstr "Річна сума:"
+
+#: pay_app/templates/statistics.html:125
+msgid "No active services for monthly burn in current scope."
+msgstr "Немає активних сервісів для місячних витрат в поточній області."
+
+#: pay_app/templates/statistics.html:132
+msgid "Monthly burn by month"
+msgstr "Місячні витрати по місяцях"
+
+#: pay_app/templates/statistics.html:139
+msgid "No trend points for selected period."
+msgstr "Немає точок тренду для вибраного періоду."
+
+#: pay_app/templates/statistics.html:145
+msgid "Cost distribution by group"
+msgstr "Розподіл витрат по групах"
+
+#: pay_app/templates/statistics.html:152
+msgid "No active group costs in current scope."
+msgstr "Немає активних групових витрат в поточній області."
+
+#: pay_app/templates/statistics.html:158
+msgid "Top cabinets by monthly cost"
+msgstr "Топ кабінетів за місячною вартістю"
+
+#: pay_app/templates/statistics.html:165
+msgid "No cabinet ranking available."
+msgstr "Немає рейтингу кабінетів."
+
+#: pay_app/templates/statistics.html:171
+msgid "Renewal / expiry pipeline"
+msgstr "Конвеєр поновлення / завершення"
+
+#: pay_app/templates/statistics.html:182
+msgid "Status mix"
+msgstr "Змішаний статус"
+
+#: pay_app/templates/statistics.html:194
+msgid "Drill-down details"
+msgstr "Деталі деталізації"
+
+#: pay_app/templates/statistics.html:196
+msgid "Clear drill-down"
+msgstr "Очистити деталізацію"
+
+#: pay_app/templates/statistics.html:203
+msgid "ID"
+msgstr "ID"
+
+#: pay_app/templates/statistics.html:204
+msgid "Service"
+msgstr "Сервіс"
+
+#: pay_app/templates/statistics.html:207
+msgid "Price / month"
+msgstr "Ціна / місяць"
+
+#: pay_app/templates/statistics.html:208
+#: pay_app/templates/partials/_pay_table.html:33
+msgid "Paid up to"
+msgstr "Оплачено до"
+
+#: pay_app/templates/statistics.html:209
+msgid "Days to expiry"
+msgstr "Днів до завершення"
+
+#: pay_app/templates/statistics.html:210
+msgid "Open"
+msgstr "Відкрити"
+
+#: pay_app/templates/statistics.html:227
+msgid "No detail rows in current scope."
+msgstr "Немає рядків деталей в поточній області."
+
+#: pay_app/models.py:44
+msgid "Monthly fee"
+msgstr "Місячна плата"
+
+#: pay_app/models.py:46 pay_app/templates/partials/_pay_table.html:32
+#: pay_app/templates/partials/_pay_sidebar.html:21
+msgid "Payment system"
+msgstr "Платіжна система"
+
+#: pay_app/models.py:50 pay_app/templates/partials/_pay_table.html:36
+#: pay_app/templates/cabinet.html:222
+#: pay_app/templates/partials/_cabinet_summary.html:41
+msgid "Password"
+msgstr "Пароль"
+
+#: pay_app/models.py:51 pay_app/templates/partials/_pay_table.html:35
+msgid "IP/Port"
+msgstr "IP/Порт"
+
+#: pay_app/models.py:52 pay_app/templates/partials/_pay_table.html:37
+#: pay_app/templates/partials/_cabinet_summary.html:94
+#: pay_app/templates/tags/tag_list.html:18
+msgid "Note"
+msgstr "Примітка"
+
+#: pay_app/models.py:60
+msgid "Date created"
+msgstr "Дата створення"
+
+#: pay_app/models.py:62 pay_app/templates/partials/_pay_table.html:28
+#: pay_app/templates/partials/_pay_sidebar.html:29
+msgid "Resource type"
+msgstr "Тип ресурсу"
+
+#: pay_app/models.py:75 pay_app/templates/cabinet.html:215
+#: pay_app/templates/partials/_cabinet_summary.html:29
+msgid "Link"
+msgstr "Посилання"
+
+#: pay_app/models.py:76 pay_app/templates/cabinet.html:257
+#: pay_app/templates/partials/_cabinet_summary.html:88
+msgid "Balance"
+msgstr "Баланс"
+
+#: pay_app/models.py:77 pay_app/templates/partials/_pay_sidebar.html:85
+msgid "Daily payment"
+msgstr "Поденна оплата"
+
+#: pay_app/models.py:89 pay_app/templates/tags/tag_list.html:17
+msgid "Tag name"
+msgstr "Назва тегу"
+
+#: pay_app/models.py:90
+msgid "Description"
+msgstr "Опис"
+
+#: pay_app/models.py:99
+msgid "Tag"
+msgstr "Тег"
+
+#: pay_app/templates/partials/_pay_table.html:9
+#: pay_app/templates/cabinet.html:190
+msgid "Found:"
+msgstr "Знайдено:"
+
+#: pay_app/templates/partials/_pay_table.html:18
+#: pay_app/templates/cabinet.html:201
+msgid "Scroll the table horizontally"
+msgstr "Гортайте таблицю по горизонталі"
+
+#: pay_app/templates/partials/_pay_table.html:26
+msgid "Creation date"
+msgstr "Дата створення"
+
+#: pay_app/templates/partials/_pay_table.html:27
+msgid "Service name"
+msgstr "Назва сервісу"
+
+#: pay_app/templates/partials/_pay_table.html:29
+msgid "Price per month / balance"
+msgstr "Ціна на місяць / баланс"
+
+#: pay_app/templates/partials/_pay_table.html:137
+msgid "Show and copy login"
+msgstr "Показати та скопіювати логін"
+
+#: pay_app/templates/partials/_pay_table.html:139
+msgid "Hide login"
+msgstr "Сховати логін"
+
+#: pay_app/templates/partials/_pay_table.html:149
+#: pay_app/templates/cabinet.html:305 pay_app/templates/cabinet.html:311
+#: pay_app/templates/partials/_cabinet_summary.html:47
+msgid "Show and copy password"
+msgstr "Показати та скопіювати пароль"
+
+#: pay_app/templates/partials/_pay_table.html:151
+#: pay_app/templates/cabinet.html:307 pay_app/templates/cabinet.html:335
+#: pay_app/templates/partials/_cabinet_summary.html:48
+msgid "Hide password"
+msgstr "Сховати пароль"
+
+#: pay_app/templates/partials/_pay_table.html:189
+#: pay_app/templates/cabinet.html:406
+msgid "Nothing found with current filters."
+msgstr "Нічого не знайдено по поточних фільтрах."
+
+#: pay_app/templates/partials/_pay_sidebar.html:15
+msgid "Admin"
+msgstr "Адмін"
+
+#: pay_app/templates/partials/_pay_sidebar.html:17
+msgid "Hello"
+msgstr "Привіт"
+
+#: pay_app/templates/partials/_pay_sidebar.html:37
+msgid "Active status"
+msgstr "Статус активний"
+
+#: pay_app/templates/partials/_pay_sidebar.html:52
+msgid "Yes"
+msgstr "Так"
+
+#: pay_app/templates/partials/_pay_sidebar.html:59
+msgid "No"
+msgstr "Ні"
+
+#: pay_app/templates/partials/_pay_sidebar.html:67
+msgid "Balance greater than payment"
+msgstr "Баланс більший за оплату"
+
+#: pay_app/templates/partials/_pay_sidebar.html:103
+msgid "Search"
+msgstr "Пошук"
+
+#: pay_app/templates/partials/_pay_sidebar.html:105
+msgid "Search in page..."
+msgstr "Пошук на сторінці..."
+
+#: pay_app/templates/partials/_pay_sidebar.html:112
+msgid "Search payments"
+msgstr "Пошук платежів"
+
+#: pay_app/templates/partials/_pay_sidebar.html:119
+msgid "Reset filters"
+msgstr "Скинути фільтри"
+
+#: pay_app/templates/partials/_pay_sidebar.html:127
+msgid "Upcoming payments"
+msgstr "Найближчі оплати"
+
+#: pay_app/templates/partials/_pay_sidebar.html:135
+msgid "No upcoming payments"
+msgstr "Немає найближчих оплат"
+
+#: pay_app/templates/partials/_pay_sidebar.html:141
+msgid "Overdue payments"
+msgstr "Прострочені оплати"
+
+#: pay_app/templates/partials/_pay_sidebar.html:149
+msgid "No overdue payments"
+msgstr "Прострочених оплат немає"
+
+#: pay_app/services/statistics.py:157
+msgid "Expired"
+msgstr "Прострочені"
+
+#: pay_app/services/statistics.py:158
+msgid "0–7 days"
+msgstr "0–7 днів"
+
+#: pay_app/services/statistics.py:159
+msgid "8–30 days"
+msgstr "8–30 днів"
+
+#: pay_app/services/statistics.py:160
+msgid "31–60 days"
+msgstr "31–60 днів"
+
+#: pay_app/services/statistics.py:161
+msgid "61+ days"
+msgstr "61+ днів"
+
+#: pay_app/services/statistics.py:209
+msgid "Active"
+msgstr "Активний"
+
+#: pay_app/services/statistics.py:210
+msgid "Inactive"
+msgstr "Неактивний"
+
+#: pay_app/templates/cabinet.html:23 pay_app/templates/cabinet.html:44
+msgid "Search cabinets"
+msgstr "Пошук по кабінетах"
+
+#: pay_app/templates/cabinet.html:43
+msgid "login / note / email / service / tag"
+msgstr "логін / примітка / email / сервіс / тег"
+
+#: pay_app/templates/cabinet.html:59
+msgid "Without active services"
+msgstr "Без активних сервісів"
+
+#: pay_app/templates/cabinet.html:65
+msgid "Without services"
+msgstr "Без сервісів"
+
+#: pay_app/templates/cabinet.html:71
+msgid "Has active"
+msgstr "Є активні"
+
+#: pay_app/templates/cabinet.html:77
+msgid "Has inactive"
+msgstr "Є неактивні"
+
+#: pay_app/templates/cabinet.html:108
+msgid "Filter by currency"
+msgstr "Фільтр по валюті"
+
+#: pay_app/templates/cabinet.html:110
+msgid "all"
+msgstr "усі"
+
+#: pay_app/templates/cabinet.html:142
+msgid "Current context"
+msgstr "Поточний контекст"
+
+#: pay_app/templates/cabinet.html:144
+msgid "Search:"
+msgstr "Пошук:"
+
+#: pay_app/templates/cabinet.html:147
+msgid "active services"
+msgstr "активні сервіси"
+
+#: pay_app/templates/cabinet.html:150
+msgid "not active services"
+msgstr "не активні сервіси"
+
+#: pay_app/templates/cabinet.html:153
+msgid "without active services"
+msgstr "без активних сервісів"
+
+#: pay_app/templates/cabinet.html:156
+msgid "without services"
+msgstr "без сервісів"
+
+#: pay_app/templates/cabinet.html:159
+msgid "Daily payment: yes"
+msgstr "Поденна оплата: так"
+
+#: pay_app/templates/cabinet.html:162
+msgid "Daily payment: no"
+msgstr "Поденна оплата: ні"
+
+#: pay_app/templates/cabinet.html:165
+msgid "Tag:"
+msgstr "Тег:"
+
+#: pay_app/templates/cabinet.html:168
+msgid "Currency:"
+msgstr "Валюта:"
+
+#: pay_app/templates/cabinet.html:171
+msgid "Balance from:"
+msgstr "Баланс від:"
+
+#: pay_app/templates/cabinet.html:174
+msgid "Balance to:"
+msgstr "Баланс до:"
+
+#: pay_app/templates/cabinet.html:229
+msgid "Email"
+msgstr "Email"
+
+#: pay_app/templates/cabinet.html:236
+#: pay_app/templates/partials/_cabinet_summary.html:68
+msgid "Email password"
+msgstr "Пароль від email"
+
+#: pay_app/templates/cabinet.html:243
+msgid "Notes"
+msgstr "Примітки"
+
+#: pay_app/templates/cabinet.html:272 pay_app/templates/tags/tag_list.html:27
+msgid "Delete"
+msgstr "Видалити"
+
+#: pay_app/templates/cabinet.html:281 pay_app/templates/cabinet.html:327
+#: pay_app/templates/partials/_cabinet_summary.html:61
+msgid "Copy email"
+msgstr "Скопіювати email"
+
+#: pay_app/templates/cabinet.html:343 pay_app/templates/cabinet.html:349
+#: pay_app/templates/partials/_cabinet_summary.html:74
+msgid "Show and copy email password"
+msgstr "Показати та скопіювати пароль від email"
+
+#: pay_app/templates/cabinet.html:345
+#: pay_app/templates/partials/_cabinet_summary.html:75
+msgid "Hide email password"
+msgstr "Сховати пароль від email"
+
+#: pay_app/templates/cabinet.html:372 pay_app/templates/cabinet.html:378
+msgid "Show services"
+msgstr "Показати сервіси"
+
+#: pay_app/templates/cabinet.html:374
+msgid "Hide services"
+msgstr "Сховати сервіси"
+
+#: pay_app/templates/cabinet.html:395
+msgid "Delete this field?"
+msgstr "Видалити дане поле?"
+
+#: pay_app/templates/cabinet.html:400
+msgid "Cannot delete! This cabinet is in use."
+msgstr "Неможливо видалити! Даний кабінет використовується."
+
+#: pay_app/templates/cabinet.html:414
+msgid "Editing"
+msgstr "Редагування"
+
+#: pay_app/templates/cabinet.html:415
+msgid "Change cabinet"
+msgstr "Змінити кабінет"
+
+#: pay_app/templates/cabinet.html:420
+msgid "Cabinet data"
+msgstr "Дані кабінету"
+
+#: pay_app/templates/cabinet.html:427
+msgid "Cabinet tags"
+msgstr "Теги кабінету"
+
+#: pay_app/templates/cabinet.html:432 pay_app/templates/tags/tag_list.html:32
+msgid "No tags yet."
+msgstr "Тегів ще немає."
+
+#: pay_app/templates/cabinet.html:439
+msgid "Save"
+msgstr "Зберегти"
+
+#: pay_app/templates/cabinet.html:446
+msgid "Add new tag"
+msgstr "Додати новий тег"
+
+#: pay_app/templates/cabinet.html:450 pay_app/templates/tags/tag_list.html:11
+msgid "Add tag"
+msgstr "Додати тег"
+
+#: pay_app/templates/partials/_cabinet_summary.html:6
+msgid "Linked cabinet"
+msgstr "Повʼязаний кабінет"
+
+#: pay_app/templates/partials/_cabinet_summary.html:10
+msgid "Cabinet №%(id)s"
+msgstr "Кабінет №%(id)s"
+
+#: pay_app/templates/partials/_cabinet_summary.html:22
+msgid "Copy login"
+msgstr "Скопіювати логін"
+
+#: pay_app/templates/partials/_cabinet_summary.html:34
+msgid "Copy link"
+msgstr "Скопіювати посилання"
+
+#: pay_app/templates/tags/tag_list.html:19
+msgid "Cabinets count"
+msgstr "К-сть кабінетів"
+
+#: pay_app/templates/tags/tag_list.html:20
+msgid "Actions"
+msgstr "Дії"
+
+#: pay_app/templates/tags/tag_confirm_delete.html:5
+msgid "Tag deletion"
+msgstr "Видалення тега"
+
+#: pay_app/templates/tags/tag_confirm_delete.html:10
+msgid "Deletion confirmation"
+msgstr "Підтвердження видалення"
+
+#: pay_app/templates/tags/tag_confirm_delete.html:11
+msgid ""
+"Tag \"{{ tag.name }}\" will be deleted along with all links to cabinets."
+msgstr ""
+"Тег \"{{ tag.name }}\" буде видалено разом із усіма зв'язками з кабінетами."
+
+#: pay_app/templates/tags/tag_confirm_delete.html:16
+msgid "Cancel"
+msgstr "Скасувати"
+
+#: pay_app/templates/tags/tag_form.html:5
+msgid "Tag editing"
+msgstr "Редагування тега"
+
+#: pay_app/templates/tags/tag_form.html:6
+msgid "Tag creation"
+msgstr "Створення тега"
+
+#: pay_app/templates/tags/tag_form.html:12
+msgid "Back to tags"
+msgstr "Назад до тегів"
+
+#: pay_app/templates/partials/_tags_sidebar.html:11
+msgid "Search tags..."
+msgstr "Пошук тегів..."

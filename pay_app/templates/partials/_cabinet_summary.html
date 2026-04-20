@@ -1,26 +1,27 @@
+{% load i18n %}
 {% if not form_edit_pay and cabinet_obj %}
   <section class="summary-card">
     {% for j in cabinet_obj %}
       <header class="summary-card__header">
         <div>
-          <p class="eyebrow">Повʼязаний кабінет</p>
+          <p class="eyebrow">{% trans "Linked cabinet" %}</p>
           <h2 class="section-title">{{ j.service }}</h2>
         </div>
         <a href="{% url 'app:cabinet_page' %}?highlight={{ j.cabinet.id }}#cabinet-{{ j.cabinet.id }}" class="btn_pay btn-linklike">
-          Кабінет №{{ j.cabinet.id }}
+          {% blocktrans %}Cabinet №{{ j.cabinet.id }}{% endblocktrans %}
         </a>
       </header>
 
       <dl class="detail-grid">
         <div class="detail-row">
-          <dt>Логін</dt>
+          <dt>{% trans "Login" %}</dt>
           <dd>
             {% if j.cabinet.login %}
               <span
                 class="copy-inline-btn"
                 data-action="copy-text"
                 data-copy-text="{{ j.cabinet.login }}"
-                title="Скопіювати логін"
+                title="{% trans 'Copy login' %}"
                 role="button"
                 tabindex="0">{{ j.cabinet.login }}</span>
             {% else %}
@@ -30,14 +31,14 @@
         </div>
 
         <div class="detail-row">
-          <dt>Посилання</dt>
+          <dt>{% trans "Link" %}</dt>
           <dd>
             {% if j.cabinet.link %}
               <span
                 class="copy-inline-btn"
                 data-action="copy-text"
                 data-copy-text="{{ j.cabinet.link }}"
-                title="Скопіювати посилання"
+                title="{% trans 'Copy link' %}"
                 role="button"
                 tabindex="0">{{ j.cabinet.link }}</span>
             {% else %}
@@ -47,7 +48,7 @@
         </div>
 
         <div class="detail-row">
-          <dt>Пароль</dt>
+          <dt>{% trans "Password" %}</dt>
           <dd class="detail-row__value detail-row__value--warning">
             <div class="masked-cell__content">
               <button
@@ -58,13 +59,13 @@
                 data-id="{{ j.cabinet.id }}"
                 data-model="cabinet"
                 data-field="password"
-                data-show-label="Показати та скопіювати пароль"
-                data-hide-label="Сховати пароль">
+                data-show-label="{% trans 'Show and copy password' %}"
+                data-hide-label="{% trans 'Hide password' %}">
                 <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
   <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
   <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
 </svg>
-                <span class="visually-hidden">Показати та скопіювати пароль</span>
+                <span class="visually-hidden">{% trans 'Show and copy password' %}</span>
               </button>
               <span
                 id="cabinet-password-val-{{ j.cabinet.id }}"
@@ -85,7 +86,7 @@
                 class="copy-inline-btn"
                 data-action="copy-text"
                 data-copy-text="{{ j.cabinet.email_login }}"
-                title="Скопіювати email"
+                title="{% trans 'Copy email' %}"
                 role="button"
                 tabindex="0">{{ j.cabinet.email_login }}</span>
             {% else %}
@@ -95,7 +96,7 @@
         </div>
 
         <div class="detail-row">
-          <dt>Email password</dt>
+          <dt>{% trans "Email password" %}</dt>
           <dd class="detail-row__value detail-row__value--warning">
             <div class="masked-cell__content">
               <button
@@ -106,13 +107,13 @@
                 data-id="{{ j.cabinet.id }}"
                 data-model="cabinet"
                 data-field="email_password"
-                data-show-label="Показати та скопіювати email password"
-                data-hide-label="Сховати email password">
+                data-show-label="{% trans 'Show and copy email password' %}"
+                data-hide-label="{% trans 'Hide email password' %}">
                 <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
   <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
   <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
 </svg>
-                <span class="visually-hidden">Показати та скопіювати email password</span>
+                <span class="visually-hidden">{% trans 'Show and copy email password' %}</span>
               </button>
               <span
                 id="cabinet-email_password-val-{{ j.cabinet.id }}"
@@ -126,13 +127,13 @@
         </div>
 
         <div class="detail-row">
-          <dt>Баланс</dt>
+          <dt>{% trans "Balance" %}</dt>
           <dd>{{ j.cabinet.balance|default_if_none:0|floatformat:1 }} {{ j.cabinet.currency|default:'' }}</dd>
         </div>
 
 
         <div class="detail-row detail-row--full">
-          <dt>Примітки</dt>
+          <dt>{% trans "Note" %}</dt>
           <dd>{{ j.cabinet.note|default:'-' }}</dd>
         </div>
 

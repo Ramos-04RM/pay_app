@@ -1,9 +1,10 @@
 {% extends 'index.html' %}
 {% load crispy_forms_filters %}
 {% load static %}
+{% load i18n %}
 
 {% block title %}
-  <title>New item</title>
+  <title>{% trans "New item" %}</title>
 {% endblock %}
 
 {% block table %}{% endblock %}

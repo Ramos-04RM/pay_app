@@ -1,23 +1,24 @@
 {% extends 'index.html' %}
+{% load i18n %}
 
 {% block title %}
-  <title>Видалення тега</title>
+  <title>{% trans "Tag deletion" %}</title>
 {% endblock %}
 
 {% block table %}
   <section class="page-section-card">
     <div class="page-header-row page-header-row--compact">
       <div>
-        <h2 class="section-title">Підтвердження видалення</h2>
-        <p class="section-subtitle">Тег "{{ tag.name }}" буде видалено разом із усіма зв'язками з кабінетами.</p>
+        <h2 class="section-title">{% trans "Deletion confirmation" %}</h2>
+        <p class="section-subtitle">{% blocktrans %}Tag "{{ tag.name }}" will be deleted along with all links to cabinets.{% endblocktrans %}</p>
       </div>
     </div>
 
     <form method="post" class="form_cabinet form-card">
       {% csrf_token %}
       <div class="page-actions">
-        <button type="submit" class="btn_pay_red">Видалити</button>
-        <a href="{% url 'app:tags_page' %}" class="btn_pay btn-linklike">Скасувати</a>
+        <button type="submit" class="btn_pay_red">{% trans "Delete" %}</button>
+        <a href="{% url 'app:tags_page' %}" class="btn_pay btn-linklike">{% trans "Cancel" %}</a>
       </div>
     </form>
   </section>

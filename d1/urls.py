@@ -23,6 +23,6 @@ urlpatterns = [
     path("", include("pay_app.urls")),  # add this line
     path('accounts/', include('django.contrib.auth.urls')),
     path('admin/', admin.site.urls),
+    path('i18n/', include('django.conf.urls.i18n')),
     # url(r'^accounts/login/$', auth_views.login, {'template_name': 'myapp/login.html'}),
 ]
-

@@ -1,9 +1,10 @@
 {% extends 'index.html' %}
 {% load static %}
 {% load crispy_forms_filters %}
+{% load i18n %}
 
 {% block title %}
-  <title>Cabinet</title>
+  <title>{% trans "Cabinet" %}</title>
 {% endblock %}
 
 {% block sidebar %}
@@ -12,15 +13,15 @@
     {% if request.user.username == 'admin' %}
       <div class="sidebar-topbar">
         <div>
-          <p class="eyebrow">Admin</p>
-          <h2 class="sidebar-title">Hello</h2>
+          <p class="eyebrow">{% trans "Admin" %}</p>
+          <h2 class="sidebar-title">{% trans "Hello" %}</h2>
         </div>
         <a href="{{ admin_url }}" class="btn_pay btn-linklike">{{ request.user.username }}</a>
       </div>
     {% endif %}
 
     <section class="sidebar-section">
-      <h3 class="check-field-label">Пошук по кабінетах</h3>
+      <h3 class="check-field-label">{% trans "Search cabinets" %}</h3>
       <form class="example sidebar-search" action="{% url 'app:cabinet_page' %}" method="get">
         {% if cabinet_has_active %}<input type="hidden" name="has_active" value="1">{% endif %}
         {% if cabinet_has_inactive %}<input type="hidden" name="has_inactive" value="1">{% endif %}
@@ -40,8 +41,8 @@
             name="q"
             type="text"
             value="{{ cabinet_search_query }}"
-            placeholder="login / note / email / service / tag">
-          <button type="submit" class="search-submit" aria-label="Search cabinets">
+            placeholder="{% trans 'login / note / email / service / tag' %}">
+          <button type="submit" class="search-submit" aria-label="{% trans 'Search cabinets' %}">
             <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
   <path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z"></path>
   <path d="M20 20l-4.2-4.2"></path>
@@ -56,40 +57,40 @@
         {% if cabinet_search_query %}<input type="hidden" name="q" value="{{ cabinet_search_query }}">{% endif %}
         {% if cabinet_sort %}<input type="hidden" name="sort" value="{{ cabinet_sort }}">{% endif %}
 
-        <h3 class="check-field-label">Сервіси</h3>
+        <h3 class="check-field-label">{% trans "Services" %}</h3>
         <label class="sidebar-checkbox">
           <input type="checkbox" name="without_active" value="1" {% if cabinet_without_active %}checked{% endif %}>
-          <span>Без активних сервісів <strong>({{ cabinets_without_active }})</strong></span>
+          <span>{% trans "Without active services" %} <strong>({{ cabinets_without_active }})</strong></span>
         </label>
 
         <label class="sidebar-checkbox">
           <input type="checkbox" name="no_services" value="1" {% if cabinet_no_services %}checked{% endif %}>
-          <span>Без сервісів <strong>({{ cabinets_without_services }})</strong></span>
+          <span>{% trans "Without services" %} <strong>({{ cabinets_without_services }})</strong></span>
         </label>
 
         <label class="sidebar-checkbox">
           <input type="checkbox" name="has_active" value="1" {% if cabinet_has_active %}checked{% endif %}>
-          <span>Є активні <strong>({{ cabinets_with_active }})</strong></span>
+          <span>{% trans "Has active" %} <strong>({{ cabinets_with_active }})</strong></span>
         </label>
 
         <label class="sidebar-checkbox">
           <input type="checkbox" name="has_inactive" value="1" {% if cabinet_has_inactive %}checked{% endif %}>
-          <span>Є неактивні <strong>({{ cabinets_with_inactive }})</strong></span>
+          <span>{% trans "Has inactive" %} <strong>({{ cabinets_with_inactive }})</strong></span>
         </label>
 
-        <h3 class="check-field-label">Поденна оплата</h3>
+        <h3 class="check-field-label">{% trans "Daily payment" %}</h3>
         <label class="sidebar-checkbox">
           <input type="checkbox" name="daily_payment_yes" value="1" {% if cabinet_daily_payment_yes %}checked{% endif %}>
-          <span>Так <strong>({{ cabinets_daily_payment_yes_count }})</strong></span>
+          <span>{% trans "Yes" %} <strong>({{ cabinets_daily_payment_yes_count }})</strong></span>
         </label>
 
         <label class="sidebar-checkbox">
           <input type="checkbox" name="daily_payment_no" value="1" {% if cabinet_daily_payment_no %}checked{% endif %}>
-          <span>Ні <strong>({{ cabinets_daily_payment_no_count }})</strong></span>
+          <span>{% trans "No" %} <strong>({{ cabinets_daily_payment_no_count }})</strong></span>
         </label>
 
         {% if cabinet_tag_options %}
-          <h3 class="check-field-label">Теги</h3>
+          <h3 class="check-field-label">{% trans "Tags" %}</h3>
           <div class="sidebar-tag-list">
             {% for tag in cabinet_tag_options %}
               <label class="sidebar-checkbox">
@@ -105,9 +106,9 @@
         {% endif %}
 
         <label class="sidebar-filter-field">
-          <span class="sidebar-filter-label">Фільтр по валюті</span>
+          <span class="sidebar-filter-label">{% trans "Filter by currency" %}</span>
           <select name="currency" class="form-control">
-            <option value="">усі</option>
+            <option value="">{% trans "all" %}</option>
             {% for currency_item in cabinet_currency_options %}
               <option value="{{ currency_item }}" {% if currency_item == cabinet_selected_currency %}selected{% endif %}>
                 {{ currency_item }}
@@ -116,21 +117,21 @@
           </select>
         </label>
 
-        <h3 class="check-field-label">Баланс</h3>
+        <h3 class="check-field-label">{% trans "Balance" %}</h3>
         <div class="sidebar-balance-grid">
           <label class="sidebar-filter-field">
-            <span class="sidebar-filter-label">Мінімум</span>
+            <span class="sidebar-filter-label">{% trans "Minimum" %}</span>
             <input type="number" name="balance_min" value="{{ cabinet_balance_min }}" step="0.01" class="form-control">
           </label>
           <label class="sidebar-filter-field">
-            <span class="sidebar-filter-label">Максимум</span>
+            <span class="sidebar-filter-label">{% trans "Maximum" %}</span>
             <input type="number" name="balance_max" value="{{ cabinet_balance_max }}" step="0.01" class="form-control">
           </label>
         </div>
 
         <div class="page-actions page-actions--stacked">
-          <button type="submit" class="btn_pay">Apply</button>
-          <a href="{{ cabinet_reset_url }}" class="btn_pay_red btn-linklike">Reset</a>
+          <button type="submit" class="btn_pay">{% trans "Apply" %}</button>
+          <a href="{{ cabinet_reset_url }}" class="btn_pay_red btn-linklike">{% trans "Reset" %}</a>
         </div>
       </form>
     </section>
@@ -139,39 +140,39 @@
       {% if cabinet_search_query or cabinet_has_active or cabinet_has_inactive or cabinet_without_active or cabinet_no_services or cabinet_daily_payment_yes or cabinet_daily_payment_no or cabinet_sort or cabinet_selected_tags or cabinet_selected_currency or cabinet_balance_min != '' or cabinet_balance_max != '' %}
          <div class="context-stack">
         <div class="context-stack">
-          <span class="context-title">Поточний контекст</span>
+          <span class="context-title">{% trans "Current context" %}</span>
           {% if cabinet_search_query %}
-            <span class="context-chip">Пошук: {{ cabinet_search_query }}</span>
+            <span class="context-chip">{% trans "Search:" %} {{ cabinet_search_query }}</span>
           {% endif %}
           {% if cabinet_has_active %}
-            <span class="context-chip">active services</span>
+            <span class="context-chip">{% trans "active services" %}</span>
           {% endif %}
           {% if cabinet_has_inactive %}
-            <span class="context-chip">not active services</span>
+            <span class="context-chip">{% trans "not active services" %}</span>
           {% endif %}
           {% if cabinet_without_active %}
-            <span class="context-chip">without active services</span>
+            <span class="context-chip">{% trans "without active services" %}</span>
           {% endif %}
           {% if cabinet_no_services %}
-            <span class="context-chip">without services</span>
+            <span class="context-chip">{% trans "without services" %}</span>
           {% endif %}
           {% if cabinet_daily_payment_yes %}
-            <span class="context-chip">Поденна оплата: так</span>
+            <span class="context-chip">{% trans "Daily payment: yes" %}</span>
           {% endif %}
           {% if cabinet_daily_payment_no %}
-            <span class="context-chip">Поденна оплата: ні</span>
+            <span class="context-chip">{% trans "Daily payment: no" %}</span>
           {% endif %}
           {% for selected_tag in cabinet_selected_tags %}
-            <span class="context-chip">Тег: {{ selected_tag.name }}</span>
+            <span class="context-chip">{% trans "Tag:" %} {{ selected_tag.name }}</span>
           {% endfor %}
           {% if cabinet_selected_currency %}
-            <span class="context-chip">Валюта: {{ cabinet_selected_currency }}</span>
+            <span class="context-chip">{% trans "Currency:" %} {{ cabinet_selected_currency }}</span>
           {% endif %}
           {% if cabinet_balance_min != '' %}
-            <span class="context-chip">Баланс від: {{ cabinet_balance_min }}</span>
+            <span class="context-chip">{% trans "Balance from:" %} {{ cabinet_balance_min }}</span>
           {% endif %}
           {% if cabinet_balance_max != '' %}
-            <span class="context-chip">Баланс до: {{ cabinet_balance_max }}</span>
+            <span class="context-chip">{% trans "Balance to:" %} {{ cabinet_balance_max }}</span>
           {% endif %}
         </div>
       {% endif %}
@@ -186,8 +187,8 @@
         <div class="table-card__header table-card__header--with-hint">
           <div>
             <div class="section-title-row">
-              <h2 class="section-title">Кабінети</h2>
-              <span class="metric-pill">Знайдено: {{ object_k|length }}</span>
+              <h2 class="section-title">{% trans "Cabinets" %}</h2>
+              <span class="metric-pill">{% trans "Found:" %} {{ object_k|length }}</span>
             </div>
 {#            <p class="section-subtitle">Широка таблиця залишилась у card-контейнері: заголовки липкі, а перегляд колонок відбувається через горизонтальний скрол усередині блоку.</p>#}
           </div>
@@ -198,7 +199,7 @@
   <path d="M21 16H3"></path>
   <path d="m17 12 4 4-4 4"></path>
 </svg>
-            <span>Гортайте таблицю по горизонталі</span>
+            <span>{% trans "Scroll the table horizontally" %}</span>
           </div>
         </div>
 
@@ -211,37 +212,37 @@
                 </th>
                 <th>
                   <a href="{{ cabinet_login_sort_url }}">
-                    Логін
+                    {% trans "Login" %}
                     {% if cabinet_sort == 'login_asc' %}↑{% elif cabinet_sort == 'login_desc' %}↓{% endif %}
                   </a>
                 </th>
                 <th>
                   <a href="{{ cabinet_link_sort_url }}">
-                    Посилання
+                    {% trans "Link" %}
                     {% if cabinet_sort == 'link_asc' %}↑{% elif cabinet_sort == 'link_desc' %}↓{% endif %}
                   </a>
                 </th>
-                <th>Пароль</th>
+                <th>{% trans "Password" %}</th>
                 <th>
                   <a href="{{ cabinet_email_sort_url }}">
-                    Email
+                    {% trans "Email" %}
                     {% if cabinet_sort == 'email_login_asc' %}↑{% elif cabinet_sort == 'email_login_desc' %}↓{% endif %}
                   </a>
                 </th>
-                <th>Email password</th>
+                <th>{% trans "Email password" %}</th>
                 <th>
                   <a href="{{ cabinet_note_sort_url }}">
-                    Примітки
+                    {% trans "Notes" %}
                     {% if cabinet_sort == 'note_asc' %}↑{% elif cabinet_sort == 'note_desc' %}↓{% endif %}
                   </a>
                 </th>
                 <th>
-                  Сервіси
+                  {% trans "Services" %}
                   <a href="{{ cabinet_services_sort_asc_url }}">↑</a>
                   <a href="{{ cabinet_services_sort_desc_url }}">↓</a>
                 </th>
                 <th>
-                  Баланс
+                  {% trans "Balance" %}
                   <a href="{{ cabinet_balance_sort_asc_url }}">↑</a>
                   <a href="{{ cabinet_balance_sort_desc_url }}">↓</a>
                 </th>
@@ -251,11 +252,11 @@
 {#                  <a href="{{ cabinet_currency_sort_desc_url }}">↓</a>#}
 {#                </th>#}
                 <th>
-                  Теги
+                  {% trans "Tags" %}
                   <a href="{{ cabinet_tags_sort_asc_url }}">↑</a>
                   <a href="{{ cabinet_tags_sort_desc_url }}">↓</a>
                 </th>
-                <th>Видалити</th>
+                <th>{% trans "Delete" %}</th>
               </tr>
             </thead>
 
@@ -278,7 +279,7 @@
                         class="copy-inline-btn"
                         data-action="copy-text"
                         data-copy-text="{{ j.login }}"
-                        title="Скопіювати email"
+                        title="{% trans 'Copy email' %}"
                         role="button"
                         tabindex="0">{{ j.login }}</span>
                     {% else %}-{% endif %}
@@ -302,13 +303,13 @@
                         data-id="{{ j.id }}"
                         data-model="cabinet"
                         data-field="password"
-                        data-show-label="Показати та скопіювати пароль"
-                        data-hide-label="Сховати пароль">
+                        data-show-label="{% trans 'Show and copy password' %}"
+                        data-hide-label="{% trans 'Hide password' %}">
                         <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
   <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
   <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
 </svg>
-                        <span class="visually-hidden">Показати та скопіювати пароль</span>
+                        <span class="visually-hidden">{% trans "Show and copy password" %}</span>
                       </button>
                       <span
                         id="cabinet-password-val-{{ j.id }}"
@@ -325,7 +326,7 @@
                         class="copy-inline-btn"
                         data-action="copy-text"
                         data-copy-text="{{ j.email_login }}"
-                        title="Скопіювати email"
+                        title="{% trans 'Copy email' %}"
                         role="button"
                         tabindex="0">{{ j.email_login }}</span>
                     {% else %}-{% endif %}
@@ -341,13 +342,13 @@
                         data-id="{{ j.id }}"
                         data-model="cabinet"
                         data-field="email_password"
-                        data-show-label="Показати та скопіювати email password"
-                        data-hide-label="Сховати email password">
+                        data-show-label="{% trans 'Show and copy email password' %}"
+                        data-hide-label="{% trans 'Hide email password' %}">
                         <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
   <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
   <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
 </svg>
-                        <span class="visually-hidden">Показати та скопіювати email password</span>
+                        <span class="visually-hidden">{% trans "Show and copy email password" %}</span>
                       </button>
                       <span
                         id="cabinet-email_password-val-{{ j.id }}"
@@ -372,15 +373,15 @@
                           id="btn{{ j.id }}"
                           data-action="toggle-block"
                           data-target-id="remove-heli-{{ j.id }}"
-                          data-show-label="Показати сервіси"
-                          data-hide-label="Сховати сервіси"
+                          data-show-label="{% trans 'Show services' %}"
+                          data-hide-label="{% trans 'Hide services' %}"
                           aria-controls="remove-heli-{{ j.id }}"
                           aria-expanded="false">
                           <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
   <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
   <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
 </svg>
-                          <span class="visually-hidden">Показати сервіси</span>
+                          <span class="visually-hidden">{% trans "Show services" %}</span>
                         </button>
                       {% endif %}
                     </div>
@@ -418,23 +419,23 @@
                         href="{% url 'app:delete_cabinet' j.id %}"
                         class="btn_pay_red btn-linklike"
                         data-action="confirm-navigation"
-                        data-confirm-message="Видалити дане поле?">
-                        Delete
+                        data-confirm-message="{% trans 'Delete this field?' %}">
+                        {% trans "Delete" %}
                       </a>
                     {% else %}
                       <button
                         type="button"
                         class="btn_pay_red"
                         data-action="alert"
-                        data-alert-message="Видалити неможливо! Даний кабінет використовується.">
-                        Delete
+                        data-alert-message="{% trans 'Cannot delete! This cabinet is in use.' %}">
+                        {% trans "Delete" %}
                       </button>
                     {% endif %}
                   </td>
                 </tr>
               {% empty %}
                 <tr>
-                   <td colspan="12" class="table-empty">Нічого не знайдено по поточних фільтрах.</td>
+                   <td colspan="12" class="table-empty">{% trans "Nothing found with current filters." %}</td>
                 </tr>
               {% endfor %}
             </tbody>
@@ -447,8 +448,8 @@
       <section class="page-section-card">
         <div class="page-header-row page-header-row--compact">
           <div>
-            <p class="eyebrow">Редагування</p>
-            <h2 class="section-title">Змінити кабінет</h2>
+            <p class="eyebrow">{% trans "Editing" %}</p>
+            <h2 class="section-title">{% trans "Change cabinet" %}</h2>
           </div>
         </div>
 
@@ -456,12 +457,12 @@
           <form method="POST" class="form_cabinet form-card">
             {% csrf_token %}
             <div class="form-card__header">
-              <h3 class="form-section-title">Дані кабінету</h3>
+              <h3 class="form-section-title">{% trans "Cabinet data" %}</h3>
             </div>
             {{ form_cabinet_edit|crispy }}
 
             <div class="form-subsection">
-              <h4 class="form-section-title">Теги кабінету</h4>
+              <h4 class="form-section-title">{% trans "Cabinet tags" %}</h4>
               <div class="tag-option-grid">
                 {% for checkbox in tag_assign_form.tags %}
                   <label for="{{ checkbox.id_for_label }}" class="tag-option">
@@ -474,24 +475,24 @@
                     <span>{{ checkbox.choice_label }}</span>
                   </label>
                 {% empty %}
-                  <span class="empty-state-inline">Тегів ще немає.</span>
+                  <span class="empty-state-inline">{% trans "No tags yet." %}</span>
                 {% endfor %}
               </div>
             </div>
 
             <div class="page-actions">
-              <button type="submit" name="submit_action" value="save_tags" class="btn_pay">Save</button>
+              <button type="submit" name="submit_action" value="save_tags" class="btn_pay">{% trans "Save" %}</button>
             </div>
           </form>
 
           <form method="POST" class="form_cabinet form-card">
             {% csrf_token %}
             <div class="form-card__header">
-              <h4 class="form-section-title">Додати новий тег</h4>
+              <h4 class="form-section-title">{% trans "Add new tag" %}</h4>
             </div>
             {{ tag_form.as_p }}
             <div class="page-actions">
-              <button type="submit" name="submit_action" value="create_tag" class="btn_pay">Add tag</button>
+              <button type="submit" name="submit_action" value="create_tag" class="btn_pay">{% trans "Add tag" %}</button>
             </div>
           </form>
         </div>

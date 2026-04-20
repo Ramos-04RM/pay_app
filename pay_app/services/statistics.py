@@ -2,6 +2,7 @@ import calendar
 import datetime
 from decimal import Decimal
 from urllib.parse import urlencode
+from django.utils.translation import gettext as _
 
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
@@ -49,7 +50,58 @@ def _parse_iso_date(value):
         return None
 
 
+def _calculate_proportional_cost(service, month_start, month_end):
+    """
+    Calculate proportional cost of a service based on its active days within a month.
+
+    Args:
+    - service: Pay object
+    - month_start: start of month (datetime.date)
+    - month_end: end of month (datetime.date)
+
+    Returns: (Decimal) proportional cost of service for the period it was active in the month
+
+    Logic:
+    1. Define the actual bounds of service activity within the month:
+       - Actual start = max(create_date, month_start)
+       - Actual end = min(paid_up_to, month_end)
+    2. If service was not active in this month - return 0
+    3. Calculate the number of active days (inclusive of both days)
+    4. Calculate proportion: active_days / total_days_in_month
+    5. Return: price_per_month * proportion
+    """
+    price = Decimal(str(service.price_per_month or 0))
+
+    # Determine the actual bounds of service activity within the month
+    active_start = max(service.create_date, month_start)
+    active_end = min(service.paid_up_to, month_end)
+
+    # Check if service was active in this month
+    if active_start > active_end:
+        return Decimal('0')
+
+    # Calculate the number of active days (inclusive)
+    active_days = (active_end - active_start).days + 1
+
+    # Calculate the number of days in the month
+    days_in_month = (month_end - month_start).days + 1
+
+    # Calculate proportion and return result
+    proportion = Decimal(active_days) / Decimal(days_in_month)
+    return price * proportion
+
+
 def _get_period_bounds(period, start_raw, end_raw, today):
+    """
+    Calculate period bounds based on the selected period type.
+
+    Returns: (period_start, period_end) - closed bounds inclusive
+
+    Period 'month': current month
+    Period 'year': current year (January 1 - December 31)
+    Period 'last12': last 12 months from today
+    Period 'custom': user-defined range or fallback to current month on error
+    """
     if period == STAT_PERIOD_YEAR:
         start = datetime.date(today.year, 1, 1)
         end = datetime.date(today.year, 12, 31)
@@ -96,6 +148,26 @@ def _build_statistics_query_params(data):
 
 
 def build_statistics_context(request):
+    """
+    Build statistics context for payment metrics.
+
+    FILTERING LOGIC:
+    ================
+    1. Period: user selects period (current month, year, 12 months, custom)
+    2. Base set: filter services active within this period
+       - Condition: create_date <= period_end AND paid_up_to >= period_start
+       - This ensures correct display of active services in the period
+
+    3. Active services: base set + status='active'
+    4. Inactive services: base set + status='not active'
+
+    METRICS:
+    ========
+    - burn_by_currency: monthly cost of active services by currency
+    - month_points: monthly burn for each month in the period
+    - expiry_pipeline: distribution of active services by expiration date
+    - status_mix: distribution of active/inactive services
+    """
     today = datetime.date.today()
     period = _normalize_stat_period(request.GET.get('period'))
     start_raw = (request.GET.get('start') or '').strip()
@@ -110,8 +182,8 @@ def build_statistics_context(request):
     period_end_display = period_end.isoformat()
 
     base_queryset = Pay.objects.select_related('cabinet').filter(
-        paid_up_to__gte=period_start,
-        paid_up_to__lte=period_end,
+        create_date__lte=period_end,    # Service created before period end
+        paid_up_to__gte=period_start,   # Service active from period start
     )
     if selected_currency:
         base_queryset = base_queryset.filter(currency=selected_currency)
@@ -136,11 +208,44 @@ def build_statistics_context(request):
     active_queryset = base_queryset.filter(status='active')
     inactive_queryset = base_queryset.filter(status='not active')
 
+    # Select appropriate queryset for burn calculation based on status filter
+    # If no status selected, include both active and inactive services
+    # If status selected, use only that subset
+    if selected_status in {'active', 'not active'}:
+        burn_queryset = base_queryset.filter(status=selected_status)
+    else:
+        # When no status filter is applied, calculate for all services
+        burn_queryset = base_queryset
+
+    # Calculate burn_by_currency considering proportional costs over the period
+    # For each currency, calculate the average monthly burn
+    burn_by_currency_dict = {}
+    for service in burn_queryset:
+        currency = service.currency or 'N/A'
+        if currency not in burn_by_currency_dict:
+            burn_by_currency_dict[currency] = Decimal('0')
+
+        # Calculate proportional cost for the entire period
+        total_proportional_cost = Decimal('0')
+        month_count = 0
+        for month_start in _iter_month_starts(period_start, period_end):
+            month_end = _end_of_month(month_start)
+            cost = _calculate_proportional_cost(service, month_start, month_end)
+            total_proportional_cost += cost
+            if cost > 0:
+                month_count += 1
+
+        # If active in at least one month, add to category
+        if month_count > 0:
+            # Calculate average monthly burn for the period
+            avg_monthly = total_proportional_cost / Decimal(month_count)
+            burn_by_currency_dict[currency] += avg_monthly
+
     burn_by_currency = []
-    for row in active_queryset.values('currency').annotate(monthly_burn=Coalesce(Sum('price_per_month'), 0.0)).order_by('currency'):
-        monthly_burn = Decimal(str(row['monthly_burn'] or 0))
+    for currency in sorted(burn_by_currency_dict.keys()):
+        monthly_burn = burn_by_currency_dict[currency]
         burn_by_currency.append({
-            'currency': row['currency'] or 'N/A',
+            'currency': currency,
             'monthly_burn': monthly_burn,
             'annualized': monthly_burn * Decimal('12'),
         })
@@ -150,36 +255,108 @@ def build_statistics_context(request):
         paid_up_to__gte=today,
         paid_up_to__lte=today + datetime.timedelta(days=7),
     ).count()
-    expiring_30_count = active_queryset.filter(
-        paid_up_to__gte=today,
+    # FIXED: expiring_30_count now shows 8-30 days, not 0-30
+    # This eliminates duplication and makes KPI correct
+    expiring_8_30_count = active_queryset.filter(
+        paid_up_to__gt=today + datetime.timedelta(days=7),
         paid_up_to__lte=today + datetime.timedelta(days=30),
     ).count()
+    expiring_31_60_count = active_queryset.filter(
+        paid_up_to__gt=today + datetime.timedelta(days=30),
+        paid_up_to__lte=today + datetime.timedelta(days=60),
+    ).count()
+    expiring_61_plus_count = active_queryset.filter(
+        paid_up_to__gt=today + datetime.timedelta(days=60),
+    ).count()
+
+    expiring_30_count = expiring_8_30_count
+
     expiry_pipeline = [
-        {'label': 'Expired', 'key': 'expired', 'count': expired_count},
-        {'label': '0–7 days', 'key': 'd0_7', 'count': expiring_7_count},
-        {'label': '8–30 days', 'key': 'd8_30', 'count': active_queryset.filter(paid_up_to__gt=today + datetime.timedelta(days=7), paid_up_to__lte=today + datetime.timedelta(days=30)).count()},
-        {'label': '31–60 days', 'key': 'd31_60', 'count': active_queryset.filter(paid_up_to__gt=today + datetime.timedelta(days=30), paid_up_to__lte=today + datetime.timedelta(days=60)).count()},
-        {'label': '61+ days', 'key': 'd61_plus', 'count': active_queryset.filter(paid_up_to__gt=today + datetime.timedelta(days=60)).count()},
+        {'label': _('Expired'), 'key': 'expired', 'count': expired_count},
+        {'label': _('0–7 days'), 'key': 'd0_7', 'count': expiring_7_count},
+        {'label': _('8–30 days'), 'key': 'd8_30', 'count': expiring_8_30_count},
+        {'label': _('31–60 days'), 'key': 'd31_60', 'count': expiring_31_60_count},
+        {'label': _('61+ days'), 'key': 'd61_plus', 'count': expiring_61_plus_count},
     ]
     max_pipeline_count = max((item['count'] for item in expiry_pipeline), default=0) or 1
     for item in expiry_pipeline:
         item['percent'] = round((item['count'] / max_pipeline_count) * 100, 2) if item['count'] else 0
 
-    group_cost = list(
-        active_queryset.values('currency', 'groups').annotate(total=Coalesce(Sum('price_per_month'), 0.0)).order_by('currency', '-total', 'groups')
-    )
-    top_cabinets = list(
-        active_queryset.values('currency', 'cabinet_id', 'cabinet__login').annotate(total=Coalesce(Sum('price_per_month'), 0.0)).order_by('currency', '-total', 'cabinet__login')[:8]
-    )
+    # Calculate group_cost considering proportional costs over the period
+    group_cost_dict = {}
+    for service in active_queryset:
+        currency = service.currency or 'N/A'
+        group = service.groups or 'No group'
+        key = (currency, group)
 
-    max_group_total = max((item['total'] for item in group_cost), default=0) or 1
+        if key not in group_cost_dict:
+            group_cost_dict[key] = Decimal('0')
+
+        # Calculate proportional cost for the entire period
+        total_proportional = Decimal('0')
+        for month_start in _iter_month_starts(period_start, period_end):
+            month_end = _end_of_month(month_start)
+            cost = _calculate_proportional_cost(service, month_start, month_end)
+            total_proportional += cost
+
+        group_cost_dict[key] += total_proportional
+
+    group_cost = [
+        {
+            'currency': key[0],
+            'groups': key[1],
+            'group_name': key[1],
+            'total': total,
+        }
+        for key, total in group_cost_dict.items()
+        if total > 0
+    ]
+    group_cost = sorted(group_cost, key=lambda x: (x['currency'], -x['total'], x['groups']))
+
+    # Calculate top_cabinets considering proportional costs over the period
+    cabinet_cost_dict = {}
+    for service in active_queryset:
+        currency = service.currency or 'N/A'
+        cabinet_id = service.cabinet_id
+        cabinet_login = service.cabinet.login if service.cabinet_id else f"Cabinet #{cabinet_id}"
+        key = (currency, cabinet_id, cabinet_login)
+
+        if key not in cabinet_cost_dict:
+            cabinet_cost_dict[key] = Decimal('0')
+
+        # Calculate proportional cost for the entire period
+        total_proportional = Decimal('0')
+        for month_start in _iter_month_starts(period_start, period_end):
+            month_end = _end_of_month(month_start)
+            cost = _calculate_proportional_cost(service, month_start, month_end)
+            total_proportional += cost
+
+        cabinet_cost_dict[key] += total_proportional
+
+    top_cabinets = [
+        {
+            'currency': key[0],
+            'cabinet_id': key[1],
+            'cabinet__login': key[2],
+            'cabinet_name': key[2],
+            'total': total,
+        }
+        for key, total in cabinet_cost_dict.items()
+        if total > 0
+    ]
+    top_cabinets = sorted(top_cabinets, key=lambda x: (x['currency'], -x['total'], x['cabinet__login']))[:8]
+
+
+    max_group_total = max((item['total'] for item in group_cost), default=Decimal('0'))
+    if max_group_total <= 0:
+        max_group_total = Decimal('1')
     for item in group_cost:
-        item['group_name'] = item['groups'] or 'No group'
         item['percent'] = round((item['total'] / max_group_total) * 100, 2) if item['total'] else 0
 
-    max_cabinet_total = max((item['total'] for item in top_cabinets), default=0) or 1
+    max_cabinet_total = max((item['total'] for item in top_cabinets), default=Decimal('0'))
+    if max_cabinet_total <= 0:
+        max_cabinet_total = Decimal('1')
     for item in top_cabinets:
-        item['cabinet_name'] = item['cabinet__login'] or f"Cabinet #{item['cabinet_id']}"
         item['percent'] = round((item['total'] / max_cabinet_total) * 100, 2) if item['total'] else 0
 
     month_points = []
@@ -187,27 +364,40 @@ def build_statistics_context(request):
     for month_start in _iter_month_starts(period_start, period_end):
         month_end = _end_of_month(month_start)
         month_label = month_start.strftime('%b %Y')
-        month_totals = active_queryset.filter(
+
+        # Calculate proportional costs for each currency in this month
+        month_costs_by_currency = {}
+        for service in active_queryset.filter(
             create_date__lte=month_end,
             paid_up_to__gte=month_start,
-        ).values('currency').annotate(total=Coalesce(Sum('price_per_month'), 0.0)).order_by('currency')
-        for row in month_totals:
-            total_decimal = Decimal(str(row['total'] or 0))
-            max_month_total = max(max_month_total, total_decimal)
-            month_points.append({
-                'month': month_start.strftime('%Y-%m'),
-                'month_label': month_label,
-                'currency': row['currency'] or 'N/A',
-                'total': total_decimal,
-            })
+        ):
+            currency = service.currency or 'N/A'
+            if currency not in month_costs_by_currency:
+                month_costs_by_currency[currency] = Decimal('0')
+
+            # Calculate proportional cost for this month
+            proportional_cost = _calculate_proportional_cost(service, month_start, month_end)
+            month_costs_by_currency[currency] += proportional_cost
+
+        # Add points for each currency
+        for currency, total in month_costs_by_currency.items():
+            if total > 0:  # Add only non-zero values
+                max_month_total = max(max_month_total, total)
+                month_points.append({
+                    'month': month_start.strftime('%Y-%m'),
+                    'month_label': month_label,
+                    'currency': currency,
+                    'total': total,
+                })
+
     if max_month_total <= 0:
         max_month_total = Decimal('1')
     for point in month_points:
         point['percent'] = round((point['total'] / max_month_total) * 100, 2) if point['total'] else 0
 
     status_mix = [
-        {'label': 'Active', 'key': 'active', 'count': active_queryset.count()},
-        {'label': 'Inactive', 'key': 'inactive', 'count': inactive_queryset.count()},
+        {'label': _('Active'), 'key': 'active', 'count': active_queryset.count()},
+        {'label': _('Inactive'), 'key': 'inactive', 'count': inactive_queryset.count()},
     ]
     max_status_count = max((item['count'] for item in status_mix), default=0) or 1
     for item in status_mix:
@@ -217,6 +407,7 @@ def build_statistics_context(request):
     drill_value = (request.GET.get('drill_value') or '').strip()
     drill_currency = (request.GET.get('drill_currency') or '').strip()
     detail_queryset = base_queryset
+
     drill_caption = 'Showing filtered services.'
 
     if drill_currency:

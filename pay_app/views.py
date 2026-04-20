@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
 from django.db.models import Count, Q
@@ -304,21 +305,17 @@ def edit_table(request, id):
     try:
         item = services.decrypt_pay_secrets(Pay.objects.get(id=id))
         if request.method == 'POST':
-            item.groups = request.POST.get('groups')
-            item.service = request.POST.get('service')
-            item.create_date = request.POST.get('create_date')
-            item.type_source = request.POST.get('type_source')
-            item.price_per_month = request.POST.get('price_per_month')
-            item.currency = request.POST.get('currency')
-            item.pay_sys = request.POST.get('pay_sys')
-            item.paid_up_to = request.POST.get('paid_up_to')
-            item.status = request.POST.get('status')
-            item.email_login = request.POST.get('email_login')
-            item.password = request.POST.get('password')
-            item.ip = request.POST.get('ip')
-            item.save()
-            return redirect('app:edit_page')
-        return render(request, 'edit_table.html', {'object_l': item})
+            form_edit_pay = PayForm(request.POST, instance=item)
+            if form_edit_pay.is_valid():
+                item = form_edit_pay.save(commit=False)
+                item.save()
+                return redirect('app:edit_page')
+            else:
+                # Якщо помилка валідації, повертаємо форму із помилками
+                return render(request, 'edit_table.html', {'object_l': item, 'form_edit_pay': form_edit_pay})
+        else:
+            form_edit_pay = PayForm(instance=item)
+        return render(request, 'edit_table.html', {'object_l': item, 'form_edit_pay': form_edit_pay})
     except Pay.DoesNotExist:
         return HttpResponseNotFound('<h2> not found</h2>')
 
@@ -335,11 +332,24 @@ def delete(request, id):
 
 @login_required
 def tags_page(request):
-    tags = Tag.objects.annotate(
+    # Get all tags first (for sidebar) - WITH cabinets count
+    all_tags = Tag.objects.annotate(
         cabinets_count=Count('cabinet_tags__cabinet', distinct=True),
     ).order_by('name')
+    
+    # Start with all tags
+    tags = all_tags
 
-    content = {'tags': tags}
+    # Handle search by name or note
+    q = request.GET.get('q', '').strip()
+    if q:
+        tags = tags.filter(Q(name__icontains=q) | Q(note__icontains=q))
+
+    content = {
+        'tags': tags, 
+        'all_tags': all_tags, 
+        'search_query': q
+    }
     content.update(services.get_common_context())
     content.update(services.get_default_pay_context(request))
     return render(request, 'tags/tag_list.html', content)

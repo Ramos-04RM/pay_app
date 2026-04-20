@@ -1,0 +1,23 @@
+{% load static %}
+{% load i18n %}
+<div class="sidenav">
+  <section class="sidebar-section">
+    <form class="example sidebar-search" action="{% url 'app:tags_page' %}" method="get">
+      <label>
+        <input
+          name="q"
+          type="text"
+          value="{{ search_query|default:'' }}"
+          placeholder="{% trans 'Search tags...' %}">
+        <button type="submit" class="search-submit" aria-label="{% trans 'Search tags' %}">
+          <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z"></path>
+            <path d="M20 20l-4.2-4.2"></path>
+          </svg>
+        </button>
+      </label>
+    </form>
+  </section>
+</div>
+
+

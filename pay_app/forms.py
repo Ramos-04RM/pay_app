@@ -19,17 +19,40 @@ class PayForm(ModelForm):
             'placeholder': 'Натисніть ↓ для вибору зі списку',
         })
         self.fields['cabinet'].queryset = Cabinet.objects.order_by('id')
+        # Форматуємо price_per_month для вхідних даних
+        self.fields['price_per_month'].widget.attrs.update({
+            'class': 'form-control',
+            'step': '0.01',
+            'inputmode': 'decimal',
+        })
+        # Форматуємо дати
+        self.fields['create_date'].widget.attrs.update({'class': 'form-control'})
+        self.fields['paid_up_to'].widget.attrs.update({'class': 'form-control'})
 
 
     def clean_price_per_month(self):
         raw_value = self.cleaned_data.get('price_per_month')
+        if raw_value is None or raw_value == '':
+            raise forms.ValidationError('Поле "Місячна плата" обовʼязкове.')
+
         try:
-            value = Decimal(str(raw_value)).quantize(Decimal('0.01'))
-        except (InvalidOperation, TypeError, ValueError):
+            # Замінюємо кому на крапку, щоб підтримати обидва формати
+            value_str = str(raw_value).strip().replace(',', '.')
+            value = Decimal(value_str)
+
+            # Перевіряємо, щоб було максимум 2 цифри після коми
+            if value.as_tuple().exponent < -2:
+                raise forms.ValidationError('Переконайтеся, що тут не більше ніж 2 цифри після десяткової коми.')
+
+            # Округлюємо до 2 цифр
+            value = value.quantize(Decimal('0.01'))
+        except (InvalidOperation, TypeError, ValueError) as e:
             raise forms.ValidationError('Вкажіть коректну суму.')
+
         if value <= 0:
             raise forms.ValidationError('Сума має бути більшою за 0.')
-        return float(value)
+
+        return value
 
     class Meta:
         model = Pay
@@ -54,7 +77,7 @@ class PayForm(ModelForm):
             'pay_sys': forms.TextInput(attrs={'class': 'form-control'}),
             'create_date': DateInput(),
             'paid_up_to': DateInput(),
-            'price_per_month': forms.NumberInput(attrs={'class': 'form-control'}),
+            'price_per_month': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'ip': forms.TextInput(attrs={'placeholder': '192.168.100.1', 'class': 'form-control'}),
         }
 

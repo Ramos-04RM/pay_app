@@ -1,11 +1,13 @@
+{% load i18n %}
+
 <div class="main">
   {% if not form_edit_pay %}
     <section class="table-card table-card--wide">
       <div class="table-card__header table-card__header--with-hint">
         <div>
           <div class="section-title-row">
-            <h2 class="section-title">Сервіси</h2>
-            <span class="metric-pill">Знайдено: {{ object_l|length }}</span>
+            <h2 class="section-title">{% trans "Services" %}</h2>
+            <span class="metric-pill">{% trans "Found:" %} {{ object_l|length }}</span>
           </div>
 {#          <p class="section-subtitle">Широка таблиця не розпирає layout: перегляд усіх колонок відбувається через горизонтальний скрол всередині card-контейнера.</p>#}
         </div>
@@ -16,7 +18,7 @@
   <path d="M21 16H3"></path>
   <path d="m17 12 4 4-4 4"></path>
 </svg>
-          <span>Гортайте таблицю по горизонталі</span>
+          <span>{% trans "Scroll the table horizontally" %}</span>
         </div>
       </div>
 
@@ -27,18 +29,18 @@
               <th>
                 <a href="{% url 'app:pay_new' %}" class="btn_pay btn-linklike">+</a>
               </th>
-              <th><a href="{{ pay_sort_groups_url|default:'#' }}">Група</a></th>
-              <th><a href="{{ pay_sort_create_date_url|default:'#' }}">Дата створення</a></th>
-              <th><a href="{{ pay_sort_service_url|default:'#' }}">Умовна назва сервісу</a></th>
-              <th><a href="{{ pay_sort_type_source_url|default:'#' }}">Тип ресурсу</a></th>
-              <th><a href="{{ pay_sort_price_per_month_url|default:'#' }}">Ціна на місяць/ баланс</a></th>
+              <th><a href="{{ pay_sort_groups_url|default:'#' }}">{% trans "Group" %}</a></th>
+              <th><a href="{{ pay_sort_create_date_url|default:'#' }}">{% trans "Creation date" %}</a></th>
+              <th><a href="{{ pay_sort_service_url|default:'#' }}">{% trans "Service name" %}</a></th>
+              <th><a href="{{ pay_sort_type_source_url|default:'#' }}">{% trans "Resource type" %}</a></th>
+              <th><a href="{{ pay_sort_price_per_month_url|default:'#' }}">{% trans "Price per month / balance" %}</a></th>
 {#              <th><a href="{{ pay_sort_currency_url|default:'#' }}">Валюта</a></th>#}
-              <th><a href="{{ pay_sort_pay_sys_url|default:'#' }}">Платіжна система</a></th>
-              <th><a href="{{ pay_sort_paid_up_to_url|default:'#' }}">Проплачено до</a></th>
-              <th><a href="{{ pay_sort_email_login_url|default:'#' }}">Логін</a></th>
-              <th>IP/Port</th>
-              <th>Пароль</th>
-              <th>Примітка</th>
+              <th><a href="{{ pay_sort_pay_sys_url|default:'#' }}">{% trans "Payment system" %}</a></th>
+              <th><a href="{{ pay_sort_paid_up_to_url|default:'#' }}">{% trans "Paid up to" %}</a></th>
+              <th><a href="{{ pay_sort_email_login_url|default:'#' }}">{% trans "Login" %}</a></th>
+              <th>{% trans "IP/Port" %}</th>
+              <th>{% trans "Password" %}</th>
+              <th>{% trans "Note" %}</th>
             </tr>
           </thead>
 
@@ -134,13 +136,13 @@
                       data-id="{{ i.id }}"
                       data-model="pay"
                       data-field="email_login"
-                      data-show-label="Показати та скопіювати логін"
-                      data-hide-label="Сховати логін">
+                      data-show-label="{% trans 'Show and copy login' %}"
+                      data-hide-label="{% trans 'Hide login' %}">
                       <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
   <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
   <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
 </svg>
-                      <span class="visually-hidden">Показати та скопіювати логін</span>
+                      <span class="visually-hidden">{% trans "Show and copy login" %}</span>
                     </button>
                     <span
                       id="pay-email_login-val-{{ i.id }}"
@@ -164,13 +166,13 @@
                       data-id="{{ i.id }}"
                       data-model="pay"
                       data-field="password"
-                      data-show-label="Показати та скопіювати пароль"
-                      data-hide-label="Сховати пароль">
+                      data-show-label="{% trans 'Show and copy password' %}"
+                      data-hide-label="{% trans 'Hide password' %}">
                       <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
   <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
   <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
 </svg>
-                      <span class="visually-hidden">Показати та скопіювати пароль</span>
+                      <span class="visually-hidden">{% trans "Show and copy password" %}</span>
                     </button>
                     <span
                       id="pay-password-val-{{ i.id }}"
@@ -186,7 +188,7 @@
               </tr>
             {% empty %}
               <tr>
-                <td colspan="13" class="table-empty">Нічого не знайдено по поточних фільтрах.</td>
+                <td colspan="13" class="table-empty">{% trans "Nothing found with current filters." %}</td>
               </tr>
             {% endfor %}
           </tbody>

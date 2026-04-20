@@ -35,66 +35,120 @@
       </div>
 
       <form method="POST" class="edit-table-form">
-        {% csrf_token %}
-        <div class="table-responsive table-responsive--wide">
-          <table class="table_pay table_pay--edit">
-            <thead>
-              <tr>
-                <th>Група</th>
-                <th>Дата створення</th>
-                <th>Сервіс</th>
-                <th>Тип ресурсу</th>
-                <th>Ціна на місяць</th>
-                <th>Валюта</th>
-                <th>Платіжна система</th>
-                <th>Проплачено до</th>
-                <th>Стан</th>
-                <th>Логін</th>
-                <th>Пароль</th>
-                <th>IP</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><input type="text" name="groups" value="{{ object_l.groups }}"></td>
-                <td><input type="date" name="create_date" value="{{ object_l.create_date|date:'Y-m-d' }}"></td>
-                <td><input type="text" name="service" value="{{ object_l.service }}"></td>
-                <td><input type="text" name="type_source" value="{{ object_l.type_source }}"></td>
-                <td><input type="number" step="any" name="price_per_month" value="{{ object_l.price_per_month }}"></td>
-                <td><input type="text" name="currency" value="{{ object_l.currency }}"></td>
-                <td><input type="text" name="pay_sys" value="{{ object_l.pay_sys }}"></td>
-                <td><input type="date" name="paid_up_to" value="{{ object_l.paid_up_to|date:'Y-m-d' }}"></td>
-                <td><input type="text" name="status" value="{{ object_l.status }}"></td>
-                <td><input type="text" name="email_login" value="{{ object_l.email_login }}"></td>
-                <td>
-                  <div class="password-toggle-wrap">
-                    <input type="password" name="password" value="{{ object_l.password }}" id="id_password">
-                    <button
-                      type="button"
-                      class="btn_pay_yellow icon-btn"
-                      data-action="toggle-password-input"
-                      data-target-id="id_password"
-                      data-show-label="Показати пароль"
-                      data-hide-label="Сховати пароль">
-                      <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-  <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
-  <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
-</svg>
-                      <span class="visually-hidden">Показати пароль</span>
-                    </button>
-                  </div>
-                </td>
-                <td><input type="text" name="ip" value="{{ object_l.ip }}"></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+         {% csrf_token %}
 
-        <div class="page-actions">
-          <input type="submit" class="btn_pay" value="Save">
-          <a href="{% url 'app:edit_page' %}" class="btn_pay btn-linklike btn_pay--secondary">Back</a>
-        </div>
-      </form>
+         {% if form_edit_pay.non_field_errors %}
+         <div class="form-errors" style="padding: 15px; background-color: #f8d7da; color: #721c24; border-radius: 4px; margin-bottom: 15px;">
+           <strong>Помилка при збереженні:</strong>
+           <ul>
+             {% for error in form_edit_pay.non_field_errors %}
+               <li>{{ error }}</li>
+             {% endfor %}
+           </ul>
+         </div>
+         {% endif %}
+
+         <div class="table-responsive table-responsive--wide">
+           <table class="table_pay table_pay--edit">
+             <thead>
+               <tr>
+                 <th>Група</th>
+                 <th>Дата створення</th>
+                 <th>Сервіс</th>
+                 <th>Тип ресурсу</th>
+                 <th>Ціна на місяць</th>
+                 <th>Валюта</th>
+                 <th>Платіжна система</th>
+                 <th>Проплачено до</th>
+                 <th>Стан</th>
+                 <th>Логін</th>
+                 <th>Пароль</th>
+                 <th>IP</th>
+               </tr>
+             </thead>
+             <tbody>
+               <tr>
+                  <td>
+                    <input type="text" name="groups" value="{{ object_l.groups|default:'' }}" class="form-control">
+                    {% if form_edit_pay.groups.errors %}<span style="color: red;">{{ form_edit_pay.groups.errors.0 }}</span>{% endif %}
+                  </td>
+                  <td>
+                    <input type="date" name="create_date" value="{{ object_l.create_date|date:'Y-m-d' }}" class="form-control">
+                    {% if form_edit_pay.create_date.errors %}<span style="color: red;">{{ form_edit_pay.create_date.errors.0 }}</span>{% endif %}
+                  </td>
+                  <td>
+                    <input type="text" name="service" value="{{ object_l.service|default:'' }}" class="form-control">
+                    {% if form_edit_pay.service.errors %}<span style="color: red;">{{ form_edit_pay.service.errors.0 }}</span>{% endif %}
+                  </td>
+                  <td>
+                    <select name="type_source" class="form-control">
+                      {% for val, label in form_edit_pay.fields.type_source.choices %}
+                        <option value="{{ val }}" {% if object_l.type_source == val %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                    {% if form_edit_pay.type_source.errors %}<span style="color: red;">{{ form_edit_pay.type_source.errors.0 }}</span>{% endif %}
+                  </td>
+                  <td>
+                    <input type="number" step="0.01" name="price_per_month" value="{{ object_l.price_per_month|default:'' }}" class="form-control">
+                    {% if form_edit_pay.price_per_month.errors %}<span style="color: red;">{{ form_edit_pay.price_per_month.errors.0 }}</span>{% endif %}
+                  </td>
+                  <td>
+                    <select name="currency" class="form-control">
+                      {% for val, label in form_edit_pay.fields.currency.choices %}
+                        <option value="{{ val }}" {% if object_l.currency == val %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                    {% if form_edit_pay.currency.errors %}<span style="color: red;">{{ form_edit_pay.currency.errors.0 }}</span>{% endif %}
+                  </td>
+                  <td>
+                    <input type="date" name="paid_up_to" value="{{ object_l.paid_up_to|date:'Y-m-d' }}" class="form-control">
+                    {% if form_edit_pay.paid_up_to.errors %}<span style="color: red;">{{ form_edit_pay.paid_up_to.errors.0 }}</span>{% endif %}
+                  </td>
+                  <td>
+                    <select name="status" class="form-control">
+                      {% for val, label in form_edit_pay.fields.status.choices %}
+                        <option value="{{ val }}" {% if object_l.status == val %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                    {% if form_edit_pay.status.errors %}<span style="color: red;">{{ form_edit_pay.status.errors.0 }}</span>{% endif %}
+                  </td>
+                  <td>
+                    <input type="text" name="email_login" value="{{ object_l.email_login|default:'' }}" class="form-control">
+                    {% if form_edit_pay.email_login.errors %}<span style="color: red;">{{ form_edit_pay.email_login.errors.0 }}</span>{% endif %}
+                  </td>
+                  <td>
+                    <div class="password-toggle-wrap">
+                      <input type="password" name="password" value="{{ object_l.password|default:'' }}" id="id_password" class="form-control">
+                      {% if form_edit_pay.password.errors %}<span style="color: red;">{{ form_edit_pay.password.errors.0 }}</span>{% endif %}
+                      <button
+                        type="button"
+                        class="btn_pay_yellow icon-btn"
+                        data-action="toggle-password-input"
+                        data-target-id="id_password"
+                        data-show-label="Показати пароль"
+                        data-hide-label="Сховати пароль">
+                        <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+    <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+  </svg>
+                        <span class="visually-hidden">Показати пароль</span>
+                      </button>
+                    </div>
+                  </td>
+                  <td>
+                    <input type="text" name="ip" value="{{ object_l.ip|default:'' }}" class="form-control">
+                    {% if form_edit_pay.ip.errors %}<span style="color: red;">{{ form_edit_pay.ip.errors.0 }}</span>{% endif %}
+                  </td>
+               </tr>
+             </tbody>
+           </table>
+         </div>
+
+         <div class="page-actions">
+           <input type="submit" class="btn_pay" value="Save">
+           <a href="{% url 'app:edit_page' %}" class="btn_pay btn-linklike btn_pay--secondary">Back</a>
+         </div>
+       </form>
     </section>
   </div>
 {% endblock %}
