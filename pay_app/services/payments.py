@@ -1,7 +1,10 @@
 from urllib.parse import urlencode
+from collections.abc import Mapping
+from typing import Any
 
-from django.db.models import DecimalField, F, Q, Value
+from django.db.models import DecimalField, F, Q, QuerySet, Value
 from django.db.models.functions import Coalesce
+from django.http import HttpRequest
 from django.urls import reverse
 
 from ..models import Cabinet, Pay
@@ -16,13 +19,15 @@ from .constants import (
 )
 
 
-def get_default_statuses_for_mode(mode):
+def get_default_statuses_for_mode(mode: str) -> list[str]:
+    """Return default status filters for the selected pay list mode."""
     if mode == PAY_MODE_OVERDUE:
         return ['active', 'not active']
     return ['active']
 
 
-def get_pay_base_url_name(mode):
+def get_pay_base_url_name(mode: str) -> str:
+    """Map a mode value to its base route name."""
     if mode == PAY_MODE_UPCOMING:
         return 'app:filter_by_date'
     if mode == PAY_MODE_OVERDUE:
@@ -30,7 +35,8 @@ def get_pay_base_url_name(mode):
     return 'app:index'
 
 
-def get_pay_base_url(mode):
+def get_pay_base_url(mode: str) -> str:
+    """Resolve the base URL used by pay-list links for a given mode."""
     url_name = get_pay_base_url_name(mode)
     if url_name in {'app:filter_by_date', 'app:overdue_payments'}:
         return reverse(url_name, args=('1',))
@@ -39,15 +45,16 @@ def get_pay_base_url(mode):
 
 def build_pay_list_url(
     *,
-    mode=PAY_MODE_ALL,
-    statuses=None,
-    q='',
-    sort='',
-    pay_sys='',
-    type_source='',
-    balance_gt_payment=None,
-    daily_payment=None,
-):
+    mode: str = PAY_MODE_ALL,
+    statuses: list[str] | None = None,
+    q: str = '',
+    sort: str = '',
+    pay_sys: str = '',
+    type_source: str = '',
+    balance_gt_payment: list[str] | None = None,
+    daily_payment: list[str] | None = None,
+) -> str:
+    """Build a canonical pay-list URL while preserving active query-state filters."""
     statuses = statuses or []
     params = {}
 
@@ -82,7 +89,12 @@ def build_pay_list_url(
     return f'{base_url}?{query_string}' if query_string else base_url
 
 
-def get_pay_list_state(request, default_mode=PAY_MODE_ALL, overrides=None):
+def get_pay_list_state(
+    request: HttpRequest,
+    default_mode: str = PAY_MODE_ALL,
+    overrides: dict[str, object] | None = None,
+) -> dict[str, Any]:
+    """Normalize and validate pay-list filter state from request query parameters."""
     query_data = request.GET.copy()
     overrides = overrides or {}
 
@@ -138,7 +150,8 @@ def get_pay_list_state(request, default_mode=PAY_MODE_ALL, overrides=None):
     }
 
 
-def toggle_binary_filter(selected_values, value):
+def toggle_binary_filter(selected_values: list[str] | None, value: str) -> list[str]:
+    """Toggle a yes/no filter value and return normalized ordering."""
     normalized = [item for item in (selected_values or []) if item in {'yes', 'no'}]
     if value in normalized:
         normalized = [item for item in normalized if item != value]
@@ -147,7 +160,8 @@ def toggle_binary_filter(selected_values, value):
     return [item for item in ['yes', 'no'] if item in normalized]
 
 
-def get_pay_sort_url(state, field_name):
+def get_pay_sort_url(state: Mapping[str, Any], field_name: str) -> str:
+    """Return a URL that flips sorting direction for the given field."""
     asc_sort = f'{field_name}_asc'
     desc_sort = f'{field_name}_desc'
     next_sort = desc_sort if state['current_sort'] == asc_sort else asc_sort
@@ -163,7 +177,12 @@ def get_pay_sort_url(state, field_name):
     )
 
 
-def build_pay_queryset(request, default_mode=PAY_MODE_ALL, overrides=None):
+def build_pay_queryset(
+    request: HttpRequest,
+    default_mode: str = PAY_MODE_ALL,
+    overrides: dict[str, object] | None = None,
+) -> tuple[QuerySet[Pay], dict[str, Any], dict[str, object]]:
+    """Build the filtered/sorted pay queryset plus resolved state and shared date context."""
     state = get_pay_list_state(request, default_mode=default_mode, overrides=overrides)
     context_dates = get_common_context()
     today = context_dates['today']
@@ -226,7 +245,8 @@ def build_pay_queryset(request, default_mode=PAY_MODE_ALL, overrides=None):
     return queryset, state, context_dates
 
 
-def get_pay_sidebar_context(state):
+def get_pay_sidebar_context(state: Mapping[str, Any]) -> dict[str, Any]:
+    """Build all sidebar links and UI flags for pay list filters and sorting."""
     pay_sys_options = ['BTC', 'WM', 'BTC|WM']
     type_source_options = ['VPS', 'site', 'proxy']
 
@@ -351,12 +371,22 @@ def get_pay_sidebar_context(state):
     }
 
 
-def get_default_pay_context(request, default_mode=PAY_MODE_ALL, overrides=None):
+def get_default_pay_context(
+    request: HttpRequest,
+    default_mode: str = PAY_MODE_ALL,
+    overrides: dict[str, object] | None = None,
+) -> dict[str, Any]:
+    """Return sidebar-only pay context for forms/pages that do not render pay queryset."""
     state = get_pay_list_state(request, default_mode=default_mode, overrides=overrides)
     return get_pay_sidebar_context(state)
 
 
-def build_pay_list_context(request, default_mode=PAY_MODE_ALL, overrides=None):
+def build_pay_list_context(
+    request: HttpRequest,
+    default_mode: str = PAY_MODE_ALL,
+    overrides: dict[str, object] | None = None,
+) -> dict[str, Any]:
+    """Return full pay page context: queryset, common dates, and sidebar state."""
     object_l, state, context_dates = build_pay_queryset(
         request,
         default_mode=default_mode,
@@ -368,7 +398,8 @@ def build_pay_list_context(request, default_mode=PAY_MODE_ALL, overrides=None):
     return content
 
 
-def get_pay_group_options():
+def get_pay_group_options() -> list[str]:
+    """Return unique non-empty pay groups for datalist/autocomplete options."""
     return list(
         Pay.objects.exclude(groups__isnull=True)
         .exclude(groups__exact='')
@@ -378,7 +409,8 @@ def get_pay_group_options():
     )
 
 
-def get_pay_create_initial():
+def get_pay_create_initial() -> dict[str, object]:
+    """Build initial form defaults for pay creation (dates and last cabinet)."""
     context_dates = get_common_context()
     initial = {
         'create_date': context_dates['today'],

@@ -671,3 +671,137 @@ msgstr "Назад до тегів"
 #: pay_app/templates/partials/_tags_sidebar.html:11
 msgid "Search tags..."
 msgstr "Пошук тегів..."
+
+#: pay_app/templates/base.html:12 pay_app/templates/login.html:15
+#: pay_app/templates/registration/login.html:15
+msgid "Pay app"
+msgstr "Pay app"
+
+#: pay_app/templates/edit_dt.html:6
+msgid "Change date"
+msgstr "Змінити дату"
+
+#: pay_app/templates/edit_dt.html:13
+msgid "Update payment date"
+msgstr "Оновити дату оплати"
+
+#: pay_app/templates/edit_dt.html:14
+msgid "Current date:"
+msgstr "Поточна дата:"
+
+#: pay_app/templates/edit_dt.html:22
+msgid "New date"
+msgstr "Нова дата"
+
+#: pay_app/templates/add_pay.html:17
+msgid "Create"
+msgstr "Створення"
+
+#: pay_app/templates/add_pay.html:18
+msgid "New record"
+msgstr "Новий запис"
+
+#: pay_app/templates/add_pay.html:23
+msgid "Add cabinet"
+msgstr "Додати кабінет"
+
+#: pay_app/templates/add_pay.html:25 pay_app/templates/edit_table.html:150
+msgid "Back"
+msgstr "Назад"
+
+#: pay_app/templates/add_pay.html:35
+msgid "New payment"
+msgstr "Новий платіж"
+
+#: pay_app/templates/add_pay.html:67
+msgid "New cabinet"
+msgstr "Новий кабінет"
+
+#: pay_app/templates/partials/_pay_edit_forms.html:7
+msgid "Service and linked cabinet"
+msgstr "Сервіс і пов'язаний кабінет"
+
+#: pay_app/templates/edit_page.html:6
+msgid "Edit page"
+msgstr "Сторінка редагування"
+
+#: pay_app/templates/edit_page.html:15
+msgid "Administration"
+msgstr "Адміністрування"
+
+#: pay_app/templates/edit_page.html:16
+msgid "Service editing"
+msgstr "Редагування сервісів"
+
+#: pay_app/templates/edit_page.html:17
+msgid "Table editing without changing existing URLs, JS hooks, or server logic."
+msgstr "Табличне редагування без зміни існуючих URL, JS-хуків і серверної логіки."
+
+#: pay_app/templates/edit_page.html:37
+msgid "Total records:"
+msgstr "Усього записів:"
+
+#: pay_app/templates/edit_table.html:6
+msgid "Edit payment"
+msgstr "Редагувати платіж"
+
+#: pay_app/templates/edit_table.html:15
+msgid "Change payment"
+msgstr "Змінити платіж"
+
+#: pay_app/templates/edit_table.html:16
+msgid "Manual update without changing field names or breaking the existing submit flow."
+msgstr "Ручне оновлення без зміни імен полів і без порушення існуючого submit-потоку."
+
+#: pay_app/templates/edit_table.html:24
+msgid "Payment parameters"
+msgstr "Параметри платежу"
+
+#: pay_app/templates/edit_table.html:25
+msgid "The password field keeps the existing show/hide hook, and the wide table stays inside the container using internal horizontal scrolling."
+msgstr "Поле пароля зберігає поточний show/hide-хук, а широка таблиця залишається в контейнері завдяки внутрішньому горизонтальному скролу."
+
+#: pay_app/templates/edit_table.html:43
+msgid "Save failed:"
+msgstr "Помилка при збереженні:"
+
+#: pay_app/templates/edit_table.html:129 pay_app/templates/edit_table.html:135
+msgid "Show password"
+msgstr "Показати пароль"
+
+#: pay_app/templates/edit_table.html:68
+msgid "IP"
+msgstr "IP"
+
+#: pay_app/templates/login.html:16 pay_app/templates/registration/login.html:16
+msgid "Login to system"
+msgstr "Вхід до системи"
+
+#: pay_app/templates/login.html:20 pay_app/templates/registration/login.html:20
+msgid "Invalid login or password. Please try again."
+msgstr "Невірний логін або пароль. Спробуйте ще раз."
+
+#: pay_app/templates/login.html:23 pay_app/templates/registration/login.html:23
+msgid "Enter your login and password to continue working."
+msgstr "Введіть логін і пароль, щоб продовжити роботу."
+
+#: pay_app/templates/login.html:29 pay_app/templates/registration/login.html:29
+msgid "Your account does not have access to this page. Please log in with a user who has the required permissions."
+msgstr "Ваш обліковий запис не має доступу до цієї сторінки. Увійдіть під користувачем із потрібними правами."
+
+#: pay_app/templates/login.html:33 pay_app/templates/registration/login.html:33
+msgid "Please log in to view this page."
+msgstr "Увійдіть, щоб переглянути цю сторінку."
+
+#: pay_app/templates/login.html:44 pay_app/templates/registration/login.html:44
+msgid "Username"
+msgstr "Ім'я користувача"
+
+#: pay_app/templates/login.html:61 pay_app/templates/registration/login.html:61
+msgid "Lost password?"
+msgstr "Забули пароль?"
+
+#: pay_app/templates/edit_dt.html:21
+msgid "Please provide a valid date."
+msgstr "Вкажіть коректну дату."
+

@@ -1,3 +1,5 @@
+"""Application URL routes for payment, cabinet, tag, and helper endpoints."""
+
 from django.urls import path
 from pay_app import views
 

@@ -37,7 +37,7 @@
 
           <div class="toolbar-cluster">
             <div class="toolbar-actions toolbar-actions--secondary">
-              {% if request.user.username == 'admin' and object_l %}
+              {% if request.user.username and object_l %}
                 <a href="{% url 'app:edit_page' %}" class="btn_pay btn-linklike btn_pay--secondary">{% trans "Edit" %}</a>
               {% endif %}
 

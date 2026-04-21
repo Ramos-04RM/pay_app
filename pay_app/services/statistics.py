@@ -2,10 +2,13 @@ import calendar
 import datetime
 from decimal import Decimal
 from urllib.parse import urlencode
+from collections.abc import Iterator, Mapping
+from typing import Any
 from django.utils.translation import gettext as _
 
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
+from django.http import HttpRequest
 
 from ..models import Cabinet, Pay
 from .common import add_one_month, get_common_context
@@ -18,15 +21,18 @@ from .constants import (
 )
 
 
-def _start_of_month(value):
+def _start_of_month(value: datetime.date) -> datetime.date:
+    """Return the first day of the month for the provided date."""
     return value.replace(day=1)
 
 
-def _end_of_month(value):
+def _end_of_month(value: datetime.date) -> datetime.date:
+    """Return the last day of the month for the provided date."""
     return value.replace(day=calendar.monthrange(value.year, value.month)[1])
 
 
-def _iter_month_starts(start_date, end_date):
+def _iter_month_starts(start_date: datetime.date, end_date: datetime.date) -> Iterator[datetime.date]:
+    """Yield month-start dates from start_date month through end_date month (inclusive)."""
     current = _start_of_month(start_date)
     end_month = _start_of_month(end_date)
     while current <= end_month:
@@ -34,14 +40,16 @@ def _iter_month_starts(start_date, end_date):
         current = add_one_month(current)
 
 
-def _normalize_stat_period(value):
+def _normalize_stat_period(value: str | None) -> str:
+    """Normalize requested statistics period and fallback to default when invalid."""
     period = (value or STAT_PERIOD_MONTH).strip().lower()
     if period not in STAT_PERIOD_CHOICES:
         return STAT_PERIOD_MONTH
     return period
 
 
-def _parse_iso_date(value):
+def _parse_iso_date(value: str | None) -> datetime.date | None:
+    """Parse an ISO date string (`YYYY-MM-DD`) into a date object."""
     if not value:
         return None
     try:
@@ -50,7 +58,7 @@ def _parse_iso_date(value):
         return None
 
 
-def _calculate_proportional_cost(service, month_start, month_end):
+def _calculate_proportional_cost(service: Pay, month_start: datetime.date, month_end: datetime.date) -> Decimal:
     """
     Calculate proportional cost of a service based on its active days within a month.
 
@@ -91,7 +99,12 @@ def _calculate_proportional_cost(service, month_start, month_end):
     return price * proportion
 
 
-def _get_period_bounds(period, start_raw, end_raw, today):
+def _get_period_bounds(
+    period: str,
+    start_raw: str,
+    end_raw: str,
+    today: datetime.date,
+) -> tuple[datetime.date, datetime.date]:
     """
     Calculate period bounds based on the selected period type.
 
@@ -122,7 +135,8 @@ def _get_period_bounds(period, start_raw, end_raw, today):
     return start, end
 
 
-def _build_statistics_query_params(data):
+def _build_statistics_query_params(data: Mapping[str, str]) -> str:
+    """Serialize non-empty statistics filters into a stable query-string fragment."""
     params = {}
     if data.get('currency'):
         params['currency'] = data['currency']
@@ -147,7 +161,7 @@ def _build_statistics_query_params(data):
     return urlencode(params)
 
 
-def build_statistics_context(request):
+def build_statistics_context(request: HttpRequest) -> dict[str, Any]:
     """
     Build statistics context for payment metrics.
 

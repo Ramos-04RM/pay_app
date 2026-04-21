@@ -4,14 +4,16 @@ import datetime
 from ..models import Pay
 
 
-def add_one_month(value):
+def add_one_month(value: datetime.date) -> datetime.date:
+    """Return *value* shifted by one month while clamping to month-end when needed."""
     year = value.year + (1 if value.month == 12 else 0)
     month = 1 if value.month == 12 else value.month + 1
     day = min(value.day, calendar.monthrange(year, month)[1])
     return datetime.date(year, month, day)
 
 
-def get_common_context():
+def get_common_context() -> dict[str, object]:
+    """Build shared date and upcoming/overdue payment snippets for page sidebars."""
     today = datetime.date.today()
     month = today + datetime.timedelta(days=31)
     week = today + datetime.timedelta(days=7)

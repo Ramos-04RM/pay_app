@@ -9,6 +9,7 @@ from .constants import DAILY_DIVISOR
 
 
 def recalculate_cabinet_paid_up_to(cabinet_id: int) -> None:
+    """Recompute `paid_up_to` for active cabinet services using balance-based daily coverage."""
     cabinet = Cabinet.objects.filter(id=cabinet_id).values('id', 'balance', 'is_daily_payment').first()
     if not cabinet or not cabinet['is_daily_payment']:
         return

@@ -12,7 +12,7 @@
   <div class="auth-shell">
     <div class="login-card">
       <div class="login-card__header">
-        <p class="eyebrow">Pay app</p>
+        <p class="eyebrow">{% trans "Pay app" %}</p>
         <h1 class="page-title page-title--sm">{% trans "Login to system" %}</h1>
 
         {% if form.errors %}
@@ -41,24 +41,24 @@
 
         <div class="form-list form-list--stacked">
           <div class="form-field">
-            <label for="{{ form.username.id_for_label }}">Username</label>
+            <label for="{{ form.username.id_for_label }}">{% trans "Username" %}</label>
             {{ form.username }}
             {{ form.username.errors }}
           </div>
 
           <div class="form-field">
-            <label for="{{ form.password.id_for_label }}">Password</label>
+            <label for="{{ form.password.id_for_label }}">{% trans "Password" %}</label>
             {{ form.password }}
             {{ form.password.errors }}
           </div>
         </div>
 
-        <button class="btn_pay btn_pay--wide" type="submit" value="login" id="login-button">Login</button>
+        <button class="btn_pay btn_pay--wide" type="submit" value="login" id="login-button">{% trans "Login" %}</button>
         <input type="hidden" name="next" value="{{ next }}">
       </form>
 
       <div class="login-card__footer">
-        <a href="{% url 'password_reset' %}" class="text-link">Lost password?</a>
+        <a href="{% url 'password_reset' %}" class="text-link">{% trans "Lost password?" %}</a>
       </div>
     </div>
   </div>

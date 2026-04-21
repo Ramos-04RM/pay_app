@@ -109,8 +109,12 @@ USE_I18N = True
 USE_L10N = False
 USE_TZ = True
 
+# Disable date/datetime localization to prevent issues with Ukrainian locale
+# This ensures dates are always formatted consistently (Y-m-d)
+FORMAT_MODULE_PATH = None
+
+# Unified date format policy for all user-facing screens.
 DATE_FORMAT = 'Y-m-d'
-TIME_FORMAT = 'H:i:s'
 DATETIME_FORMAT = 'Y-m-d H:i:s'
 
 LOCALE_PATHS = [BASE_DIR / 'locale']
@@ -123,7 +127,7 @@ LANGUAGES = [
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = []
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage' if not DEBUG else 'django.contrib.staticfiles.storage.StaticFilesStorage'
+DATETIME_FORMAT = 'Y-m-d H:i:s'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGOUT_REDIRECT_URL = '/'

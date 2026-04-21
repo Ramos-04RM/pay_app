@@ -1,15 +1,13 @@
 from django import template
 from datetime import date
+from typing import Any
 
 register = template.Library()
 
 
 @register.filter
-def date_iso(value):
-    """
-    Повертає дату в ISO форматі (Y-m-d), незалежно від локалізації.
-    Це необхідно для HTML5 input[type="date"] елементів.
-    """
+def date_iso(value: Any) -> str:
+    """Return value formatted for HTML5 date inputs using stable ISO representation."""
     if not value:
         return ''
 
@@ -17,4 +15,3 @@ def date_iso(value):
         return value.isoformat()
 
     return str(value)
-

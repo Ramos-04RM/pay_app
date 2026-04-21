@@ -1,9 +1,10 @@
+{% load i18n %}
 {% if form_edit_pay %}
   <section class="page-section-card">
     <div class="page-header-row page-header-row--compact">
       <div>
-        <p class="eyebrow">Редагування</p>
-        <h2 class="section-title">Сервіс і повʼязаний кабінет</h2>
+        <p class="eyebrow">{% trans "Editing" %}</p>
+        <h2 class="section-title">{% trans "Service and linked cabinet" %}</h2>
       </div>
     </div>
 
@@ -11,7 +12,7 @@
       <form method="POST" class="form_cabinet form-card">
         {% csrf_token %}
         <div class="form-card__header">
-          <h3 class="form-section-title">Сервіс</h3>
+          <h3 class="form-section-title">{% trans "Service" %}</h3>
         </div>
         <ul class="form-list">
           {% for field in form_edit_pay %}
@@ -36,18 +37,18 @@
           {% endfor %}
         </ul>
         <div class="page-actions">
-          <button type="submit" class="btn_add">Save</button>
+          <button type="submit" class="btn_add">{% trans "Save" %}</button>
         </div>
       </form>
 
       <form method="POST" class="form_cabinet form-card">
         {% csrf_token %}
         <div class="form-card__header">
-          <h3 class="form-section-title">Кабінет</h3>
+          <h3 class="form-section-title">{% trans "Cabinet" %}</h3>
         </div>
         <div class="form-as-list">{{ form_edit_cabinet.as_ul }}</div>
         <div class="page-actions">
-          <button type="submit" class="btn_pay">Save</button>
+          <button type="submit" class="btn_pay">{% trans "Save" %}</button>
         </div>
       </form>
     </div>

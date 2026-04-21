@@ -1,7 +1,10 @@
 from urllib.parse import urlencode
+from collections.abc import Iterable, Mapping
+from typing import Any
 
 from django.db.models import Count, DecimalField, Q, Value
 from django.db.models.functions import Coalesce
+from django.http import HttpRequest
 from django.urls import reverse
 
 from ..models import Cabinet, CabinetTag, Pay, Tag
@@ -10,19 +13,20 @@ from .constants import CABINET_SORT_MAP
 
 
 def build_cabinet_page_url(
-    q='',
-    has_active=False,
-    has_inactive=False,
-    without_active=False,
-    no_services=False,
-    daily_payment_yes=False,
-    daily_payment_no=False,
-    tag_ids=None,
-    sort='',
-    currency='',
-    balance_min='',
-    balance_max='',
-):
+    q: str = '',
+    has_active: bool = False,
+    has_inactive: bool = False,
+    without_active: bool = False,
+    no_services: bool = False,
+    daily_payment_yes: bool = False,
+    daily_payment_no: bool = False,
+    tag_ids: list[int] | None = None,
+    sort: str = '',
+    currency: str = '',
+    balance_min: str = '',
+    balance_max: str = '',
+) -> str:
+    """Build a cabinet list URL with active filter/sort query parameters."""
     params = {}
     if q:
         params['q'] = q
@@ -54,25 +58,27 @@ def build_cabinet_page_url(
 
 
 def get_cabinet_sort_url(
-    search_query,
-    has_active,
-    has_inactive,
-    without_active,
-    no_services,
-    daily_payment_yes,
-    daily_payment_no,
-    tag_ids,
-    current_sort,
-    field_name,
-    currency='',
-    balance_min='',
-    balance_max='',
-):
+    *,
+    q: str = '',
+    has_active: bool = False,
+    has_inactive: bool = False,
+    without_active: bool = False,
+    no_services: bool = False,
+    daily_payment_yes: bool = False,
+    daily_payment_no: bool = False,
+    tag_ids: list[int] | None = None,
+    current_sort: str = '',
+    field_name: str,
+    currency: str = '',
+    balance_min: str = '',
+    balance_max: str = '',
+) -> str:
+    """Return a cabinet list URL that toggles the requested sort field direction."""
     asc_sort = f'{field_name}_asc'
     desc_sort = f'{field_name}_desc'
     next_sort = desc_sort if current_sort == asc_sort else asc_sort
     return build_cabinet_page_url(
-        q=search_query,
+        q=q,
         has_active=has_active,
         has_inactive=has_inactive,
         without_active=without_active,
@@ -88,19 +94,20 @@ def get_cabinet_sort_url(
 
 
 def get_cabinet_sidebar_context(
-    search_query='',
-    has_active=False,
-    has_inactive=False,
-    without_active=False,
-    no_services=False,
-    daily_payment_yes=False,
-    daily_payment_no=False,
-    current_sort='',
-    tag_ids=None,
-    currency='',
-    balance_min='',
-    balance_max='',
-):
+    search_query: str = '',
+    has_active: bool = False,
+    has_inactive: bool = False,
+    without_active: bool = False,
+    no_services: bool = False,
+    daily_payment_yes: bool = False,
+    daily_payment_no: bool = False,
+    current_sort: str = '',
+    tag_ids: list[int] | None = None,
+    currency: str = '',
+    balance_min: str = '',
+    balance_max: str = '',
+) -> dict[str, Any]:
+    """Assemble sidebar counters, selected filters, and navigation links for cabinet page."""
     tag_ids = [int(tag_id) for tag_id in (tag_ids or [])]
 
     cabinet_stats = Cabinet.objects.annotate(
@@ -120,6 +127,30 @@ def get_cabinet_sidebar_context(
         .distinct()
         .order_by('currency')
     )
+
+    _url_base = dict(
+        q=search_query,
+        has_active=has_active,
+        has_inactive=has_inactive,
+        without_active=without_active,
+        no_services=no_services,
+        daily_payment_yes=daily_payment_yes,
+        daily_payment_no=daily_payment_no,
+        tag_ids=tag_ids,
+        currency=currency,
+        balance_min=balance_min,
+        balance_max=balance_max,
+    )
+
+    def _sort_url(field: str) -> str:
+        return get_cabinet_sort_url(
+            **_url_base,
+            current_sort=current_sort,
+            field_name=field,
+        )
+
+    def _page_url(sort: str) -> str:
+        return build_cabinet_page_url(**_url_base, sort=sort)
 
     return {
         'cabinet_search_query': search_query,
@@ -145,20 +176,21 @@ def get_cabinet_sidebar_context(
         'cabinets_daily_payment_yes_count': cabinet_stats.filter(is_daily_payment=True).count(),
         'cabinets_daily_payment_no_count': cabinet_stats.filter(is_daily_payment=False).count(),
         'cabinet_reset_url': reverse('app:cabinet_page'),
-        'cabinet_login_sort_url': get_cabinet_sort_url(search_query, has_active, has_inactive, without_active, no_services, daily_payment_yes, daily_payment_no, tag_ids, current_sort, 'login', currency, balance_min, balance_max),
-        'cabinet_link_sort_url': get_cabinet_sort_url(search_query, has_active, has_inactive, without_active, no_services, daily_payment_yes, daily_payment_no, tag_ids, current_sort, 'link', currency, balance_min, balance_max),
-        'cabinet_email_sort_url': get_cabinet_sort_url(search_query, has_active, has_inactive, without_active, no_services, daily_payment_yes, daily_payment_no, tag_ids, current_sort, 'email_login', currency, balance_min, balance_max),
-        'cabinet_note_sort_url': get_cabinet_sort_url(search_query, has_active, has_inactive, without_active, no_services, daily_payment_yes, daily_payment_no, tag_ids, current_sort, 'note', currency, balance_min, balance_max),
-        'cabinet_services_sort_asc_url': build_cabinet_page_url(q=search_query, has_active=has_active, has_inactive=has_inactive, without_active=without_active, no_services=no_services, daily_payment_yes=daily_payment_yes, daily_payment_no=daily_payment_no, tag_ids=tag_ids, sort='services_asc', currency=currency, balance_min=balance_min, balance_max=balance_max),
-        'cabinet_services_sort_desc_url': build_cabinet_page_url(q=search_query, has_active=has_active, has_inactive=has_inactive, without_active=without_active, no_services=no_services, daily_payment_yes=daily_payment_yes, daily_payment_no=daily_payment_no, tag_ids=tag_ids, sort='services_desc', currency=currency, balance_min=balance_min, balance_max=balance_max),
-        'cabinet_balance_sort_asc_url': build_cabinet_page_url(q=search_query, has_active=has_active, has_inactive=has_inactive, without_active=without_active, no_services=no_services, daily_payment_yes=daily_payment_yes, daily_payment_no=daily_payment_no, tag_ids=tag_ids, sort='balance_asc', currency=currency, balance_min=balance_min, balance_max=balance_max),
-        'cabinet_balance_sort_desc_url': build_cabinet_page_url(q=search_query, has_active=has_active, has_inactive=has_inactive, without_active=without_active, no_services=no_services, daily_payment_yes=daily_payment_yes, daily_payment_no=daily_payment_no, tag_ids=tag_ids, sort='balance_desc', currency=currency, balance_min=balance_min, balance_max=balance_max),
-        'cabinet_tags_sort_asc_url': build_cabinet_page_url(q=search_query, has_active=has_active, has_inactive=has_inactive, without_active=without_active, no_services=no_services, daily_payment_yes=daily_payment_yes, daily_payment_no=daily_payment_no, tag_ids=tag_ids, sort='tags_asc', currency=currency, balance_min=balance_min, balance_max=balance_max),
-        'cabinet_tags_sort_desc_url': build_cabinet_page_url(q=search_query, has_active=has_active, has_inactive=has_inactive, without_active=without_active, no_services=no_services, daily_payment_yes=daily_payment_yes, daily_payment_no=daily_payment_no, tag_ids=tag_ids, sort='tags_desc', currency=currency, balance_min=balance_min, balance_max=balance_max),
+        'cabinet_login_sort_url': _sort_url('login'),
+        'cabinet_link_sort_url': _sort_url('link'),
+        'cabinet_email_sort_url': _sort_url('email_login'),
+        'cabinet_note_sort_url': _sort_url('note'),
+        'cabinet_services_sort_asc_url': _page_url('services_asc'),
+        'cabinet_services_sort_desc_url': _page_url('services_desc'),
+        'cabinet_balance_sort_asc_url': _page_url('balance_asc'),
+        'cabinet_balance_sort_desc_url': _page_url('balance_desc'),
+        'cabinet_tags_sort_asc_url': _page_url('tags_asc'),
+        'cabinet_tags_sort_desc_url': _page_url('tags_desc'),
     }
 
 
-def parse_tag_ids(raw_tag_ids):
+def parse_tag_ids(raw_tag_ids: Iterable[object]) -> list[int]:
+    """Parse raw tag IDs into integers, skipping invalid values."""
     tag_ids = []
     for raw_tag_id in raw_tag_ids:
         try:
@@ -168,11 +200,13 @@ def parse_tag_ids(raw_tag_ids):
     return tag_ids
 
 
-def get_selected_cabinet_tag_ids(cabinet):
+def get_selected_cabinet_tag_ids(cabinet: Cabinet) -> list[int]:
+    """Return IDs of tags currently attached to the given cabinet."""
     return list(CabinetTag.objects.filter(cabinet=cabinet).values_list('tag_id', flat=True))
 
 
-def replace_cabinet_tags(cabinet, tags):
+def replace_cabinet_tags(cabinet: Cabinet, tags: Iterable[Tag]) -> None:
+    """Replace cabinet-tag relations with the provided tag collection."""
     CabinetTag.objects.filter(cabinet=cabinet).delete()
     CabinetTag.objects.bulk_create([
         CabinetTag(cabinet=cabinet, tag=tag)
@@ -180,19 +214,25 @@ def replace_cabinet_tags(cabinet, tags):
     ])
 
 
-def extract_prefixed_cabinet_form_data(post_data, prefix='cabinet_'):
-    cabinet_form_data = {}
+def extract_prefixed_cabinet_form_data(
+    post_data: Mapping[str, object],
+    prefix: str = 'cabinet_',
+) -> dict[str, object]:
+    """Extract fields prefixed for cabinet form reconstruction from mixed POST payload."""
+    cabinet_form_data: dict[str, object] = {}
     for key, value in post_data.items():
         if key.startswith(prefix):
             cabinet_form_data[key.replace(prefix, '', 1)] = value
     return cabinet_form_data
 
 
-def get_cabinet_create_context():
+def get_cabinet_create_context() -> dict[str, object]:
+    """Return base context for cabinet creation pages."""
     return get_common_context()
 
 
-def build_cabinet_page_context(request):
+def build_cabinet_page_context(request: HttpRequest) -> dict[str, Any]:
+    """Build full cabinet list context from query filters, counters, and sorting state."""
     search_query = (request.GET.get('q') or '').strip()
     has_active = request.GET.get('has_active') == '1'
     has_inactive = request.GET.get('has_inactive') == '1'

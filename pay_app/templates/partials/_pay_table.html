@@ -9,7 +9,6 @@
             <h2 class="section-title">{% trans "Services" %}</h2>
             <span class="metric-pill">{% trans "Found:" %} {{ object_l|length }}</span>
           </div>
-{#          <p class="section-subtitle">Широка таблиця не розпирає layout: перегляд усіх колонок відбувається через горизонтальний скрол всередині card-контейнера.</p>#}
         </div>
         <div class="table-scroll-hint">
           <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -34,13 +33,14 @@
               <th><a href="{{ pay_sort_service_url|default:'#' }}">{% trans "Service name" %}</a></th>
               <th><a href="{{ pay_sort_type_source_url|default:'#' }}">{% trans "Resource type" %}</a></th>
               <th><a href="{{ pay_sort_price_per_month_url|default:'#' }}">{% trans "Price per month / balance" %}</a></th>
-{#              <th><a href="{{ pay_sort_currency_url|default:'#' }}">Валюта</a></th>#}
+{#              <th><a href="{{ pay_sort_currency_url|default:'#' }}">Currency</a></th>#}
               <th><a href="{{ pay_sort_pay_sys_url|default:'#' }}">{% trans "Payment system" %}</a></th>
               <th><a href="{{ pay_sort_paid_up_to_url|default:'#' }}">{% trans "Paid up to" %}</a></th>
               <th><a href="{{ pay_sort_email_login_url|default:'#' }}">{% trans "Login" %}</a></th>
               <th>{% trans "IP/Port" %}</th>
               <th>{% trans "Password" %}</th>
               <th>{% trans "Note" %}</th>
+              <th>{% trans "Actions" %}</th>
             </tr>
           </thead>
 
@@ -60,7 +60,7 @@
                     <a class="all_cell service-link" target="_blank" href="{% url 'app:home_page_with_cabinet' i.id %}">
                       <span class="service-link__content">
                         <span class="service-link__label">{{ i.service }}</span>
-{#                        <span class="service-link__hint">деталі</span>#}
+{#                        <span class="service-link__hint">details</span>#}
                       </span>
                       <span class="service-link__icon" aria-hidden="true">
   <svg class="icon-svg" viewBox="0 0 24 24" focusable="false">
@@ -76,7 +76,7 @@
                     <a class="all_cell service-link" target="_blank" href="{% url 'app:home_page_with_cabinet' i.id %}">
                       <span class="service-link__content">
                         <span class="service-link__label">{{ i.service }}</span>
-{#                        <span class="service-link__hint">деталі</span>#}
+{#                        <span class="service-link__hint">details</span>#}
                       </span>
                       <span class="service-link__icon" aria-hidden="true">
   <svg class="icon-svg" viewBox="0 0 24 24" focusable="false">
@@ -185,10 +185,36 @@
                 </td>
 
                 <td>{{ i.note_pay }}</td>
+                <td class="table-actions-cell">
+                  <form
+                    method="post"
+                    action="{% url 'app:delete' i.id %}"
+                    class="table-inline-form"
+                    data-service="{{ i.service }}"
+                    data-confirm-message="{% blocktrans with service=i.service %}Delete service &quot;{{ service }}&quot;?{% endblocktrans %}"
+                    onsubmit="return window.confirm(this.dataset.confirmMessage);">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button
+                      type="submit"
+                      class="btn_pay_red icon-btn"
+                      title="{% trans 'Delete service' %}"
+                      aria-label="{% trans 'Delete service' %} {{ i.service }}">
+                      <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M3 6h18"></path>
+                        <path d="M8 6V4h8v2"></path>
+                        <path d="M19 6l-1 14H6L5 6"></path>
+                        <path d="M10 11v6"></path>
+                        <path d="M14 11v6"></path>
+                      </svg>
+                      <span class="visually-hidden">{% trans "Delete service" %}</span>
+                    </button>
+                  </form>
+                </td>
               </tr>
             {% empty %}
               <tr>
-                <td colspan="13" class="table-empty">{% trans "Nothing found with current filters." %}</td>
+                <td colspan="14" class="table-empty">{% trans "Nothing found with current filters." %}</td>
               </tr>
             {% endfor %}
           </tbody>

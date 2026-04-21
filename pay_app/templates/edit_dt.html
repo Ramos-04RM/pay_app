@@ -1,28 +1,33 @@
 {% extends 'index.html' %}
 {% load static %}
+{% load i18n %}
+{% load date_filters %}
 
 {% block title %}
-  <title>Change date</title>
+  <title>{% trans "Change date" %}</title>
 {% endblock %}
 
 {% block table %}
   <section class="form-card form-card--narrow">
     <div class="table-card__header table-card__header--compact">
       <div>
-        <h2 class="section-title">Оновити дату оплати</h2>
-        <p class="section-subtitle">Поточна дата: <strong>{{ object_l.paid_up_to|date:"d.m.Y" }}</strong></p>
+        <h2 class="section-title">{% trans "Update payment date" %}</h2>
+        <p class="section-subtitle">{% trans "Current date:" %} <strong>{{ object_l.paid_up_to|date:"d.m.Y" }}</strong></p>
       </div>
     </div>
 
     <form method="POST" class="date-edit-form date-edit-form--card">
       {% csrf_token %}
+      {% if date_error %}
+        <p class="form-error">{% trans "Please provide a valid date." %}</p>
+      {% endif %}
       <div class="form-inline-row">
-        <label class="form-field form-field--inline" for="id_paid_up_to">
-          <span>Нова дата</span>
-          <input id="id_paid_up_to" type="date" name="paid_up_to" value="{{ object_l.paid_up_to|date:'Y-m-d' }}">
-        </label>
-        <button type="submit" class="btn_add">Save</button>
-      </div>
+         <label class="form-field form-field--inline" for="id_paid_up_to">
+           <span>{% trans "New date" %}</span>
+           <input id="id_paid_up_to" type="date" name="paid_up_to" value="{{ object_l.paid_up_to|date_iso }}">
+         </label>
+         <button type="submit" class="btn_add">{% trans "Save" %}</button>
+       </div>
     </form>
   </section>
 {% endblock %}

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 """
-Скрипт для заповнення БД тестовими даними
-- 70 кабінетів
-- 200 сервісів
-- Правдоподібні дані для тестування фільтрів, сортування тощо
+Test data population script.
+- 50 cabinets
+- 200 services
+- 5 tags
 """
 
 import os
@@ -46,7 +46,7 @@ SERVICE_NAMES = {
 PAY_SYSTEMS = ['PayPal', 'Stripe', 'Credit Card', 'Bank Transfer', 'Bitcoin', 'Wise', 'Wire Transfer']
 CURRENCIES = ['USD $', 'EURO €', 'UAH ₴', 'rub ₽']
 GROUPS = ['Production', 'Development', 'Testing', 'Staging', 'Backup', 'Monitor', 'Critical', 'Non-Critical']
-TAGS_LIST = ['Production', 'Development', 'Testing', 'Premium', 'Free Tier', 'Legacy', 'Active', 'Inactive']
+TAGS_LIST = ['Production', 'Development', 'Testing', 'Premium', 'Legacy']
 
 def generate_cabinet_data():
     """Генерує дані для кабінету"""
@@ -136,9 +136,9 @@ def main():
         print(f"  {status}: {tag_name}")
 
     # Створення кабінетів
-    print("\n🏢 Створення кабінетів (70)...")
+    print("\n🏢 Створення кабінетів (50)...")
     cabinets = []
-    for i in range(70):
+    for i in range(50):
         cabinet_data = generate_cabinet_data()
         cabinet = Cabinet.objects.create(**cabinet_data)
         cabinets.append(cabinet)
@@ -149,7 +149,7 @@ def main():
             CabinetTag.objects.create(cabinet=cabinet, tag=tag)
 
         if (i + 1) % 10 == 0:
-            print(f"  ✅ {i + 1}/70 кабінетів створено")
+            print(f"  ✅ {i + 1}/50 кабінетів створено")
 
     print(f"✅ Всього кабінетів: {len(cabinets)}")
 

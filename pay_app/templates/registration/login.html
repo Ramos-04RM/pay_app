@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
 {% load crispy_forms_filters %}
 {% load static %}
+{% load i18n %}
 
 {% block title %}
-  <title>Login</title>
+  <title>{% trans "Login" %}</title>
 {% endblock %}
 
 
@@ -11,25 +12,25 @@
   <div class="auth-shell">
     <div class="login-card">
       <div class="login-card__header">
-        <p class="eyebrow">Pay app</p>
-        <h1 class="page-title page-title--sm">Вхід до системи</h1>
+        <p class="eyebrow">{% trans "Pay app" %}</p>
+        <h1 class="page-title page-title--sm">{% trans "Login to system" %}</h1>
 
         {% if form.errors %}
           <div class="status-banner status-banner--danger" role="alert">
-            Невірний логін або пароль. Спробуйте ще раз.
+            {% trans "Invalid login or password. Please try again." %}
           </div>
         {% else %}
-          <p class="page-subtitle">Введіть логін і пароль, щоб продовжити роботу.</p>
+          <p class="page-subtitle">{% trans "Enter your login and password to continue working." %}</p>
         {% endif %}
 
         {% if next %}
           {% if user.is_authenticated %}
             <div class="status-banner status-banner--warning">
-              Ваш обліковий запис не має доступу до цієї сторінки. Увійдіть під користувачем із потрібними правами.
+              {% trans "Your account does not have access to this page. Please log in with a user who has the required permissions." %}
             </div>
           {% else %}
             <div class="status-banner status-banner--info">
-              Увійдіть, щоб переглянути цю сторінку.
+              {% trans "Please log in to view this page." %}
             </div>
           {% endif %}
         {% endif %}
@@ -40,24 +41,24 @@
 
         <div class="form-list form-list--stacked">
           <div class="form-field">
-            <label for="{{ form.username.id_for_label }}">Username</label>
+            <label for="{{ form.username.id_for_label }}">{% trans "Username" %}</label>
             {{ form.username }}
             {{ form.username.errors }}
           </div>
 
           <div class="form-field">
-            <label for="{{ form.password.id_for_label }}">Password</label>
+            <label for="{{ form.password.id_for_label }}">{% trans "Password" %}</label>
             {{ form.password }}
             {{ form.password.errors }}
           </div>
         </div>
 
-        <button class="btn_pay btn_pay--wide" type="submit" value="login" id="login-button">Login</button>
+        <button class="btn_pay btn_pay--wide" type="submit" value="login" id="login-button">{% trans "Login" %}</button>
         <input type="hidden" name="next" value="{{ next }}">
       </form>
 
       <div class="login-card__footer">
-        <a href="{% url 'password_reset' %}" class="text-link">Lost password?</a>
+        <a href="{% url 'password_reset' %}" class="text-link">{% trans "Lost password?" %}</a>
       </div>
     </div>
   </div>

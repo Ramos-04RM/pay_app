@@ -510,6 +510,17 @@ function initStatisticsFilters() {
   sync();
 }
 
+function showDeleteToastFromUrl() {
+  const url = new URL(window.location.href);
+  const deletedService = (url.searchParams.get("deleted_service") || "").trim();
+  if (!deletedService) return;
+
+  showToast(`Сервіс "${deletedService}" успішно видалено`);
+  url.searchParams.delete("deleted_service");
+  const cleanUrl = `${url.pathname}${url.search}${url.hash}`;
+  window.history.replaceState(window.history.state, "", cleanUrl);
+}
+
 document.addEventListener("click", async (event) => {
   const decryptBtn = event.target.closest('[data-action="decrypt-copy"]');
   if (decryptBtn) {
@@ -565,6 +576,47 @@ document.addEventListener("click", async (event) => {
     event.preventDefault();
     const message = alertBtn.dataset.alertMessage || "Дію заборонено.";
     window.alert(message);
+    return;
+  }
+
+  const deleteServiceBtn = event.target.closest('[data-action="delete-service"]');
+  if (deleteServiceBtn) {
+    event.preventDefault();
+    const serviceName = deleteServiceBtn.dataset.service || "сервіс";
+    const url = deleteServiceBtn.dataset.url;
+    if (!url) return;
+
+    const confirmed = window.confirm(`Видалити сервіс "${serviceName}"? Цю дію неможливо скасувати.`);
+    if (!confirmed) return;
+
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+    })
+      .then((resp) => {
+        if (!resp.ok) throw new Error("Server error: " + resp.status);
+        return resp.json();
+      })
+      .then((data) => {
+        if (data.ok) {
+          const row = deleteServiceBtn.closest("tr");
+          if (row) {
+            row.style.transition = "opacity 0.3s";
+            row.style.opacity = "0";
+            setTimeout(() => row.remove(), 310);
+          }
+          showToast(`Сервіс "${serviceName}" успішно видалено`);
+        } else {
+          showToast(data.error || "Помилка видалення", true);
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        showToast("Помилка з'єднання при видаленні", true);
+      });
   }
 });
 
@@ -579,4 +631,5 @@ document.addEventListener("DOMContentLoaded", () => {
   initIconButtons();
   initStatisticsFilters();
   restoreToggleStateFromHistory(history.state);
+  showDeleteToastFromUrl();
 });

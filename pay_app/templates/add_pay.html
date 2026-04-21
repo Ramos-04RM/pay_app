@@ -13,15 +13,15 @@
   <section class="page-section-card">
     <div class="page-header-row page-header-row--compact page-header-row--stretch">
       <div>
-        <p class="eyebrow">Створення</p>
-        <h2 class="section-title">Новий запис</h2>
+        <p class="eyebrow">{% trans "Create" %}</p>
+        <h2 class="section-title">{% trans "New record" %}</h2>
       </div>
 
       <div class="page-actions page-actions--compact">
         {% if form_pay and not form_cabinet %}
-          <a href="{% url 'app:cabinet_new' %}" class="btn_pay btn-linklike">ADD CABINET</a>
+          <a href="{% url 'app:cabinet_new' %}" class="btn_pay btn-linklike">{% trans "Add cabinet" %}</a>
         {% elif form_pay and form_cabinet %}
-          <a href="{% url 'app:pay_new' %}" class="btn_pay btn-linklike">Back</a>
+          <a href="{% url 'app:pay_new' %}" class="btn_pay btn-linklike">{% trans "Back" %}</a>
         {% endif %}
       </div>
     </div>
@@ -31,7 +31,7 @@
         {% csrf_token %}
         {% if form_pay %}
           <div class="form-card__header">
-            <h3 class="form-section-title">Новий платіж</h3>
+            <h3 class="form-section-title">{% trans "New payment" %}</h3>
           </div>
 
           <ul class="form-list">
@@ -54,7 +54,7 @@
 
         {% if form_pay and not form_cabinet %}
           <div class="page-actions">
-            <button type="submit" class="btn_pay">Save</button>
+            <button type="submit" class="btn_pay">{% trans "Save" %}</button>
           </div>
         {% endif %}
       </form>
@@ -63,14 +63,14 @@
         <form method="POST" class="form_cabinet form-card" id="cabinet-create-form">
           {% if form_cabinet %}
             <div class="form-card__header">
-              <h3 class="form-section-title">New cabinet</h3>
+              <h3 class="form-section-title">{% trans "New cabinet" %}</h3>
             </div>
             {% csrf_token %}
             <div class="form-as-list">{{ form_cabinet.as_ul }}</div>
 
             {% if tag_assign_form %}
               <div class="form-subsection">
-                <h4 class="form-section-title">Теги кабінету</h4>
+                <h4 class="form-section-title">{% trans "Cabinet tags" %}</h4>
                 <div class="tag-option-grid">
                   {% for checkbox in tag_assign_form.tags %}
                     <label for="{{ checkbox.id_for_label }}" class="tag-option">
@@ -83,14 +83,14 @@
                       <span>{{ checkbox.choice_label }}</span>
                     </label>
                   {% empty %}
-                    <span class="empty-state-inline">Тегів ще немає.</span>
+                    <span class="empty-state-inline">{% trans "No tags yet." %}</span>
                   {% endfor %}
                 </div>
               </div>
             {% endif %}
 
             <div class="page-actions">
-              <button type="submit" name="submit_action" value="save_cabinet" class="btn_pay">Save</button>
+              <button type="submit" name="submit_action" value="save_cabinet" class="btn_pay">{% trans "Save" %}</button>
             </div>
           {% endif %}
         </form>
@@ -99,12 +99,12 @@
           <form method="POST" class="form_cabinet form-card" id="cabinet-tag-create-form">
             {% csrf_token %}
             <div class="form-card__header">
-              <h4 class="form-section-title">Додати новий тег</h4>
+              <h4 class="form-section-title">{% trans "Add new tag" %}</h4>
             </div>
             {{ tag_form.as_p }}
             <div id="cabinet-selected-tags-hidden-container"></div>
             <div class="page-actions">
-              <button type="submit" name="submit_action" value="create_tag" class="btn_pay">Add tag</button>
+              <button type="submit" name="submit_action" value="create_tag" class="btn_pay">{% trans "Add tag" %}</button>
             </div>
           </form>
         {% endif %}

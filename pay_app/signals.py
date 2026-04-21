@@ -1,12 +1,14 @@
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
+from typing import Any
 
 from .models import Cabinet, Pay
 from .services import recalculate_cabinet_paid_up_to
 
 
 @receiver(pre_save, sender=Cabinet)
-def cabinet_pre_save(sender, instance, **kwargs):
+def cabinet_pre_save(sender: type[Cabinet], instance: Cabinet, **kwargs: Any) -> None:
+    """Cache previous cabinet balance/daily flags before save for change detection."""
     instance._prev_balance = None
     instance._prev_is_daily_payment = None
 
@@ -20,7 +22,8 @@ def cabinet_pre_save(sender, instance, **kwargs):
 
 
 @receiver(post_save, sender=Cabinet)
-def cabinet_post_save(sender, instance, created, **kwargs):
+def cabinet_post_save(sender: type[Cabinet], instance: Cabinet, created: bool, **kwargs: Any) -> None:
+    """Recalculate daily-payment coverage when cabinet state changes."""
     if created:
         if instance.is_daily_payment:
             recalculate_cabinet_paid_up_to(instance.id)
@@ -34,7 +37,8 @@ def cabinet_post_save(sender, instance, created, **kwargs):
 
 
 @receiver(pre_save, sender=Pay)
-def pay_pre_save(sender, instance, **kwargs):
+def pay_pre_save(sender: type[Pay], instance: Pay, **kwargs: Any) -> None:
+    """Cache previous pay pricing/status/cabinet fields before save."""
     instance._prev_price_per_month = None
     instance._prev_status = None
     instance._prev_cabinet_id = None
@@ -54,7 +58,8 @@ def pay_pre_save(sender, instance, **kwargs):
 
 
 @receiver(post_save, sender=Pay)
-def pay_post_save(sender, instance, created, **kwargs):
+def pay_post_save(sender: type[Pay], instance: Pay, created: bool, **kwargs: Any) -> None:
+    """Recalculate affected cabinet coverage when pay fields change."""
     affected_cabinet_ids = set()
 
     if created:
@@ -74,5 +79,6 @@ def pay_post_save(sender, instance, created, **kwargs):
 
 
 @receiver(post_delete, sender=Pay)
-def pay_post_delete(sender, instance, **kwargs):
+def pay_post_delete(sender: type[Pay], instance: Pay, **kwargs: Any) -> None:
+    """Recalculate cabinet coverage after pay deletion."""
     recalculate_cabinet_paid_up_to(instance.cabinet_id)

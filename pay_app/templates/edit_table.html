@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load i18n %}
+{% load date_filters %}
 
 {% block title %}
-  <title>Edit payment</title>
+  <title>{% trans "Edit payment" %}</title>
 {% endblock %}
 
 {% block content %}
@@ -10,9 +12,9 @@
     <header class="page-header-card">
       <div class="page-header-row">
         <div>
-          <p class="eyebrow">Редагування</p>
-          <h1 class="page-title">Змінити платіж</h1>
-          <p class="page-subtitle">Оновлення вручну без зміни імен полів і без втрати існуючого submit-flow.</p>
+          <p class="eyebrow">{% trans "Editing" %}</p>
+          <h1 class="page-title">{% trans "Change payment" %}</h1>
+          <p class="page-subtitle">{% trans "Manual update without changing field names or breaking the existing submit flow." %}</p>
         </div>
       </div>
     </header>
@@ -20,8 +22,8 @@
     <section class="table-card table-card--wide">
       <div class="table-card__header table-card__header--with-hint">
         <div>
-          <h2 class="section-title">Параметри платежу</h2>
-          <p class="section-subtitle">Поле password зберігає існуючий show/hide hook, а широка таблиця залишається в межах контейнера через внутрішній горизонтальний скрол.</p>
+          <h2 class="section-title">{% trans "Payment parameters" %}</h2>
+          <p class="section-subtitle">{% trans "The password field keeps the existing show/hide hook, and the wide table stays inside the container using internal horizontal scrolling." %}</p>
         </div>
         <div class="table-scroll-hint">
             <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -30,7 +32,7 @@
   <path d="M21 16H3"></path>
   <path d="m17 12 4 4-4 4"></path>
 </svg>
-            <span>Гортайте таблицю по горизонталі</span>
+            <span>{% trans "Scroll the table horizontally" %}</span>
         </div>
       </div>
 
@@ -39,7 +41,7 @@
 
          {% if form_edit_pay.non_field_errors %}
          <div class="form-errors" style="padding: 15px; background-color: #f8d7da; color: #721c24; border-radius: 4px; margin-bottom: 15px;">
-           <strong>Помилка при збереженні:</strong>
+           <strong>{% trans "Save failed:" %}</strong>
            <ul>
              {% for error in form_edit_pay.non_field_errors %}
                <li>{{ error }}</li>
@@ -52,18 +54,18 @@
            <table class="table_pay table_pay--edit">
              <thead>
                <tr>
-                 <th>Група</th>
-                 <th>Дата створення</th>
-                 <th>Сервіс</th>
-                 <th>Тип ресурсу</th>
-                 <th>Ціна на місяць</th>
-                 <th>Валюта</th>
-                 <th>Платіжна система</th>
-                 <th>Проплачено до</th>
-                 <th>Стан</th>
-                 <th>Логін</th>
-                 <th>Пароль</th>
-                 <th>IP</th>
+                 <th>{% trans "Group" %}</th>
+                 <th>{% trans "Creation date" %}</th>
+                 <th>{% trans "Service" %}</th>
+                 <th>{% trans "Resource type" %}</th>
+                 <th>{% trans "Price per month / balance" %}</th>
+                 <th>{% trans "Currency" %}</th>
+                 <th>{% trans "Payment system" %}</th>
+                 <th>{% trans "Paid up to" %}</th>
+                 <th>{% trans "Status" %}</th>
+                 <th>{% trans "Login" %}</th>
+                 <th>{% trans "Password" %}</th>
+                 <th>{% trans "IP" %}</th>
                </tr>
              </thead>
              <tbody>
@@ -72,10 +74,10 @@
                     <input type="text" name="groups" value="{{ object_l.groups|default:'' }}" class="form-control">
                     {% if form_edit_pay.groups.errors %}<span style="color: red;">{{ form_edit_pay.groups.errors.0 }}</span>{% endif %}
                   </td>
-                  <td>
-                    <input type="date" name="create_date" value="{{ object_l.create_date|date:'Y-m-d' }}" class="form-control">
-                    {% if form_edit_pay.create_date.errors %}<span style="color: red;">{{ form_edit_pay.create_date.errors.0 }}</span>{% endif %}
-                  </td>
+                   <td>
+                     <input type="date" name="create_date" value="{{ object_l.create_date|date_iso }}" class="form-control">
+                     {% if form_edit_pay.create_date.errors %}<span style="color: red;">{{ form_edit_pay.create_date.errors.0 }}</span>{% endif %}
+                   </td>
                   <td>
                     <input type="text" name="service" value="{{ object_l.service|default:'' }}" class="form-control">
                     {% if form_edit_pay.service.errors %}<span style="color: red;">{{ form_edit_pay.service.errors.0 }}</span>{% endif %}
@@ -100,10 +102,10 @@
                     </select>
                     {% if form_edit_pay.currency.errors %}<span style="color: red;">{{ form_edit_pay.currency.errors.0 }}</span>{% endif %}
                   </td>
-                  <td>
-                    <input type="date" name="paid_up_to" value="{{ object_l.paid_up_to|date:'Y-m-d' }}" class="form-control">
-                    {% if form_edit_pay.paid_up_to.errors %}<span style="color: red;">{{ form_edit_pay.paid_up_to.errors.0 }}</span>{% endif %}
-                  </td>
+                   <td>
+                     <input type="date" name="paid_up_to" value="{{ object_l.paid_up_to|date_iso }}" class="form-control">
+                     {% if form_edit_pay.paid_up_to.errors %}<span style="color: red;">{{ form_edit_pay.paid_up_to.errors.0 }}</span>{% endif %}
+                   </td>
                   <td>
                     <select name="status" class="form-control">
                       {% for val, label in form_edit_pay.fields.status.choices %}
@@ -125,13 +127,13 @@
                         class="btn_pay_yellow icon-btn"
                         data-action="toggle-password-input"
                         data-target-id="id_password"
-                        data-show-label="Показати пароль"
-                        data-hide-label="Сховати пароль">
+                        data-show-label="{% trans 'Show password' %}"
+                        data-hide-label="{% trans 'Hide password' %}">
                         <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
     <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
   </svg>
-                        <span class="visually-hidden">Показати пароль</span>
+                        <span class="visually-hidden">{% trans "Show password" %}</span>
                       </button>
                     </div>
                   </td>
@@ -145,8 +147,8 @@
          </div>
 
          <div class="page-actions">
-           <input type="submit" class="btn_pay" value="Save">
-           <a href="{% url 'app:edit_page' %}" class="btn_pay btn-linklike btn_pay--secondary">Back</a>
+           <input type="submit" class="btn_pay" value="{% trans 'Save' %}">
+           <a href="{% url 'app:edit_page' %}" class="btn_pay btn-linklike btn_pay--secondary">{% trans "Back" %}</a>
          </div>
        </form>
     </section>

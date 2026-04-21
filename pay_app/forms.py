@@ -1,4 +1,5 @@
 from decimal import Decimal, InvalidOperation
+from typing import Any
 
 from django.forms import ModelForm
 from django import forms
@@ -6,11 +7,20 @@ from pay_app.models import Pay, Cabinet, Tag
 
 
 class DateInput(forms.DateInput):
+    """HTML5 date widget with stable ISO format."""
     input_type = 'date'
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize date widget with explicit `%Y-%m-%d` format."""
+        kwargs.setdefault('format', '%Y-%m-%d')
+        super().__init__(*args, **kwargs)
 
 
 class PayForm(ModelForm):
-    def __init__(self, *args, **kwargs):
+    """Model form for pay CRUD with normalized money/date inputs."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Configure widgets, cabinet ordering, and date input normalization."""
         super().__init__(*args, **kwargs)
         self.fields['groups'].widget.attrs.update({
             'class': 'form-control',
@@ -19,32 +29,35 @@ class PayForm(ModelForm):
             'placeholder': 'Натисніть ↓ для вибору зі списку',
         })
         self.fields['cabinet'].queryset = Cabinet.objects.order_by('id')
-        # Форматуємо price_per_month для вхідних даних
+
         self.fields['price_per_month'].widget.attrs.update({
             'class': 'form-control',
             'step': '0.01',
             'inputmode': 'decimal',
         })
-        # Форматуємо дати
-        self.fields['create_date'].widget.attrs.update({'class': 'form-control'})
-        self.fields['paid_up_to'].widget.attrs.update({'class': 'form-control'})
+        # Keep native HTML date input widgets styled consistently.
+        for field_name in ('create_date', 'paid_up_to'):
+            field = self.fields[field_name]
+            field.localize = False
+            field.input_formats = ['%Y-%m-%d']
+            field.widget.is_localized = False
+            field.widget.format = '%Y-%m-%d'
+            field.widget.attrs.update({'class': 'form-control'})
 
 
-    def clean_price_per_month(self):
+    def clean_price_per_month(self) -> Decimal:
+        """Validate positive decimal amount with up to two fractional digits."""
         raw_value = self.cleaned_data.get('price_per_month')
         if raw_value is None or raw_value == '':
             raise forms.ValidationError('Поле "Місячна плата" обовʼязкове.')
 
         try:
-            # Замінюємо кому на крапку, щоб підтримати обидва формати
             value_str = str(raw_value).strip().replace(',', '.')
             value = Decimal(value_str)
 
-            # Перевіряємо, щоб було максимум 2 цифри після коми
             if value.as_tuple().exponent < -2:
                 raise forms.ValidationError('Переконайтеся, що тут не більше ніж 2 цифри після десяткової коми.')
 
-            # Округлюємо до 2 цифр
             value = value.quantize(Decimal('0.01'))
         except (InvalidOperation, TypeError, ValueError) as e:
             raise forms.ValidationError('Вкажіть коректну суму.')
@@ -83,6 +96,8 @@ class PayForm(ModelForm):
 
 
 class CabinetForm(ModelForm):
+    """Model form for cabinet create/edit operations."""
+
     class Meta:
         model = Cabinet
         fields = '__all__'
@@ -95,6 +110,8 @@ class CabinetForm(ModelForm):
 
 
 class TagForm(ModelForm):
+    """Model form for tag create/edit flows."""
+
     class Meta:
         model = Tag
         fields = ['name', 'note']
@@ -103,7 +120,8 @@ class TagForm(ModelForm):
             'note': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Необовʼязково'}),
         }
 
-    def clean_name(self):
+    def clean_name(self) -> str:
+        """Require a non-empty, trimmed tag name."""
         name = (self.cleaned_data.get('name') or '').strip()
         if not name:
             raise forms.ValidationError('Назва тегу обовʼязкова.')
@@ -111,6 +129,8 @@ class TagForm(ModelForm):
 
 
 class CabinetTagAssignForm(forms.Form):
+    """Form for assigning multiple tags to a cabinet."""
+
     tags = forms.ModelMultipleChoiceField(
         queryset=Tag.objects.all().order_by('name'),
         required=False,

@@ -5,7 +5,6 @@ pay_app/migrations/__pycache__/
 pay_app/migrations
 .idea
 
-db.sqlite3
 dump.sql
 data.json
 mydb.dump
@@ -14,3 +13,8 @@ __pycache__
 *.pyc
 *.pyo
 *.pyd
+
+AGENTS.md
+agent_skills.md
+repair_decrypt.py
+SALES_PITCH.md

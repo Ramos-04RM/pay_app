@@ -138,7 +138,6 @@
 
     <section class="sidebar-section sidebar-section--muted">
       {% if cabinet_search_query or cabinet_has_active or cabinet_has_inactive or cabinet_without_active or cabinet_no_services or cabinet_daily_payment_yes or cabinet_daily_payment_no or cabinet_sort or cabinet_selected_tags or cabinet_selected_currency or cabinet_balance_min != '' or cabinet_balance_max != '' %}
-         <div class="context-stack">
         <div class="context-stack">
           <span class="context-title">{% trans "Current context" %}</span>
           {% if cabinet_search_query %}
@@ -190,7 +189,6 @@
               <h2 class="section-title">{% trans "Cabinets" %}</h2>
               <span class="metric-pill">{% trans "Found:" %} {{ object_k|length }}</span>
             </div>
-{#            <p class="section-subtitle">Широка таблиця залишилась у card-контейнері: заголовки липкі, а перегляд колонок відбувається через горизонтальний скрол усередині блоку.</p>#}
           </div>
           <div class="table-scroll-hint">
             <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -247,7 +245,7 @@
                   <a href="{{ cabinet_balance_sort_desc_url }}">↓</a>
                 </th>
 {#                <th>#}
-{#                  Валюта#}
+{#                  Currency#}
 {#                  <a href="{{ cabinet_currency_sort_asc_url }}">↑</a>#}
 {#                  <a href="{{ cabinet_currency_sort_desc_url }}">↓</a>#}
 {#                </th>#}
@@ -378,9 +376,9 @@
                           aria-controls="remove-heli-{{ j.id }}"
                           aria-expanded="false">
                           <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-  <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
-  <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
-</svg>
+                            <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+                            <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+                          </svg>
                           <span class="visually-hidden">{% trans "Show services" %}</span>
                         </button>
                       {% endif %}
@@ -390,7 +388,7 @@
                       {% for s in j.pay_set.all %}
                         <a href="{% url 'app:home_page_with_cabinet' s.id %}" target="_blank">
                           <h3 class="cabinet-service-item {% if s.status == 'active' %}cabinet-service-item--active{% else %}cabinet-service-item--inactive{% endif %}">
-                            {{ s }}
+                            {{ s.service }}
                           </h3>
                         </a>
                       {% endfor %}

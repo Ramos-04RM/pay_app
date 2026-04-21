@@ -2,7 +2,6 @@
 
 **Дата:** квітень 2026  
 **Версія:** 1.0.0  
-**Статус:** Готово до продажу  
 
 ---
 
@@ -43,7 +42,7 @@
 
 ### 3. **Безпека**
 - ✅ Django Auth + CSRF protection
-- ✅ Шифрування паролів (cryptocode)
+- ✅ Шифрування паролів (cryptocode) AES-256
 - ✅ HTTPS ready (HSTS, X-Frame, CSP)
 - ✅ SQL Injection захист (ORM)
 - ✅ XSS protection вбудована

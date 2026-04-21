@@ -1,5 +1,8 @@
+"""Legacy integration-style tests for core pay/cabinet/decrypt flows."""
+
 from datetime import date, timedelta
 from unittest.mock import patch
+from typing import Any
 
 import cryptocode
 from django.contrib.auth.models import User
@@ -10,7 +13,9 @@ from pay_app.models import Cabinet, CabinetTag, Pay, Tag
 
 
 class BaseAppTestCase(TestCase):
-    def setUp(self):
+    """Shared fixtures for flow tests in this legacy module."""
+
+    def setUp(self) -> None:
         self.admin = User.objects.create_user(
             username='admin',
             password='secret123',
@@ -80,27 +85,29 @@ class BaseAppTestCase(TestCase):
 
 
 class PayAndCabinetFlowTests(BaseAppTestCase):
-    def test_pay_list_search_and_filter(self):
+    """End-to-end checks for list/filter/create page flows."""
+
+    def test_pay_list_search_and_filter(self) -> None:
         response = self.client.get(reverse('app:index'), {'q': 'Alpha', 'status': ['active']})
         self.assertEqual(response.status_code, 200)
         object_l = list(response.context['object_l'])
         self.assertEqual(len(object_l), 1)
         self.assertEqual(object_l[0].id, self.pay_active.id)
 
-    def test_cabinet_list_filter_by_tag(self):
+    def test_cabinet_list_filter_by_tag(self) -> None:
         response = self.client.get(reverse('app:cabinet_page'), {'tag_id': [self.tag_fast.id]})
         self.assertEqual(response.status_code, 200)
         object_k = list(response.context['object_k'])
         self.assertEqual(len(object_k), 1)
         self.assertEqual(object_k[0].id, self.cabinet_a.id)
 
-    def test_statistics_page_loads_with_filters(self):
+    def test_statistics_page_loads_with_filters(self) -> None:
         response = self.client.get(reverse('app:statistics'), {'currency': 'USD $', 'status': 'active'})
         self.assertEqual(response.status_code, 200)
         self.assertIn('burn_by_currency', response.context)
         self.assertGreaterEqual(response.context['active_count'], 1)
 
-    def test_pay_create_flow(self):
+    def test_pay_create_flow(self) -> None:
         payload = {
             'cabinet': self.cabinet_a.id,
             'groups': 'grp-c',
@@ -123,7 +130,9 @@ class PayAndCabinetFlowTests(BaseAppTestCase):
 
 
 class DecryptEndpointTests(BaseAppTestCase):
-    def test_decrypt_requires_staff_permission(self):
+    """Permission and success-path checks for decrypt endpoint."""
+
+    def test_decrypt_requires_staff_permission(self) -> None:
         self.client.force_login(self.user)
         response = self.client.post(
             reverse('app:decrypt_item'),
@@ -132,7 +141,7 @@ class DecryptEndpointTests(BaseAppTestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-    def test_decrypt_success_for_staff(self):
+    def test_decrypt_success_for_staff(self) -> None:
         response = self.client.post(
             reverse('app:decrypt_item'),
             data='{"model":"pay","field":"password","id": %d}' % self.pay_active.id,
@@ -143,8 +152,10 @@ class DecryptEndpointTests(BaseAppTestCase):
 
 
 class CompatibilityEncryptionTests(BaseAppTestCase):
+    """Compatibility checks for legacy ciphertext decrypt behavior."""
+
     @patch('pay_app.security._build_key_candidates')
-    def test_legacy_encrypted_values_can_be_decrypted(self, mock_keys):
+    def test_legacy_encrypted_values_can_be_decrypted(self, mock_keys: Any) -> None:
         legacy_key = 'legacy-key'
         app_key = 'new-app-key'
         mock_keys.return_value = [app_key, legacy_key]
