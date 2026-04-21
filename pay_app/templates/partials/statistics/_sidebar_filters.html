@@ -1,0 +1,76 @@
+{% load i18n %}
+
+<div class="sidenav">
+  <section class="sidebar-section">
+    <h3 class="sidebar-title">{% trans "Statistics filters" %}</h3>
+    <form method="get" action="{% url 'app:statistics' %}" class="sidebar-form">
+      <label class="sidebar-filter-field">
+        <span class="sidebar-filter-label">{% trans "Currency" %}</span>
+        <select name="currency" class="form-control">
+          <option value="">{% trans "All" %}</option>
+          {% for item in currency_options %}
+            <option value="{{ item }}" {% if item == selected_currency %}selected{% endif %}>{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="sidebar-filter-field">
+        <span class="sidebar-filter-label">{% trans "Status" %}</span>
+        <select name="status" class="form-control">
+          <option value="">{% trans "All" %}</option>
+          <option value="active" {% if selected_status == 'active' %}selected{% endif %}>{% trans "active" %}</option>
+          <option value="not active" {% if selected_status == 'not active' %}selected{% endif %}>{% trans "not active" %}</option>
+        </select>
+      </label>
+
+      <label class="sidebar-filter-field">
+        <span class="sidebar-filter-label">{% trans "Group" %}</span>
+        <select name="group" class="form-control">
+          <option value="">{% trans "All" %}</option>
+          {% for item in group_options %}
+            <option value="{{ item }}" {% if item == selected_group %}selected{% endif %}>{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="sidebar-filter-field">
+        <span class="sidebar-filter-label">{% trans "Cabinet" %}</span>
+        <select name="cabinet" class="form-control">
+          <option value="">{% trans "All" %}</option>
+          {% for item in cabinet_options %}
+            <option value="{{ item.id }}" {% if item.id|stringformat:'s' == selected_cabinet %}selected{% endif %}>
+              {{ item.login }} (ID {{ item.id }})
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="sidebar-filter-field">
+        <span class="sidebar-filter-label">{% trans "Period" %}</span>
+        <select name="period" class="form-control" id="statistics-period-selector">
+          <option value="month" {% if period == 'month' %}selected{% endif %}>{% trans "Current month" %}</option>
+          <option value="year" {% if period == 'year' %}selected{% endif %}>{% trans "Current year" %}</option>
+          <option value="last12" {% if period == 'last12' %}selected{% endif %}>{% trans "Last 12 months" %}</option>
+          <option value="custom" {% if period == 'custom' %}selected{% endif %}>{% trans "Custom range" %}</option>
+        </select>
+      </label>
+
+      <div id="statistics-custom-period" {% if period != 'custom' %}hidden{% endif %}>
+        <label class="sidebar-filter-field">
+          <span class="sidebar-filter-label">{% trans "Start" %}</span>
+          <input type="date" name="start" value="{{ period_start }}" class="form-control">
+        </label>
+        <label class="sidebar-filter-field">
+          <span class="sidebar-filter-label">{% trans "End" %}</span>
+          <input type="date" name="end" value="{{ period_end }}" class="form-control">
+        </label>
+      </div>
+
+      <div class="page-actions page-actions--stacked">
+        <button type="submit" class="btn_pay">{% trans "Apply" %}</button>
+        <a href="{% url 'app:statistics' %}" class="btn_pay_red btn-linklike">{% trans "Reset" %}</a>
+      </div>
+    </form>
+  </section>
+</div>
+

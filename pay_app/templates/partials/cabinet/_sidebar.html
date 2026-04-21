@@ -1,0 +1,172 @@
+{% load i18n %}
+
+{% url 'admin:index' as admin_url %}
+<div class="sidenav">
+  {% if request.user.username == 'admin' %}
+    <div class="sidebar-topbar">
+      <div>
+        <p class="eyebrow">{% trans "Admin" %}</p>
+        <h2 class="sidebar-title">{% trans "Hello" %}</h2>
+      </div>
+      <a href="{{ admin_url }}" class="btn_pay btn-linklike">{{ request.user.username }}</a>
+    </div>
+  {% endif %}
+
+  <section class="sidebar-section">
+    <h3 class="check-field-label">{% trans "Search cabinets" %}</h3>
+    <form class="example sidebar-search" action="{% url 'app:cabinet_page' %}" method="get">
+      {% if cabinet_has_active %}<input type="hidden" name="has_active" value="1">{% endif %}
+      {% if cabinet_has_inactive %}<input type="hidden" name="has_inactive" value="1">{% endif %}
+      {% if cabinet_without_active %}<input type="hidden" name="without_active" value="1">{% endif %}
+      {% if cabinet_no_services %}<input type="hidden" name="no_services" value="1">{% endif %}
+      {% if cabinet_daily_payment_yes %}<input type="hidden" name="daily_payment_yes" value="1">{% endif %}
+      {% if cabinet_daily_payment_no %}<input type="hidden" name="daily_payment_no" value="1">{% endif %}
+      {% if cabinet_selected_currency %}<input type="hidden" name="currency" value="{{ cabinet_selected_currency }}">{% endif %}
+      {% if cabinet_balance_min != '' %}<input type="hidden" name="balance_min" value="{{ cabinet_balance_min }}">{% endif %}
+      {% if cabinet_balance_max != '' %}<input type="hidden" name="balance_max" value="{{ cabinet_balance_max }}">{% endif %}
+      {% for selected_tag_id in cabinet_selected_tag_ids %}
+        <input type="hidden" name="tag_id" value="{{ selected_tag_id }}">
+      {% endfor %}
+      {% if cabinet_sort %}<input type="hidden" name="sort" value="{{ cabinet_sort }}">{% endif %}
+      <label>
+        <input
+          name="q"
+          type="text"
+          value="{{ cabinet_search_query }}"
+          placeholder="{% trans 'login / note / email / service / tag' %}">
+        <button type="submit" class="search-submit" aria-label="{% trans 'Search cabinets' %}">
+          <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z"></path>
+            <path d="M20 20l-4.2-4.2"></path>
+          </svg>
+        </button>
+      </label>
+    </form>
+  </section>
+
+  <section class="sidebar-section">
+    <form method="get" action="{% url 'app:cabinet_page' %}" class="sidebar-form">
+      {% if cabinet_search_query %}<input type="hidden" name="q" value="{{ cabinet_search_query }}">{% endif %}
+      {% if cabinet_sort %}<input type="hidden" name="sort" value="{{ cabinet_sort }}">{% endif %}
+
+      <h3 class="check-field-label">{% trans "Services" %}</h3>
+      <label class="sidebar-checkbox">
+        <input type="checkbox" name="without_active" value="1" {% if cabinet_without_active %}checked{% endif %}>
+        <span>{% trans "Without active services" %} <strong>({{ cabinets_without_active }})</strong></span>
+      </label>
+
+      <label class="sidebar-checkbox">
+        <input type="checkbox" name="no_services" value="1" {% if cabinet_no_services %}checked{% endif %}>
+        <span>{% trans "Without services" %} <strong>({{ cabinets_without_services }})</strong></span>
+      </label>
+
+      <label class="sidebar-checkbox">
+        <input type="checkbox" name="has_active" value="1" {% if cabinet_has_active %}checked{% endif %}>
+        <span>{% trans "Has active" %} <strong>({{ cabinets_with_active }})</strong></span>
+      </label>
+
+      <label class="sidebar-checkbox">
+        <input type="checkbox" name="has_inactive" value="1" {% if cabinet_has_inactive %}checked{% endif %}>
+        <span>{% trans "Has inactive" %} <strong>({{ cabinets_with_inactive }})</strong></span>
+      </label>
+
+      <h3 class="check-field-label">{% trans "Daily payment" %}</h3>
+      <label class="sidebar-checkbox">
+        <input type="checkbox" name="daily_payment_yes" value="1" {% if cabinet_daily_payment_yes %}checked{% endif %}>
+        <span>{% trans "Yes" %} <strong>({{ cabinets_daily_payment_yes_count }})</strong></span>
+      </label>
+
+      <label class="sidebar-checkbox">
+        <input type="checkbox" name="daily_payment_no" value="1" {% if cabinet_daily_payment_no %}checked{% endif %}>
+        <span>{% trans "No" %} <strong>({{ cabinets_daily_payment_no_count }})</strong></span>
+      </label>
+
+      {% if cabinet_tag_options %}
+        <h3 class="check-field-label">{% trans "Tags" %}</h3>
+        <div class="sidebar-tag-list">
+          {% for tag in cabinet_tag_options %}
+            <label class="sidebar-checkbox">
+              <input
+                type="checkbox"
+                name="tag_id"
+                value="{{ tag.id }}"
+                {% if tag.id in cabinet_selected_tag_ids %}checked{% endif %}>
+              <span>{{ tag.name }} <strong>({{ tag.cabinets_count }})</strong></span>
+            </label>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <label class="sidebar-filter-field">
+        <span class="sidebar-filter-label">{% trans "Filter by currency" %}</span>
+        <select name="currency" class="form-control">
+          <option value="">{% trans "all" %}</option>
+          {% for currency_item in cabinet_currency_options %}
+            <option value="{{ currency_item }}" {% if currency_item == cabinet_selected_currency %}selected{% endif %}>
+              {{ currency_item }}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <h3 class="check-field-label">{% trans "Balance" %}</h3>
+      <div class="sidebar-balance-grid">
+        <label class="sidebar-filter-field">
+          <span class="sidebar-filter-label">{% trans "Minimum" %}</span>
+          <input type="number" name="balance_min" value="{{ cabinet_balance_min }}" step="0.01" class="form-control">
+        </label>
+        <label class="sidebar-filter-field">
+          <span class="sidebar-filter-label">{% trans "Maximum" %}</span>
+          <input type="number" name="balance_max" value="{{ cabinet_balance_max }}" step="0.01" class="form-control">
+        </label>
+      </div>
+
+      <div class="page-actions page-actions--stacked">
+        <button type="submit" class="btn_pay">{% trans "Apply" %}</button>
+        <a href="{{ cabinet_reset_url }}" class="btn_pay_red btn-linklike">{% trans "Reset" %}</a>
+      </div>
+    </form>
+  </section>
+
+  <section class="sidebar-section sidebar-section--muted">
+    {% if cabinet_search_query or cabinet_has_active or cabinet_has_inactive or cabinet_without_active or cabinet_no_services or cabinet_daily_payment_yes or cabinet_daily_payment_no or cabinet_sort or cabinet_selected_tags or cabinet_selected_currency or cabinet_balance_min != '' or cabinet_balance_max != '' %}
+      <div class="context-stack">
+        <span class="context-title">{% trans "Current context" %}</span>
+        {% if cabinet_search_query %}
+          <span class="context-chip">{% trans "Search:" %} {{ cabinet_search_query }}</span>
+        {% endif %}
+        {% if cabinet_has_active %}
+          <span class="context-chip">{% trans "active services" %}</span>
+        {% endif %}
+        {% if cabinet_has_inactive %}
+          <span class="context-chip">{% trans "not active services" %}</span>
+        {% endif %}
+        {% if cabinet_without_active %}
+          <span class="context-chip">{% trans "without active services" %}</span>
+        {% endif %}
+        {% if cabinet_no_services %}
+          <span class="context-chip">{% trans "without services" %}</span>
+        {% endif %}
+        {% if cabinet_daily_payment_yes %}
+          <span class="context-chip">{% trans "Daily payment: yes" %}</span>
+        {% endif %}
+        {% if cabinet_daily_payment_no %}
+          <span class="context-chip">{% trans "Daily payment: no" %}</span>
+        {% endif %}
+        {% for selected_tag in cabinet_selected_tags %}
+          <span class="context-chip">{% trans "Tag:" %} {{ selected_tag.name }}</span>
+        {% endfor %}
+        {% if cabinet_selected_currency %}
+          <span class="context-chip">{% trans "Currency:" %} {{ cabinet_selected_currency }}</span>
+        {% endif %}
+        {% if cabinet_balance_min != '' %}
+          <span class="context-chip">{% trans "Balance from:" %} {{ cabinet_balance_min }}</span>
+        {% endif %}
+        {% if cabinet_balance_max != '' %}
+          <span class="context-chip">{% trans "Balance to:" %} {{ cabinet_balance_max }}</span>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+</div>
+

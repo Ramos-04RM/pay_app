@@ -1,0 +1,92 @@
+{% load i18n %}
+
+<tr tabindex="0">
+  <td class="table-index-cell">
+    <a class="btn_pay_edit btn-linklike" href="{% url 'app:edit_table' i.id %}">
+      {% trans "Edit" %}
+      <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M12 8.75A3.25 3.25 0 1 0 12 15.25 3.25 3.25 0 1 0 12 8.75Z"></path>
+        <path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1 1 0 0 1 0 1.4l-1.2 1.2a1 1 0 0 1-1.4 0l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a1 1 0 0 1-1 1h-1.6a1 1 0 0 1-1-1v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1 1 0 0 1-1.4 0l-1.2-1.2a1 1 0 0 1 0-1.4l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a1 1 0 0 1-1-1v-1.6a1 1 0 0 1 1-1h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1 1 0 0 1 0-1.4l1.2-1.2a1 1 0 0 1 1.4 0l.1.1a1 1 0 0 0 1.1.2 1 1 0 0 0 .6-.9V4a1 1 0 0 1 1-1h1.6a1 1 0 0 1 1 1v.2a1 1 0 0 0 .6.9 1 1 0 0 0 1.1-.2l.1-.1a1 1 0 0 1 1.4 0l1.2 1.2a1 1 0 0 1 0 1.4l-.1.1a1 1 0 0 0-.2 1.1 1 1 0 0 0 .9.6H20a1 1 0 0 1 1 1v1.6a1 1 0 0 1-1 1h-.2a1 1 0 0 0-.9.6Z"></path>
+      </svg>
+    </a>
+  </td>
+  <td class="table-count-cell">{{ forloop.counter }}</td>
+  <td>{{ i.groups }}</td>
+  <td>{{ i.create_date|date:"d.m.Y" }}</td>
+  <td>{{ i.service }}</td>
+  <td>{{ i.type_source }}</td>
+  <td>{{ i.price_per_month }}</td>
+  <td>{{ i.currency }}</td>
+  <td>{{ i.pay_sys }}</td>
+  <td>{{ i.paid_up_to|date:"d.m.Y" }}</td>
+  <td>{{ i.status }}</td>
+
+  <td class="masked-cell masked-cell--warning">
+    <div class="masked-cell__content">
+      <button
+        type="button"
+        class="btn_pay_yellow icon-btn js-decrypt-btn"
+        id="pay-email_login-btn-{{ i.id }}"
+        data-action="decrypt-copy"
+        data-id="{{ i.id }}"
+        data-model="pay"
+        data-field="email_login"
+        data-show-label="{% trans 'Show and copy login' %}"
+        data-hide-label="{% trans 'Hide login' %}">
+        <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+          <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+        </svg>
+        <span class="visually-hidden">{% trans "Show and copy login" %}</span>
+      </button>
+      <span
+        id="pay-email_login-val-{{ i.id }}"
+        data-visible="0"
+        data-decrypted=""
+        class="masked-value">
+        *****
+      </span>
+    </div>
+  </td>
+
+  <td>{{ i.ip }}</td>
+
+  <td class="masked-cell masked-cell--warning">
+    <div class="masked-cell__content">
+      <button
+        type="button"
+        class="btn_pay_yellow icon-btn js-decrypt-btn"
+        id="pay-password-btn-{{ i.id }}"
+        data-action="decrypt-copy"
+        data-id="{{ i.id }}"
+        data-model="pay"
+        data-field="password"
+        data-show-label="{% trans 'Show and copy password' %}"
+        data-hide-label="{% trans 'Hide password' %}">
+        <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+          <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+        </svg>
+        <span class="visually-hidden">{% trans "Show and copy password" %}</span>
+      </button>
+      <span
+        id="pay-password-val-{{ i.id }}"
+        data-visible="0"
+        data-decrypted=""
+        class="masked-value">
+        *****
+      </span>
+    </div>
+  </td>
+
+  <td>
+    <a
+      href="{% url 'app:delete' i.id %}"
+      class="btn_pay_red btn-linklike"
+      data-action="confirm-navigation"
+      data-confirm-message="{% trans 'Delete this field?' %}">
+      {% trans "Delete" %}
+    </a>
+  </td>
+</tr>
+

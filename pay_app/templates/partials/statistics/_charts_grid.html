@@ -1,0 +1,65 @@
+{% load i18n %}
+
+<div class="statistics-grid">
+  <section class="table-card">
+    <h3 class="section-title">{% trans "Monthly burn by month" %}</h3>
+    {% for point in month_points %}
+      <a class="stats-bar-row" href="?{{ base_querystring }}&drill=month&drill_value={{ point.month }}&drill_currency={{ point.currency|urlencode }}#details">
+        <span class="stats-bar-label">{{ point.month_label }} · {{ point.currency }}</span>
+        <span class="stats-bar"><span style="width: {{ point.percent }}%"></span></span>
+        <strong>{{ point.total|floatformat:2 }}</strong>
+      </a>
+    {% empty %}
+      <p class="statistics-empty">{% trans "No trend points for selected period." %}</p>
+    {% endfor %}
+  </section>
+
+  <section class="table-card">
+    <h3 class="section-title">{% trans "Cost distribution by group" %}</h3>
+    {% for item in group_cost %}
+      <a class="stats-bar-row" href="?{{ base_querystring }}&drill=group&drill_value={{ item.group_name|urlencode }}&drill_currency={{ item.currency|urlencode }}#details">
+        <span class="stats-bar-label">{{ item.group_name }} · {{ item.currency }}</span>
+        <span class="stats-bar"><span style="width: {{ item.percent }}%"></span></span>
+        <strong>{{ item.total|floatformat:2 }}</strong>
+      </a>
+    {% empty %}
+      <p class="statistics-empty">{% trans "No active group costs in current scope." %}</p>
+    {% endfor %}
+  </section>
+
+  <section class="table-card">
+    <h3 class="section-title">{% trans "Top cabinets by monthly cost" %}</h3>
+    {% for item in top_cabinets %}
+      <a class="stats-bar-row" href="?{{ base_querystring }}&drill=cabinet&drill_value={{ item.cabinet_id }}&drill_currency={{ item.currency|urlencode }}#details">
+        <span class="stats-bar-label">{{ item.cabinet_name }} · {{ item.currency }}</span>
+        <span class="stats-bar"><span style="width: {{ item.percent }}%"></span></span>
+        <strong>{{ item.total|floatformat:2 }}</strong>
+      </a>
+    {% empty %}
+      <p class="statistics-empty">{% trans "No cabinet ranking available." %}</p>
+    {% endfor %}
+  </section>
+
+  <section class="table-card">
+    <h3 class="section-title">{% trans "Renewal / expiry pipeline" %}</h3>
+    {% for item in expiry_pipeline %}
+      <a class="stats-bar-row" href="?{{ base_querystring }}&drill={{ item.key }}#details">
+        <span class="stats-bar-label">{{ item.label }}</span>
+        <span class="stats-bar"><span style="width: {{ item.percent }}%"></span></span>
+        <strong>{{ item.count }}</strong>
+      </a>
+    {% endfor %}
+  </section>
+
+  <section class="table-card">
+    <h3 class="section-title">{% trans "Status mix" %}</h3>
+    {% for item in status_mix %}
+      <a class="stats-bar-row" href="?{{ base_querystring }}&drill=status&drill_value={% if item.key == 'inactive' %}not%20active{% else %}active{% endif %}#details">
+        <span class="stats-bar-label">{{ item.label }}</span>
+        <span class="stats-bar"><span style="width: {{ item.percent }}%"></span></span>
+        <strong>{{ item.count }}</strong>
+      </a>
+    {% endfor %}
+  </section>
+</div>
+

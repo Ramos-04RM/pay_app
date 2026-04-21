@@ -326,10 +326,12 @@ docker compose ps
 Expected:
 ```
 NAME    STATUS          PORTS
-web     Up              0.0.0.0:8000->8000/tcp
+web     Up              (no public port — accessed via nginx)
 db      Up (healthy)    5432/tcp
 nginx   Up              0.0.0.0:8080->80/tcp
 ```
+
+> Note: `web` has no published port by default. All external traffic is routed through `nginx` on port 8080.
 
 ### Step 6 — Check startup logs
 
@@ -346,6 +348,14 @@ Look for:
 
 ```bash
 curl http://localhost:8080/healthz/
+```
+
+Expected: `ok` (plain text — returned by Nginx directly, no Django involvement).
+
+To check the Django JSON health endpoint from inside the stack:
+
+```bash
+docker compose exec web curl -s http://web:8000/healthz/
 ```
 
 Expected: `{"status": "ok"}`

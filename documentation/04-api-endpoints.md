@@ -106,11 +106,28 @@ Security note:
 
 ## Health Check
 
-### `GET /healthz/`
-Returns:
+There are **two** health check endpoints with different response contracts:
 
+### `GET /healthz/` — via Nginx (port 8080, public)
+
+Handled directly by Nginx (`infra/nginx/default.conf`). Does **not** proxy to Django.
+
+Returns plain text:
+```
+ok
+```
+- HTTP `200`
+- No Django involvement (access log disabled)
+- Use this for **container/ingress-level** liveness probes
+
+### `GET /healthz/` — via Django directly (port 8000, internal)
+
+Handled by `pay_app.views.healthz`. Returns JSON:
 ```json
 {"status": "ok"}
 ```
+- HTTP `200`
+- Accessible only inside the Docker network (`http://web:8000/healthz/`)
+- Use this for **application-level** health assertions in tests
 
-Use this for container and ingress-level smoke checks.
+> **Summary:** From outside the stack (port 8080), expect plain `ok\n`. From inside (port 8000), expect `{"status": "ok"}`.

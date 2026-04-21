@@ -1,0 +1,32 @@
+{% load i18n %}
+
+<header class="page-header-card">
+  <div class="page-header-row">
+    <div>
+      <p class="eyebrow">{% trans "Administration" %}</p>
+      <h1 class="page-title">{% trans "Service editing" %}</h1>
+      <p class="page-subtitle">{% trans "Table editing without changing existing URLs, JS hooks, or server logic." %}</p>
+    </div>
+
+    <div class="toolbar-actions">
+      <a class="btn_pay btn-linklike" href="{% url 'app:index' %}">{% trans "Services" %}</a>
+      <a class="btn_pay btn-linklike" href="{% url 'app:pay_new' %}">{% trans "Add" %}</a>
+      <a href="{% url 'logout' %}" class="btn_pay_red btn-linklike">{% trans "Logout" %}</a>
+    </div>
+  </div>
+
+  <div class="page-header-row page-header-row--compact">
+    <div class="user-chip">
+      <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z"></path>
+        <path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path>
+        <path d="M18 8.5 21 10v3.5c0 2.9-1.9 5.6-4.5 6.5-2.6-.9-4.5-3.6-4.5-6.5V10l3-1.5Z"></path>
+      </svg>
+      <span>{{ request.user.username }}{% trans ", you are authorized" %}</span>
+    </div>
+    <div class="toolbar-meta">
+      <span class="metric-pill">{% trans "Total records:" %} {{ object_l.count }}</span>
+    </div>
+  </div>
+</header>
+

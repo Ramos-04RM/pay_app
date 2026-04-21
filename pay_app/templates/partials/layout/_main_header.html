@@ -1,0 +1,71 @@
+{% load i18n %}
+
+<header class="page-header-card">
+  <div class="page-header-row page-header-row--top">
+    <div>
+      <div class="user-chip">
+        <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z"></path>
+          <path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path>
+          <path d="M18 8.5 21 10v3.5c0 2.9-1.9 5.6-4.5 6.5-2.6-.9-4.5-3.6-4.5-6.5V10l3-1.5Z"></path>
+        </svg>
+        <span>{{ request.user.username }} {% trans ", you are authorized" %}</span>
+        <form method="post" action="{% url 'logout' %}" class="logout-form">
+          {% csrf_token %}
+          <button type="submit" class="btn_pay_red btn-linklike">{% trans "Logout" %}</button>
+        </form>
+      </div>
+      <h1 class="page-title">{% trans "Payment control system" %}</h1>
+      <p class="page-subtitle">{% trans "Unified space for managing payments, services and related cabinets." %}</p>
+    </div>
+
+    <div class="toolbar-cluster">
+      <div class="toolbar-actions toolbar-actions--secondary">
+        <div class="language-selector">
+          <form action="{% url 'set_language' %}" method="post" id="language-form">
+            {% csrf_token %}
+            <input name="next" type="hidden" value="{{ redirect_to }}">
+            <select name="language" aria-label="{% trans 'Language' %}" onchange="document.getElementById('language-form').submit();">
+              {% get_current_language as LANGUAGE_CODE %}
+              {% get_available_languages as LANGUAGES %}
+              {% get_language_info_list for LANGUAGES as languages %}
+              {% for language in languages %}
+                <option value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} selected{% endif %}>
+                  {{ language.name_local }}
+                </option>
+              {% endfor %}
+            </select>
+          </form>
+        </div>
+      </div>
+
+      <nav class="toolbar-nav" aria-label="{% trans 'Navigation through the application' %}">
+        <a
+          href="{{ app_index_url }}"
+          class="btn_pay btn-linklike {% if request.path == app_index_url %}is-selected{% endif %}">
+          {% trans "Services" %}
+        </a>
+        <a
+          href="{{ cabinet_page_url }}"
+          class="btn_pay btn-linklike {% if request.path == cabinet_page_url %}is-selected{% endif %}">
+          {% trans "Cabinets" %}
+        </a>
+        {% if request.path == cabinet_page_url or request.path == tags_page_url %}
+          <a
+            href="{{ tags_page_url }}"
+            class="btn_pay btn-linklike {% if request.path == tags_page_url %}is-selected{% endif %}">
+            {% trans "Tags" %}
+          </a>
+        {% endif %}
+        <a
+          href="{{ statistics_url }}"
+          class="btn_pay btn-linklike {% if request.path == statistics_url %}is-selected{% endif %}">
+          {% trans "Statistics" %}
+        </a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+
+

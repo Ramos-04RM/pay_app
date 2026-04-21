@@ -365,6 +365,21 @@ msgstr "Показати та скопіювати пароль"
 msgid "Hide password"
 msgstr "Сховати пароль"
 
+#: pay_app/templates/partials/_pay_table.html:194
+#, python-format
+msgid "Delete service \"%(service)s\"?"
+msgstr "Видалити сервіс \"%(service)s\"?"
+
+#: pay_app/templates/partials/_pay_table.html:201
+#: pay_app/templates/partials/_pay_table.html:202
+#: pay_app/templates/partials/_pay_table.html:210
+msgid "Delete service"
+msgstr "Видалити сервіс"
+
+#: pay_app/templates/partials/layout/_main_header.html:28
+msgid "Language"
+msgstr "Мова"
+
 #: pay_app/templates/partials/_pay_table.html:189
 #: pay_app/templates/cabinet.html:406
 msgid "Nothing found with current filters."
@@ -579,8 +594,8 @@ msgid "Delete this field?"
 msgstr "Видалити дане поле?"
 
 #: pay_app/templates/cabinet.html:400
-msgid "Cannot delete! This cabinet is in use."
-msgstr "Неможливо видалити! Даний кабінет використовується."
+msgid "Cannot delete! This cabinet uses. Please delete all associated services first."
+msgstr "Неможливо видалити! Даний кабінет використовується. Спочатку видаліть всі прив'язані сервіси"
 
 #: pay_app/templates/cabinet.html:414
 msgid "Editing"

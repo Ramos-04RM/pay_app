@@ -1,0 +1,256 @@
+{% load i18n %}
+
+<section class="table-card table-card--wide">
+  <div class="table-card__header table-card__header--with-hint">
+    <div>
+      <div class="section-title-row">
+        <h2 class="section-title">{% trans "Cabinets" %}</h2>
+        <span class="metric-pill">{% trans "Found:" %} {{ object_k|length }}</span>
+      </div>
+    </div>
+    <div class="table-scroll-hint">
+      <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M3 8h18"></path>
+        <path d="M7 4 3 8l4 4"></path>
+        <path d="M21 16H3"></path>
+        <path d="m17 12 4 4-4 4"></path>
+      </svg>
+      <span>{% trans "Scroll the table horizontally" %}</span>
+    </div>
+  </div>
+
+  <div class="table-responsive table-responsive--wide">
+    <table class="home-table">
+      <thead>
+        <tr>
+          <th>
+            <a href="{% url 'app:cabinet_new' %}" class="btn_pay btn-linklike">+</a>
+          </th>
+          <th>
+            <a href="{{ cabinet_login_sort_url }}">
+              {% trans "Login" %}
+              {% if cabinet_sort == 'login_asc' %}↑{% elif cabinet_sort == 'login_desc' %}↓{% endif %}
+            </a>
+          </th>
+          <th>
+            <a href="{{ cabinet_link_sort_url }}">
+              {% trans "Link" %}
+              {% if cabinet_sort == 'link_asc' %}↑{% elif cabinet_sort == 'link_desc' %}↓{% endif %}
+            </a>
+          </th>
+          <th>{% trans "Password" %}</th>
+          <th>
+            <a href="{{ cabinet_email_sort_url }}">
+              {% trans "Email" %}
+              {% if cabinet_sort == 'email_login_asc' %}↑{% elif cabinet_sort == 'email_login_desc' %}↓{% endif %}
+            </a>
+          </th>
+          <th>{% trans "Email password" %}</th>
+          <th>
+            <a href="{{ cabinet_note_sort_url }}">
+              {% trans "Notes" %}
+              {% if cabinet_sort == 'note_asc' %}↑{% elif cabinet_sort == 'note_desc' %}↓{% endif %}
+            </a>
+          </th>
+          <th>
+            {% trans "Services" %}
+            <a href="{{ cabinet_services_sort_asc_url }}">↑</a>
+            <a href="{{ cabinet_services_sort_desc_url }}">↓</a>
+          </th>
+          <th>
+            {% trans "Balance" %}
+            <a href="{{ cabinet_balance_sort_asc_url }}">↑</a>
+            <a href="{{ cabinet_balance_sort_desc_url }}">↓</a>
+          </th>
+          <th>
+            {% trans "Tags" %}
+            <a href="{{ cabinet_tags_sort_asc_url }}">↑</a>
+            <a href="{{ cabinet_tags_sort_desc_url }}">↓</a>
+          </th>
+          <th>{% trans "Delete" %}</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for j in object_k %}
+          <tr
+            id="cabinet-{{ j.id }}"
+            tabindex="0"
+            class="{% if highlight_id and j.id == highlight_id %}cabinet-highlight{% endif %}">
+
+            <td class="table-index-cell">
+              <a href="{% url 'app:cabinet_edit' j.id %}">
+                <div class="all_cell">{{ forloop.counter }}</div>
+              </a>
+            </td>
+
+            <td>
+              {% if j.login %}
+                <span
+                  class="copy-inline-btn"
+                  data-action="copy-text"
+                  data-copy-text="{{ j.login }}"
+                  title="{% trans 'Copy email' %}"
+                  role="button"
+                  tabindex="0">{{ j.login }}</span>
+              {% else %}-{% endif %}
+            </td>
+
+            <td>
+              {% if j.link %}
+                <a href="{{ j.link }}" target="_blank" rel="noopener noreferrer">{{ j.link }}</a>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+
+            <td class="masked-cell masked-cell--warning">
+              <div class="masked-cell__content">
+                <button
+                  type="button"
+                  class="btn_pay_yellow icon-btn js-decrypt-btn"
+                  id="cabinet-password-btn-{{ j.id }}"
+                  data-action="decrypt-copy"
+                  data-id="{{ j.id }}"
+                  data-model="cabinet"
+                  data-field="password"
+                  data-show-label="{% trans 'Show and copy password' %}"
+                  data-hide-label="{% trans 'Hide password' %}">
+                  <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+                    <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+                  </svg>
+                  <span class="visually-hidden">{% trans "Show and copy password" %}</span>
+                </button>
+                <span
+                  id="cabinet-password-val-{{ j.id }}"
+                  data-visible="0"
+                  data-decrypted=""
+                  class="masked-value">
+                  *****
+                </span>
+              </div>
+            </td>
+            <td>
+              {% if j.email_login %}
+                <span
+                  class="copy-inline-btn"
+                  data-action="copy-text"
+                  data-copy-text="{{ j.email_login }}"
+                  title="{% trans 'Copy email' %}"
+                  role="button"
+                  tabindex="0">{{ j.email_login }}</span>
+              {% else %}-{% endif %}
+            </td>
+
+            <td class="masked-cell masked-cell--warning">
+              <div class="masked-cell__content">
+                <button
+                  type="button"
+                  class="btn_pay_yellow icon-btn js-decrypt-btn"
+                  id="cabinet-email_password-btn-{{ j.id }}"
+                  data-action="decrypt-copy"
+                  data-id="{{ j.id }}"
+                  data-model="cabinet"
+                  data-field="email_password"
+                  data-show-label="{% trans 'Show and copy email password' %}"
+                  data-hide-label="{% trans 'Hide email password' %}">
+                  <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+                    <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+                  </svg>
+                  <span class="visually-hidden">{% trans "Show and copy email password" %}</span>
+                </button>
+                <span
+                  id="cabinet-email_password-val-{{ j.id }}"
+                  data-visible="0"
+                  data-decrypted=""
+                  class="masked-value">
+                  *****
+                </span>
+              </div>
+            </td>
+
+            <td>{{ j.note|default:'-' }}</td>
+
+            <td>
+              <div class="cabinet-service-summary">
+                <h5 class="cabinet-service-count">{{ j.services_count }}</h5>
+
+                {% if j.services_count > 0 %}
+                  <button
+                    type="button"
+                    class="btn_pay_yellow icon-btn icon-btn--ghost"
+                    id="btn{{ j.id }}"
+                    data-action="toggle-block"
+                    data-target-id="remove-heli-{{ j.id }}"
+                    data-show-label="{% trans 'Show services' %}"
+                    data-hide-label="{% trans 'Hide services' %}"
+                    aria-controls="remove-heli-{{ j.id }}"
+                    aria-expanded="false">
+                    <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path d="M1.5 12s3.5-7 10.5-7 10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+                      <path d="M12 16.25A4.25 4.25 0 1 0 12 7.75a4.25 4.25 0 0 0 0 8.5Z"></path>
+                    </svg>
+                    <span class="visually-hidden">{% trans "Show services" %}</span>
+                  </button>
+                {% endif %}
+              </div>
+
+              <div class="cabinet-service-list" id="remove-heli-{{ j.id }}" hidden>
+                {% for s in j.pay_set.all %}
+                  <a href="{% url 'app:home_page_with_cabinet' s.id %}" target="_blank">
+                    <h3 class="cabinet-service-item {% if s.status == 'active' %}cabinet-service-item--active{% else %}cabinet-service-item--inactive{% endif %}">
+                      {{ s.service }}
+                    </h3>
+                  </a>
+                {% endfor %}
+              </div>
+            </td>
+
+            <td>
+              <div class="chip-list">
+                {{ j.balance_value|floatformat:1 }} {{ j.currency|default:'' }}
+              </div>
+            </td>
+
+            <td>
+              <div class="chip-list">
+                {% for rel in j.cabinet_tags.all %}
+                  <span class="cabinet-tag-chip">{{ rel.tag.name }}</span>
+                {% empty %}
+                  <span class="muted-text">-</span>
+                {% endfor %}
+              </div>
+            </td>
+
+            <td>
+              {% if j.services_count == 0 %}
+                <a
+                  href="{% url 'app:delete_cabinet' j.id %}"
+                  class="btn_pay_red btn-linklike"
+                  data-action="confirm-navigation"
+                  data-confirm-message="{% trans 'Delete this field?' %}">
+                  {% trans "Delete" %}
+                </a>
+              {% else %}
+                <button
+                  type="button"
+                  class="btn_pay_red"
+                  data-action="alert"
+                  data-alert-message="{% trans 'Cannot delete! This cabinet uses. Please delete all associated services first.' %}">
+                  {% trans "Delete" %}
+                </button>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="12" class="table-empty">{% trans "Nothing found with current filters." %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+

@@ -1,0 +1,56 @@
+{% load crispy_forms_filters %}
+{% load i18n %}
+
+<section class="page-section-card">
+  <div class="page-header-row page-header-row--compact">
+    <div>
+      <p class="eyebrow">{% trans "Editing" %}</p>
+      <h2 class="section-title">{% trans "Change cabinet" %}</h2>
+    </div>
+  </div>
+
+  <div class="forms-grid">
+    <form method="POST" class="form_cabinet form-card">
+      {% csrf_token %}
+      <div class="form-card__header">
+        <h3 class="form-section-title">{% trans "Cabinet data" %}</h3>
+      </div>
+      {{ form_cabinet_edit|crispy }}
+
+      <div class="form-subsection">
+        <h4 class="form-section-title">{% trans "Cabinet tags" %}</h4>
+        <div class="tag-option-grid">
+          {% for checkbox in tag_assign_form.tags %}
+            <label for="{{ checkbox.id_for_label }}" class="tag-option">
+              <input
+                type="checkbox"
+                name="{{ checkbox.data.name }}"
+                value="{{ checkbox.data.value }}"
+                id="{{ checkbox.id_for_label }}"
+                {% if checkbox.data.selected %}checked{% endif %}>
+              <span>{{ checkbox.choice_label }}</span>
+            </label>
+          {% empty %}
+            <span class="empty-state-inline">{% trans "No tags yet." %}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="page-actions">
+        <button type="submit" name="submit_action" value="save_tags" class="btn_pay">{% trans "Save" %}</button>
+      </div>
+    </form>
+
+    <form method="POST" class="form_cabinet form-card">
+      {% csrf_token %}
+      <div class="form-card__header">
+        <h4 class="form-section-title">{% trans "Add new tag" %}</h4>
+      </div>
+      {{ tag_form.as_p }}
+      <div class="page-actions">
+        <button type="submit" name="submit_action" value="create_tag" class="btn_pay">{% trans "Add tag" %}</button>
+      </div>
+    </form>
+  </div>
+</section>
+

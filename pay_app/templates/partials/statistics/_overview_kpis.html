@@ -1,0 +1,41 @@
+{% load i18n %}
+
+<div class="statistics-kpi-grid">
+  <a class="statistics-kpi" href="?{{ base_querystring }}&drill=status&drill_value=active#details">
+    <span>{% trans "Active services" %}</span>
+    <strong>{{ active_count }}</strong>
+  </a>
+  <a class="statistics-kpi" href="?{{ base_querystring }}&drill=status&drill_value=not%20active#details">
+    <span>{% trans "Inactive services" %}</span>
+    <strong>{{ inactive_count }}</strong>
+  </a>
+  <a class="statistics-kpi" href="?{{ base_querystring }}&drill=expired#details">
+    <span>{% trans "Expired services" %}</span>
+    <strong>{{ expired_count }}</strong>
+  </a>
+  <a class="statistics-kpi" href="?{{ base_querystring }}&drill=expiring_7#details">
+    <span>{% trans "Expiring in 7 days" %}</span>
+    <strong>{{ expiring_7_count }}</strong>
+  </a>
+  <a class="statistics-kpi" href="?{{ base_querystring }}&drill=expiring_30#details">
+    <span>{% trans "Expiring in 30 days" %}</span>
+    <strong>{{ expiring_30_count }}</strong>
+  </a>
+  <div class="statistics-kpi">
+    <span>{% trans "Cabinets in scope" %}</span>
+    <strong>{{ cabinets_count }}</strong>
+  </div>
+</div>
+
+<div class="statistics-kpi-grid statistics-kpi-grid--currency">
+  {% for item in burn_by_currency %}
+    <div class="statistics-kpi">
+      <span>{{ item.currency }} {% trans "monthly burn" %}</span>
+      <strong>{{ item.monthly_burn|floatformat:2 }}</strong>
+      <small>{% trans "Annualized:" %} {{ item.annualized|floatformat:2 }}</small>
+    </div>
+  {% empty %}
+    <div class="statistics-empty">{% trans "No active services for monthly burn in current scope." %}</div>
+  {% endfor %}
+</div>
+

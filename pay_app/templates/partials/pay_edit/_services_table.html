@@ -1,0 +1,55 @@
+{% load i18n %}
+
+<section class="table-card table-card--wide">
+  <div class="table-card__header table-card__header--with-hint">
+    <div>
+      <h2 class="section-title">{% trans "Services" %}</h2>
+    </div>
+    <div class="table-scroll-hint">
+      <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M3 8h18"></path>
+        <path d="M7 4 3 8l4 4"></path>
+        <path d="M21 16H3"></path>
+        <path d="m17 12 4 4-4 4"></path>
+      </svg>
+      <span>{% trans "Scroll the table horizontally" %}</span>
+    </div>
+  </div>
+
+  <div class="table-responsive table-responsive--wide">
+    <table class="table_pay">
+      <thead>
+        <tr>
+          <th>
+            <a href="{% url 'app:pay_new' %}" class="btn_add btn-linklike">{% trans "Add" %}</a>
+          </th>
+          <th>№</th>
+          <th>{% trans "Group" %}</th>
+          <th>{% trans "Creation date" %}</th>
+          <th>{% trans "Service" %}</th>
+          <th>{% trans "Resource type" %}</th>
+          <th>{% trans "Price per month / balance" %}</th>
+          <th>{% trans "Currency" %}</th>
+          <th>{% trans "Payment system" %}</th>
+          <th>{% trans "Paid up to" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Login" %}</th>
+          <th>{% trans "IP/Port" %}</th>
+          <th>{% trans "Password" %}</th>
+          <th>{% trans "Delete" %}</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for i in object_l %}
+          {% include 'partials/pay_edit/_table_row.html' with i=i %}
+        {% empty %}
+          <tr>
+            <td colspan="15" class="table-empty">{% trans "Nothing found with current filters." %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+

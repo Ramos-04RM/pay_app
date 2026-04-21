@@ -1,0 +1,48 @@
+{% load i18n %}
+
+<section class="table-card" id="details">
+  <div class="section-title-row">
+    <h3 class="section-title">{% trans "Drill-down details" %}</h3>
+    <a href="?{{ base_querystring }}#details" class="btn_pay btn-linklike">{% trans "Clear drill-down" %}</a>
+  </div>
+  <p class="section-subtitle">{{ drill_caption }}</p>
+  <div class="table-responsive table-responsive--wide">
+    <table class="home-table">
+      <thead>
+        <tr>
+          <th>{% trans "ID" %}</th>
+          <th>{% trans "Service" %}</th>
+          <th>{% trans "Cabinet" %}</th>
+          <th>{% trans "Group" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Currency" %}</th>
+          <th>{% trans "Price / month" %}</th>
+          <th>{% trans "Paid up to" %}</th>
+          <th>{% trans "Days to expiry" %}</th>
+          <th>{% trans "Open" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in detail_rows %}
+          <tr>
+            <td>{{ row.id }}</td>
+            <td>{{ row.service }}</td>
+            <td>{{ row.cabinet }}</td>
+            <td>{{ row.group }}</td>
+            <td>{% if row.status == 'active' %}{% trans "active" %}{% else %}{% trans "not active" %}{% endif %}</td>
+            <td>{{ row.currency }}</td>
+            <td>{{ row.price_per_month|floatformat:2 }}</td>
+            <td>{{ row.paid_up_to|date:'Y-m-d' }}</td>
+            <td>{% if row.days_to_expiry is not None %}{{ row.days_to_expiry }}{% else %}-{% endif %}</td>
+            <td><a href="{% url 'app:pay_edit' row.id %}">{% trans "Edit" %}</a></td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="10">{% trans "No detail rows in current scope." %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+

@@ -1,0 +1,12 @@
+{% load i18n %}
+
+<div class="auth-warning-shell">
+  <a href="{% url 'login' %}" class="auth-warning">
+    <div>
+      <strong>{% trans "You are not authorized." %}</strong>
+      <span>{% trans "Log in to view and edit data." %}</span>
+    </div>
+    <span class="btn_pay">{% trans "Login" %}</span>
+  </a>
+</div>
+
