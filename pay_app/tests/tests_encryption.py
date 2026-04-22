@@ -104,6 +104,7 @@ class KeyCandidatesTests(TestCase):
 
     @override_settings(APP_ENCRYPTION_KEY='', LEGACY_ENCRYPTION_USER='nonexistent')
     def test_no_keys_raises(self) -> None:
+        User.objects.all().delete()
         with patch.dict(os.environ, {'APP_ENCRYPTION_KEY': ''}, clear=False):
             with self.assertRaises(RuntimeError):
                 get_write_encryption_key()

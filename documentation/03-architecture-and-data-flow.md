@@ -86,9 +86,9 @@ sequenceDiagram
     V->>SS: decrypt_item_payload(request)
     SS-->>V: parsed JSON payload
     V->>SEC: decrypt_secret(user, payload)
-    SEC->>SEC: validate model/field/permissions
+    SEC->>SEC: validate model/field/authentication
     SEC->>SEC: decrypt_value() with key candidates
-    SEC->>L: log secret_decrypt action
+    SEC->>L: log `secret.decrypt.*` to security logger
     SEC-->>V: {"value": "decrypted_text"}
     V-->>C: JSON response
 ```
@@ -132,6 +132,38 @@ graph TD
 - Keep analytics math in `services/statistics.py`
 - Keep security and decryption checks in `services/security.py`
 - Avoid coupling templates to DB logic directly
+
+## Structured Logging (Grafana/Loki Friendly)
+
+Runtime logging is JSON Lines (`.jsonl`) in:
+- `logs/app.jsonl` (application/audit events)
+- `logs/security.jsonl` (auth + decrypt security events)
+
+Retention policy:
+- Daily rotation (`TimedRotatingFileHandler`, midnight)
+- `backupCount=90` (about 90 days)
+
+Each line is a standalone JSON object designed for log aggregation systems.
+
+Recommended event fields:
+- `time` (ISO 8601, UTC)
+- `level`
+- `logger`
+- `event` (stable machine-readable event name, e.g. `pay.created`)
+- `username`
+- `user_id`
+- `request_id`
+- `http_method`
+- `path`
+- `context` (small structured payload with IDs/statuses)
+
+Best practices implemented:
+- Keep event names stable and low-cardinality (`pay.updated`, `auth.login.failed`)
+- Avoid secrets in logs (password/token fields are masked)
+- Prefer IDs and enum-like values over verbose text for query efficiency
+- Emit one log line per event (no multi-line payloads)
+- Use request-scoped correlation (`request_id`) for traceability
+- Route security-sensitive events to dedicated logger/file for least-privilege access
 
 ## Extension Strategy
 

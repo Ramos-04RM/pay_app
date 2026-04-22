@@ -15,7 +15,17 @@ docker compose logs web --tail=200
 docker compose logs db --tail=200
 docker compose logs nginx --tail=200
 curl http://localhost:8080/healthz/
+Get-Content .\logs\app.jsonl -Tail 50
+Get-Content .\logs\security.jsonl -Tail 50
 ```
+
+## Structured Audit Log Notes
+- Log file path: `logs/app.jsonl`
+- Security log path: `logs/security.jsonl`
+- Format: one JSON object per line (JSONL)
+- Rotation/retention: daily, keep last 90 files
+- Core keys for dashboards/alerts: `time`, `level`, `event`, `username`, `request_id`, `path`
+- Prefer Grafana/Loki queries by `event` + `level` and then drill into `context`
 
 ## Common Symptoms
 
@@ -30,8 +40,8 @@ curl http://localhost:8080/healthz/
 
 ### Decryption failures
 - Verify `APP_ENCRYPTION_KEY` exists in runtime env
-- Confirm request user is `is_staff`/`is_superuser`
-- Check `secret_decrypt` logs for denied attempts
+- Confirm request user is authenticated and session is still valid
+- Check `logs/security.jsonl` for `secret.decrypt.failed` events and failure context
 
 ### Cabinet delete fails
 Expected when linked pay records exist due to `Pay.cabinet` `DO_NOTHING` policy.

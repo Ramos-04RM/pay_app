@@ -5,6 +5,8 @@ import importlib.util
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+LOG_DIR = BASE_DIR / 'logs'
+LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def env_bool(name: str, default: bool = False) -> bool:
@@ -36,6 +38,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'pay_app.middleware.RequestContextMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -154,3 +157,65 @@ SECURE_HSTS_PRELOAD = env_bool('SECURE_HSTS_PRELOAD', not DEBUG)
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'request_context': {
+            '()': 'pay_app.logging_filters.RequestContextFilter',
+        },
+    },
+    'formatters': {
+        'json': {
+            '()': 'pay_app.logging_formatters.JsonLogFormatter',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'filters': ['request_context'],
+            'formatter': 'json',
+        },
+        'app_file': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': str(LOG_DIR / 'app.jsonl'),
+            'when': 'midnight',
+            'backupCount': 90,
+            'encoding': 'utf-8',
+            'filters': ['request_context'],
+            'formatter': 'json',
+        },
+        'security_file': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': str(LOG_DIR / 'security.jsonl'),
+            'when': 'midnight',
+            'backupCount': 90,
+            'encoding': 'utf-8',
+            'filters': ['request_context'],
+            'formatter': 'json',
+        },
+    },
+    'loggers': {
+        'pay_app.audit': {
+            'handlers': ['console', 'app_file'],
+            'level': os.getenv('APP_AUDIT_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+        'pay_app.security_audit': {
+            'handlers': ['console', 'security_file'],
+            'level': os.getenv('APP_SECURITY_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+        'pay_app': {
+            'handlers': ['console', 'app_file'],
+            'level': os.getenv('APP_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+    },
+    'root': {
+        'handlers': ['console', 'app_file'],
+        'level': os.getenv('ROOT_LOG_LEVEL', 'WARNING'),
+    },
+}
+

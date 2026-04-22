@@ -4,7 +4,6 @@ import json
 from datetime import date, timedelta
 
 from django.contrib.auth.models import User
-from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory, TestCase, override_settings
 
 from pay_app.models import Cabinet, Pay
@@ -73,9 +72,13 @@ class ServiceSecurityTests(TestCase):
         self.assertIsNone(payload)
         self.assertEqual(error.status_code, 400)
 
-    def test_decrypt_secret_denies_non_staff(self):
-        with self.assertRaises(PermissionDenied):
-            decrypt_secret(self.user, {'model': 'pay', 'field': 'password', 'id': self.pay.id})
+    def test_decrypt_secret_allows_non_staff(self):
+        with self.assertLogs('pay_app.security_audit', level='INFO') as captured:
+            response = decrypt_secret(self.user, {'model': 'pay', 'field': 'password', 'id': self.pay.id})
+        self.assertEqual(response.status_code, 200)
+        payload = json.loads(response.content.decode('utf-8'))
+        self.assertEqual(payload['value'], 'svc-pass')
+        self.assertTrue(any('Secret decrypted' in line for line in captured.output))
 
     def test_decrypt_secret_invalid_model(self):
         response = decrypt_secret(self.staff, {'model': 'user', 'field': 'password', 'id': 1})
@@ -106,6 +109,15 @@ class ServiceSecurityTests(TestCase):
         )
         response = decrypt_secret(self.staff, {'model': 'pay', 'field': 'password', 'id': empty_pay.id})
         self.assertEqual(response.status_code, 400)
+
+    def test_decrypt_secret_failed_event_goes_to_security_logger(self):
+        Pay.objects.filter(pk=self.pay.pk).update(password='not-encrypted-at-all')
+
+        with self.assertLogs('pay_app.security_audit', level='INFO') as captured:
+            response = decrypt_secret(self.staff, {'model': 'pay', 'field': 'password', 'id': self.pay.id})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertTrue(any('Secret decryption failed' in line for line in captured.output))
 
     def test_decrypt_pay_secrets_mutates_object_to_plaintext(self):
         encrypted = Pay.objects.get(pk=self.pay.pk)

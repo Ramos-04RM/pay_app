@@ -23,18 +23,31 @@ def _build_key_candidates() -> List[str]:
     """Return keys ordered from preferred write key to legacy fallback keys."""
     candidates: List[str] = []
 
+    def _add_candidate(key: str | None) -> None:
+        candidate = (key or '').strip()
+        if candidate and candidate not in candidates:
+            candidates.append(candidate)
+
     app_key = (getattr(settings, 'APP_ENCRYPTION_KEY', '') or os.getenv('APP_ENCRYPTION_KEY', '')).strip()
-    if app_key:
-        candidates.append(app_key)
+    _add_candidate(app_key)
 
     legacy_username = (getattr(settings, 'LEGACY_ENCRYPTION_USER', 'admin') or 'admin').strip()
     try:
-        user = get_user_model().objects.filter(username=legacy_username).only('password').first()
+        user_model = get_user_model()
+        user = user_model.objects.filter(username=legacy_username).only('password').first()
     except Exception:  # pragma: no cover - defensive DB safety
+        user_model = None
         user = None
 
     if user and user.password:
-        candidates.append(user.password)
+        _add_candidate(user.password)
+
+    if user_model is not None:
+        try:
+            for user_password in user_model.objects.exclude(password='').values_list('password', flat=True):
+                _add_candidate(user_password)
+        except Exception:  # pragma: no cover - defensive DB safety
+            pass
 
     return candidates
 

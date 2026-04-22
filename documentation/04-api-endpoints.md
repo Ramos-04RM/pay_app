@@ -72,7 +72,7 @@ Purpose:
 
 Access:
 - User must be authenticated
-- User must be `is_staff` or `is_superuser`
+- No extra password confirmation is required
 
 Allowed payload by model:
 
@@ -95,14 +95,15 @@ Allowed payload by model:
 Validation behavior:
 - Invalid JSON -> `400`
 - Invalid model/field/id format -> `400`
-- Missing permission -> `403`
+- Not authenticated -> Django login redirect (`302`)
 - Object not found by id -> `404`
 - Empty value or decrypt fail -> `400`
 - Wrong HTTP method (non-POST) -> `405`
 - Success -> `200` with `{ "value": "..." }`
 
 Security note:
-- Decrypt action is logged as `secret_decrypt user=<id> model=<model> object_id=<id> field=<field>`
+- Decrypt actions are logged as structured events: `secret.decrypt.success` / `secret.decrypt.failed`
+- These events are written to `logs/security.jsonl`
 
 ## Health Check
 

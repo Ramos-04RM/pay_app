@@ -461,14 +461,15 @@ class DecryptEndpointTests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    def test_decrypt_requires_staff(self) -> None:
+    def test_decrypt_allows_non_staff_user(self) -> None:
         self.client.force_login(self.user)
         response = self.client.post(
             reverse('app:decrypt_item'),
             data=json.dumps({'model': 'pay', 'field': 'password', 'id': self.pay.id}),
             content_type='application/json',
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['value'], 'svc-pass')
 
     def test_decrypt_invalid_model(self) -> None:
         response = self.client.post(

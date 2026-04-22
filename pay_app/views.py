@@ -10,6 +10,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from .forms import CabinetForm, CabinetTagAssignForm, PayForm, TagForm
+from .logging_helpers import log_event
 from .models import Cabinet, Pay, Tag
 from . import services
 
@@ -154,7 +155,16 @@ def delete(request: HttpRequest, id: int) -> HttpResponse:
     """Delete a pay record. Returns JSON for AJAX requests, otherwise redirects."""
     pay = get_object_or_404(Pay, id=id)
     service_name = pay.service
+    pay_id = pay.id
+    cabinet_id = pay.cabinet_id
     pay.delete()
+    log_event(
+        event='pay.delete.request',
+        message='Pay delete endpoint executed',
+        pay_id=pay_id,
+        cabinet_id=cabinet_id,
+        service=service_name,
+    )
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return JsonResponse({'ok': True, 'message': f'Service "{service_name}" deleted successfully.'})
 
@@ -269,8 +279,20 @@ def delete_cabinet(request: HttpRequest, id: int) -> HttpResponse:
     """Delete cabinet when possible, handling linked-record integrity failures."""
     try:
         get_object_or_404(Cabinet, id=id).delete()
+        log_event(
+            event='cabinet.delete.request',
+            message='Cabinet delete endpoint executed',
+            cabinet_id=id,
+            outcome='deleted',
+        )
         return redirect('app:cabinet_page')
     except IntegrityError:
+        log_event(
+            event='cabinet.delete.blocked',
+            message='Cabinet delete blocked by linked records',
+            cabinet_id=id,
+            outcome='blocked_integrity_error',
+        )
         return HttpResponseNotFound(
             '<h2>Дане поле неможливо видалити!! Поле зв\'язане із елементом у іншій таблиці</h2>'
         )

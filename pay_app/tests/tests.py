@@ -132,14 +132,15 @@ class PayAndCabinetFlowTests(BaseAppTestCase):
 class DecryptEndpointTests(BaseAppTestCase):
     """Permission and success-path checks for decrypt endpoint."""
 
-    def test_decrypt_requires_staff_permission(self) -> None:
+    def test_decrypt_allows_authenticated_non_staff_user(self) -> None:
         self.client.force_login(self.user)
         response = self.client.post(
             reverse('app:decrypt_item'),
             data='{"model":"pay","field":"password","id": %d}' % self.pay_active.id,
             content_type='application/json',
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['value'], 'svc-pass-a')
 
     def test_decrypt_success_for_staff(self) -> None:
         response = self.client.post(

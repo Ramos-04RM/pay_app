@@ -1,17 +1,14 @@
 import json
-import logging
 from collections.abc import Mapping
 from typing import Any
 
-from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
+from ..logging_helpers import log_event
 from ..models import Cabinet, Pay
 from ..security import decrypt_value
-
-logger = logging.getLogger(__name__)
 
 
 def decrypt_item_payload(request: HttpRequest) -> tuple[dict[str, Any] | None, JsonResponse | None]:
@@ -44,8 +41,6 @@ def decrypt_secret(user: Any, payload: Mapping[str, Any]) -> JsonResponse:
     except Exception:
         return JsonResponse({'error': 'Invalid id'}, status=400)
 
-    if not (user.is_staff or user.is_superuser):
-        raise PermissionDenied('You do not have permission to decrypt secrets.')
 
     obj = get_object_or_404(allowed[model]['cls'], pk=obj_id)
     encrypted_value = getattr(obj, field, None)
@@ -54,14 +49,24 @@ def decrypt_secret(user: Any, payload: Mapping[str, Any]) -> JsonResponse:
 
     decrypted_value = decrypt_value(encrypted_value)
     if decrypted_value in {False, None, ''}:
+        log_event(
+            event='secret.decrypt.failed',
+            message='Secret decryption failed',
+            logger_name='pay_app.security_audit',
+            model=model,
+            object_id=obj_id,
+            field=field,
+        )
         return JsonResponse({'error': 'Decryption failed'}, status=400)
 
-    logger.info(
-        'secret_decrypt user=%s model=%s object_id=%s field=%s',
-        user.id,
-        model,
-        obj_id,
-        field,
+    log_event(
+        event='secret.decrypt.success',
+        message='Secret decrypted',
+        logger_name='pay_app.security_audit',
+        model=model,
+        object_id=obj_id,
+        field=field,
+        target_user_id=user.id,
     )
     return JsonResponse({'value': decrypted_value})
 

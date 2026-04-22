@@ -203,7 +203,12 @@ async function decryptAndCopy(arg1, fieldArg, modelArg) {
       }),
     });
 
-    const data = await resp.json();
+    let data = {};
+    try {
+      data = await resp.json();
+    } catch (parseError) {
+      data = {};
+    }
     if (!resp.ok) {
       alert(data.error || "Decrypt error");
       return;
@@ -219,7 +224,7 @@ async function decryptAndCopy(arg1, fieldArg, modelArg) {
     showToast(copied ? "Скопійовано в буфер обміну" : "Не вдалося скопіювати", !copied);
   } catch (error) {
     console.error(error);
-    alert("Request failed");
+    alert("Decrypt error");
   }
 }
 
