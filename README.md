@@ -2,10 +2,6 @@
 
 Developer-focused documentation index for the Payment Control System.
 
-## Audience
-- Primary: middle-level developers
-- Secondary: junior developers (extra notes on critical areas)
-
 ## How to Use Documentation
 1. Start with [Project Overview](./documentation/01-project-overview.md)
 2. Read [Domain Business Logic](./documentation/02-domain-business-logic.md) before touching models or services
