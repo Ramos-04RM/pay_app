@@ -328,6 +328,71 @@ class CabinetCRUDViewTests(TestCase):
         self.assertTrue(is_encrypted_value(raw))
         self.assertEqual(decrypt_value(raw), 'fresh-pw')
 
+    def test_cabinet_new_create_tag_preserves_draft_fields(self) -> None:
+        existing_tag = Tag.objects.create(name='ExistingTag')
+        response = self.client.post(
+            reverse('app:cabinet_new'),
+            {
+                'submit_action': 'create_tag',
+                'new_tag-name': 'FreshTag',
+                'new_tag-note': 'draft note',
+                'selected_tags': [str(existing_tag.id)],
+                'cabinet_link': 'https://draft.example.com',
+                'cabinet_login': 'draft-cabinet',
+                'cabinet_password': 'draft-pass',
+                'cabinet_email_login': 'draft@example.com',
+                'cabinet_email_password': 'draft-mail-pass',
+                'cabinet_balance': '25.00',
+                'cabinet_currency': 'USD $',
+                'cabinet_note': 'draft cabinet note',
+                'cabinet_is_daily_payment': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Cabinet.objects.filter(login='draft-cabinet').exists())
+        self.assertEqual(response.context['form_cabinet']['login'].value(), 'draft-cabinet')
+        self.assertEqual(response.context['form_cabinet']['password'].value(), 'draft-pass')
+        self.assertEqual(response.context['form_cabinet']['email_password'].value(), 'draft-mail-pass')
+        self.assertEqual(response.context['form_cabinet']['balance'].value(), '25.00')
+        self.assertEqual(response.context['form_cabinet']['note'].value(), 'draft cabinet note')
+
+        new_tag = Tag.objects.get(name='FreshTag')
+        self.assertCountEqual(response.context['tag_assign_form'].initial['tags'], [existing_tag.id, new_tag.id])
+
+    def test_cabinet_edit_create_tag_preserves_draft_fields(self) -> None:
+        existing_tag = Tag.objects.create(name='ExistingEditTag')
+        response = self.client.post(
+            reverse('app:cabinet_edit', args=[self.cabinet.id]),
+            {
+                'submit_action': 'create_tag',
+                'new_tag-name': 'FreshEditTag',
+                'new_tag-note': 'edit draft note',
+                'selected_tags': [str(existing_tag.id)],
+                'cabinet_link': 'https://edited.example.com',
+                'cabinet_login': 'edited-cabinet',
+                'cabinet_password': 'edited-pass',
+                'cabinet_email_login': 'edited@example.com',
+                'cabinet_email_password': 'edited-mail-pass',
+                'cabinet_balance': '45.50',
+                'cabinet_currency': 'USD $',
+                'cabinet_note': 'edited cabinet note',
+                'cabinet_is_daily_payment': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.cabinet.refresh_from_db()
+        self.assertEqual(self.cabinet.login, 'cab-a')
+        self.assertEqual(response.context['form_cabinet_edit']['login'].value(), 'edited-cabinet')
+        self.assertEqual(response.context['form_cabinet_edit']['password'].value(), 'edited-pass')
+        self.assertEqual(response.context['form_cabinet_edit']['email_password'].value(), 'edited-mail-pass')
+        self.assertEqual(response.context['form_cabinet_edit']['balance'].value(), '45.50')
+        self.assertEqual(response.context['form_cabinet_edit']['note'].value(), 'edited cabinet note')
+
+        new_tag = Tag.objects.get(name='FreshEditTag')
+        self.assertCountEqual(response.context['tag_assign_form'].initial['tags'], [existing_tag.id, new_tag.id])
+
     def test_delete_cabinet(self) -> None:
         cab = Cabinet.objects.create(
             link='https://del.test.com', login='del-cab', password='x',

@@ -431,23 +431,68 @@ function toggleTargetBlock(button) {
   );
 }
 
-function syncCabinetSelectedTags() {
-  const cabinetCreateForm = document.getElementById("cabinet-create-form");
-  const cabinetTagCreateForm = document.getElementById("cabinet-tag-create-form");
-  const hiddenContainer = document.getElementById("cabinet-selected-tags-hidden-container");
+function appendHiddenInput(container, name, value) {
+  const hiddenInput = document.createElement("input");
+  hiddenInput.type = "hidden";
+  hiddenInput.name = name;
+  hiddenInput.value = value;
+  container.appendChild(hiddenInput);
+}
 
-  if (!cabinetCreateForm || !cabinetTagCreateForm || !hiddenContainer) return;
+function syncCabinetDraftState() {
+  const syncPairs = [
+    {
+      sourceFormId: "cabinet-create-form",
+      targetFormId: "cabinet-tag-create-form",
+      hiddenContainerId: "cabinet-selected-tags-hidden-container",
+    },
+    {
+      sourceFormId: "cabinet-edit-form",
+      targetFormId: "cabinet-edit-tag-create-form",
+      hiddenContainerId: "cabinet-edit-tag-create-hidden-container",
+    },
+  ];
 
-  cabinetTagCreateForm.addEventListener("submit", () => {
-    hiddenContainer.innerHTML = "";
+  syncPairs.forEach(({ sourceFormId, targetFormId, hiddenContainerId }) => {
+    const sourceForm = document.getElementById(sourceFormId);
+    const targetForm = document.getElementById(targetFormId);
+    const hiddenContainer = document.getElementById(hiddenContainerId);
 
-    const checkedTags = cabinetCreateForm.querySelectorAll('input[name="tags"]:checked');
-    checkedTags.forEach((checkbox) => {
-      const hiddenInput = document.createElement("input");
-      hiddenInput.type = "hidden";
-      hiddenInput.name = "selected_tags";
-      hiddenInput.value = checkbox.value;
-      hiddenContainer.appendChild(hiddenInput);
+    if (!sourceForm || !targetForm || !hiddenContainer) return;
+
+    targetForm.addEventListener("submit", () => {
+      hiddenContainer.innerHTML = "";
+
+      const checkedTags = sourceForm.querySelectorAll('input[name="tags"]:checked');
+      checkedTags.forEach((checkbox) => {
+        appendHiddenInput(hiddenContainer, "selected_tags", checkbox.value);
+      });
+
+      const sourceFields = sourceForm.querySelectorAll("input[name], select[name], textarea[name]");
+      sourceFields.forEach((field) => {
+        const name = (field.name || "").trim();
+        const fieldType = (field.type || "").toLowerCase();
+        const tagName = (field.tagName || "").toLowerCase();
+
+        if (!name || field.disabled) return;
+        if (name === "csrfmiddlewaretoken" || name === "submit_action" || name === "tags") return;
+        if (fieldType === "hidden" || fieldType === "file") return;
+
+        if (fieldType === "checkbox" || fieldType === "radio") {
+          if (!field.checked) return;
+          appendHiddenInput(hiddenContainer, `cabinet_${name}`, field.value || "on");
+          return;
+        }
+
+        if (tagName === "select" && field.multiple) {
+          Array.from(field.selectedOptions).forEach((option) => {
+            appendHiddenInput(hiddenContainer, `cabinet_${name}`, option.value);
+          });
+          return;
+        }
+
+        appendHiddenInput(hiddenContainer, `cabinet_${name}`, field.value);
+      });
     });
   });
 }
@@ -631,7 +676,7 @@ window.addEventListener("popstate", (event) => {
 
 document.addEventListener("DOMContentLoaded", () => {
   attachPasswordGenerators();
-  syncCabinetSelectedTags();
+  syncCabinetDraftState();
   initCabinetHighlight();
   initIconButtons();
   initStatisticsFilters();

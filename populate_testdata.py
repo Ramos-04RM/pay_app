@@ -1,223 +1,1 @@
-#!/usr/bin/env python
-"""
-Test data population script.
-- 50 cabinets
-- 200 services
-- 5 tags
-"""
-
-import os
-import django
-import random
-from datetime import datetime, timedelta
-from decimal import Decimal
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'd1.settings')
-django.setup()
-
-from pay_app.models import Cabinet, Pay, Tag, CabinetTag
-from django.contrib.auth.models import User
-
-# Дані для генерації
-SERVICE_TYPES = {
-    'VPS': ['DigitalOcean', 'Linode', 'Vultr', 'AWS EC2', 'Google Cloud', 'Azure VM', 'Hetzner'],
-    'site': ['Bluehost', 'SiteGround', 'Hostinger', 'GoDaddy', 'Namecheap', 'DreamHost', 'A2 Hosting'],
-    'proxy': ['Bright Data', 'Oxylabs', 'Smartproxy', 'IPRoyal', 'Residential Proxy', 'Datacenter Proxy'],
-}
-
-SERVICE_NAMES = {
-    'VPS': [
-        'Production Server', 'Development Environment', 'Database Server',
-        'Web Server', 'API Server', 'Backup Server', 'Staging Server',
-        'Load Balancer', 'Cache Server', 'Mail Server'
-    ],
-    'site': [
-        'Corporate Website', 'E-commerce Store', 'Blog Platform',
-        'Portfolio Site', 'Documentation Site', 'Support Portal',
-        'Community Forum', 'Knowledge Base', 'Landing Page'
-    ],
-    'proxy': [
-        'Rotating Proxy Pool', 'Residential Network', 'ISP Proxy',
-        'Datacenter Proxy', 'Backup Proxy', 'Test Environment',
-        'Scraping Service', 'Geo-location Testing'
-    ]
-}
-
-PAY_SYSTEMS = ['PayPal', 'Stripe', 'Credit Card', 'Bank Transfer', 'Bitcoin', 'Wise', 'Wire Transfer']
-CURRENCIES = ['USD $', 'EURO €', 'UAH ₴', 'rub ₽']
-GROUPS = ['Production', 'Development', 'Testing', 'Staging', 'Backup', 'Monitor', 'Critical', 'Non-Critical']
-TAGS_LIST = ['Production', 'Development', 'Testing', 'Premium', 'Legacy']
-
-def generate_cabinet_data():
-    """Генерує дані для кабінету"""
-    companies = [
-        'TechCorp', 'DataFlow', 'CloudPlus', 'ServerHub', 'NetCloud',
-        'InfoBase', 'WebHost', 'DigitalHub', 'ServicePro', 'CloudForce',
-        'NetSolutions', 'DataCenter', 'ServerFarm', 'HostPlus', 'CloudHost',
-        'TechHost', 'ProServices', 'DataService', 'ServerHub', 'WebService',
-    ]
-    domains = ['com', 'io', 'net', 'org', 'co', 'dev', 'app', 'tech']
-
-    company = random.choice(companies)
-    domain = random.choice(domains)
-    username = company.lower() + str(random.randint(1000, 9999))
-
-    return {
-        'link': f'https://{company.lower()}.{domain}',
-        'login': username,
-        'password': f'pass_{username}_{random.randint(100000, 999999)}',
-        'email_login': f'{username}@{company.lower()}.{domain}',
-        'email_password': f'email_pass_{random.randint(100000, 999999)}',
-        'balance': Decimal(str(round(random.uniform(10, 5000), 2))),
-        'currency': random.choice(CURRENCIES),
-        'note': random.choice(['Regular client', 'VIP client', 'Trial period', 'Long-term contract', 'Active account', '']) or None,
-        'is_daily_payment': random.choice([True, False])
-    }
-
-def generate_pay_data(cabinet):
-    """Генерує дані для платежу"""
-    type_source = random.choice(['VPS', 'site', 'proxy'])
-    provider = random.choice(SERVICE_TYPES[type_source])
-    service_base = random.choice(SERVICE_NAMES[type_source])
-
-    # Варіювання послуг для одного провайдера
-    if random.random() > 0.7:
-        service = f"{provider} - {service_base} #{random.randint(1, 5)}"
-    else:
-        service = f"{provider} - {service_base}"
-
-    # Дата створення - випадкова у межах останніх 2 років
-    create_date = datetime.now().date() - timedelta(days=random.randint(1, 730))
-
-    # Дата оплати до - від 1 до 12 місяців у майбутньому
-    paid_up_to = create_date + timedelta(days=random.randint(30, 365))
-
-    # Проверка статусу
-    is_paid = paid_up_to >= datetime.now().date()
-    status = 'active' if is_paid else 'not active'
-
-    price = round(random.uniform(5, 500), 2)
-
-    return {
-        'cabinet': cabinet,
-        'groups': random.choice(GROUPS),
-        'create_date': create_date,
-        'service': service,
-        'type_source': type_source,
-        'price_per_month': price,
-        'currency': random.choice(CURRENCIES),
-        'pay_sys': random.choice(PAY_SYSTEMS),
-        'paid_up_to': paid_up_to,
-        'status': status,
-        'email_login': f'{service.lower().replace(" ", "_")}_{random.randint(1000, 9999)}@example.com',
-        'password': f'svc_pass_{random.randint(100000, 999999)}',
-        'ip': f'{random.randint(1, 255)}.{random.randint(0, 255)}.{random.randint(0, 255)}.{random.randint(0, 255)}',
-        'note_pay': random.choice(['Regular service', 'Important service', 'Test service', 'Legacy', '']) or None,
-    }
-
-def main():
-    print("🔄 Очищення попередніх даних...")
-    Pay.objects.all().delete()
-    Cabinet.objects.all().delete()
-    CabinetTag.objects.all().delete()
-    Tag.objects.all().delete()
-    print("✅ Очищено")
-
-    # Створення тегів
-    print("\n📌 Створення тегів...")
-    tags = {}
-    for tag_name in TAGS_LIST:
-        tag, created = Tag.objects.get_or_create(
-            name=tag_name,
-            defaults={'note': f'Tag for {tag_name}'}
-        )
-        tags[tag_name] = tag
-        status = '✅ Створено' if created else '⏭️ Існує'
-        print(f"  {status}: {tag_name}")
-
-    # Створення кабінетів
-    print("\n🏢 Створення кабінетів (50)...")
-    cabinets = []
-    for i in range(50):
-        cabinet_data = generate_cabinet_data()
-        cabinet = Cabinet.objects.create(**cabinet_data)
-        cabinets.append(cabinet)
-
-        # Додавання випадкових тегів до кабінету
-        cabinet_tags = random.sample(list(tags.values()), k=random.randint(1, 3))
-        for tag in cabinet_tags:
-            CabinetTag.objects.create(cabinet=cabinet, tag=tag)
-
-        if (i + 1) % 10 == 0:
-            print(f"  ✅ {i + 1}/50 кабінетів створено")
-
-    print(f"✅ Всього кабінетів: {len(cabinets)}")
-
-    # Створення платежів (200)
-    print("\n💳 Створення сервісів (200)...")
-    pays_created = 0
-    for i in range(200):
-        cabinet = random.choice(cabinets)
-        pay_data = generate_pay_data(cabinet)
-        Pay.objects.create(**pay_data)
-        pays_created += 1
-
-        if (i + 1) % 25 == 0:
-            print(f"  ✅ {i + 1}/200 сервісів створено")
-
-    print(f"✅ Всього сервісів: {pays_created}")
-
-    # Статистика
-    print("\n📊 Статистика:")
-    print(f"  📦 Кабінетів: {Cabinet.objects.count()}")
-    print(f"  💼 Сервісів: {Pay.objects.count()}")
-    print(f"  🏷️  Тегів: {Tag.objects.count()}")
-    print(f"  🔗 CabinetTag зв'язків: {CabinetTag.objects.count()}")
-
-    # Розбиття за статусом
-    active_count = Pay.objects.filter(status='active').count()
-    inactive_count = Pay.objects.filter(status='not active').count()
-    print(f"  ✅ Активних сервісів: {active_count}")
-    print(f"  ❌ Неактивних сервісів: {inactive_count}")
-
-    # Розбиття за типами
-    vps_count = Pay.objects.filter(type_source='VPS').count()
-    site_count = Pay.objects.filter(type_source='site').count()
-    proxy_count = Pay.objects.filter(type_source='proxy').count()
-    print(f"  🖥️  VPS: {vps_count}")
-    print(f"  🌐 Site: {site_count}")
-    print(f"  🔀 Proxy: {proxy_count}")
-
-    # Розбиття за валютами
-    print(f"\n  💱 За валютами:")
-    for currency in CURRENCIES:
-        count = Pay.objects.filter(currency=currency).count()
-        if count > 0:
-            print(f"    {currency}: {count}")
-
-    # Розбиття за системами оплати
-    print(f"\n  💰 За системами оплати:")
-    for pay_sys in PAY_SYSTEMS:
-        count = Pay.objects.filter(pay_sys=pay_sys).count()
-        if count > 0:
-            print(f"    {pay_sys}: {count}")
-
-    print("\n" + "="*50)
-    print("✨ Тестові дані успішно загружені в БД!")
-    print("="*50)
-    print("\nВи можете тестувати:")
-    print("  ✓ Фільтрацію за статусом (active/not active)")
-    print("  ✓ Фільтрацію за типом (VPS/site/proxy)")
-    print("  ✓ Фільтрацію за валютою")
-    print("  ✓ Сортування за датою, ціною тощо")
-    print("  ✓ Пошук за назвою сервісу")
-    print("  ✓ Теги та теги кабінетів")
-    print("  ✓ Статистику платежів")
-
-if __name__ == '__main__':
-    try:
-        main()
-    except Exception as e:
-        print(f"\n❌ Помилка: {e}")
-        import traceback
-        traceback.print_exc()
+#!/usr/bin/env python"""Test data population script.- 50 cabinets- 200 services- 5 tags"""import osimport djangoimport randomfrom datetime import datetime, timedeltafrom decimal import Decimalos.environ.setdefault('DJANGO_SETTINGS_MODULE', 'd1.settings')django.setup()from pay_app.models import Cabinet, Pay, Tag, CabinetTagfrom django.contrib.auth.models import User# Дані для генераціїSERVICE_TYPES = {    'VPS': ['DigitalOcean', 'Linode', 'Vultr', 'AWS EC2', 'Google Cloud', 'Azure VM', 'Hetzner'],    'site': ['Bluehost', 'SiteGround', 'Hostinger', 'GoDaddy', 'Namecheap', 'DreamHost', 'A2 Hosting'],    'proxy': ['Bright Data', 'Oxylabs', 'Smartproxy', 'IPRoyal', 'Residential Proxy', 'Datacenter Proxy'],}SERVICE_NAMES = {    'VPS': [        'Production Server', 'Development Environment', 'Database Server',        'Web Server', 'API Server', 'Backup Server', 'Staging Server',        'Load Balancer', 'Cache Server', 'Mail Server'    ],    'site': [        'Corporate Website', 'E-commerce Store', 'Blog Platform',        'Portfolio Site', 'Documentation Site', 'Support Portal',        'Community Forum', 'Knowledge Base', 'Landing Page'    ],    'proxy': [        'Rotating Proxy Pool', 'Residential Network', 'ISP Proxy',        'Datacenter Proxy', 'Backup Proxy', 'Test Environment',        'Scraping Service', 'Geo-location Testing'    ]}PAY_SYSTEMS = ['PayPal', 'Stripe', 'Credit Card', 'Bank Transfer', 'Bitcoin', 'Wise', 'Wire Transfer']CURRENCIES = ['USD $', 'EURO €', 'UAH ₴', 'rub ₽']GROUPS = ['Production', 'Development', 'Testing', 'Staging', 'Backup', 'Monitor', 'Critical', 'Non-Critical']TAGS_LIST = ['Production', 'Development', 'Testing', 'Premium', 'Legacy']def generate_cabinet_data():    """Генерує дані для кабінету"""    companies = [        'TechCorp', 'DataFlow', 'CloudPlus', 'ServerHub', 'NetCloud',        'InfoBase', 'WebHost', 'DigitalHub', 'ServicePro', 'CloudForce',        'NetSolutions', 'DataCenter', 'ServerFarm', 'HostPlus', 'CloudHost',        'TechHost', 'ProServices', 'DataService', 'ServerHub', 'WebService',    ]    domains = ['com', 'io', 'net', 'org', 'co', 'dev', 'app', 'tech']    company = random.choice(companies)    domain = random.choice(domains)    username = company.lower() + str(random.randint(1000, 9999))    return {        'link': f'https://{company.lower()}.{domain}',        'login': username,        'password': f'pass_{username}_{random.randint(100000, 999999)}',        'email_login': f'{username}@{company.lower()}.{domain}',        'email_password': f'email_pass_{random.randint(100000, 999999)}',        'balance': Decimal(str(round(random.uniform(10, 5000), 2))),        'currency': random.choice(CURRENCIES),        'note': random.choice(['Regular client', 'VIP client', 'Trial period', 'Long-term contract', 'Active account', '']) or None,        'is_daily_payment': random.choice([True, False])    }def generate_pay_data(cabinet):    """Генерує дані для платежу"""    type_source = random.choice(['VPS', 'site', 'proxy'])    provider = random.choice(SERVICE_TYPES[type_source])    service_base = random.choice(SERVICE_NAMES[type_source])    # Варіювання послуг для одного провайдера    if random.random() > 0.7:        service = f"{provider} - {service_base} #{random.randint(1, 5)}"    else:        service = f"{provider} - {service_base}"    # Дата створення - випадкова у межах останніх 2 років    create_date = datetime.now().date() - timedelta(days=random.randint(1, 730))    # Дата оплати до - від 1 до 12 місяців у майбутньому    paid_up_to = create_date + timedelta(days=random.randint(30, 365))    # Проверка статусу    is_paid = paid_up_to >= datetime.now().date()    status = 'active' if is_paid else 'not active'    price = round(random.uniform(5, 500), 2)    return {        'cabinet': cabinet,        'groups': random.choice(GROUPS),        'create_date': create_date,        'service': service,        'type_source': type_source,        'price_per_month': price,        'currency': random.choice(CURRENCIES),        'pay_sys': random.choice(PAY_SYSTEMS),        'paid_up_to': paid_up_to,        'status': status,        'email_login': f'{service.lower().replace(" ", "_")}_{random.randint(1000, 9999)}@example.com',        'password': f'svc_pass_{random.randint(100000, 999999)}',        'ip': f'{random.randint(1, 255)}.{random.randint(0, 255)}.{random.randint(0, 255)}.{random.randint(0, 255)}',        'note_pay': random.choice(['Regular service', 'Important service', 'Test service', 'Legacy', '']) or None,    }def main():    print("🔄 Очищення попередніх даних...")    Pay.objects.all().delete()    Cabinet.objects.all().delete()    CabinetTag.objects.all().delete()    Tag.objects.all().delete()    print("✅ Очищено")    # Створення тегів    print("\n📌 Створення тегів...")    tags = {}    for tag_name in TAGS_LIST:        tag, created = Tag.objects.get_or_create(            name=tag_name,            defaults={'note': f'Tag for {tag_name}'}        )        tags[tag_name] = tag        status = '✅ Створено' if created else '⏭️ Існує'        print(f"  {status}: {tag_name}")    # Створення кабінетів    print("\n🏢 Створення кабінетів (50)...")    cabinets = []    for i in range(50):        cabinet_data = generate_cabinet_data()        cabinet = Cabinet.objects.create(**cabinet_data)        cabinets.append(cabinet)        # Додавання випадкових тегів до кабінету        cabinet_tags = random.sample(list(tags.values()), k=random.randint(1, 3))        for tag in cabinet_tags:            CabinetTag.objects.create(cabinet=cabinet, tag=tag)        if (i + 1) % 10 == 0:            print(f"  ✅ {i + 1}/50 кабінетів створено")    print(f"✅ Всього кабінетів: {len(cabinets)}")    # Створення платежів (200)    print("\n💳 Створення сервісів (200)...")    pays_created = 0    for i in range(200):        cabinet = random.choice(cabinets)        pay_data = generate_pay_data(cabinet)        Pay.objects.create(**pay_data)        pays_created += 1        if (i + 1) % 25 == 0:            print(f"  ✅ {i + 1}/200 сервісів створено")    print(f"✅ Всього сервісів: {pays_created}")    # Статистика    print("\n📊 Статистика:")    print(f"  📦 Кабінетів: {Cabinet.objects.count()}")    print(f"  💼 Сервісів: {Pay.objects.count()}")    print(f"  🏷️  Тегів: {Tag.objects.count()}")    print(f"  🔗 CabinetTag зв'язків: {CabinetTag.objects.count()}")    # Розбиття за статусом    active_count = Pay.objects.filter(status='active').count()    inactive_count = Pay.objects.filter(status='not active').count()    print(f"  ✅ Активних сервісів: {active_count}")    print(f"  ❌ Неактивних сервісів: {inactive_count}")    # Розбиття за типами    vps_count = Pay.objects.filter(type_source='VPS').count()    site_count = Pay.objects.filter(type_source='site').count()    proxy_count = Pay.objects.filter(type_source='proxy').count()    print(f"  🖥️  VPS: {vps_count}")    print(f"  🌐 Site: {site_count}")    print(f"  🔀 Proxy: {proxy_count}")    # Розбиття за валютами    print(f"\n  💱 За валютами:")    for currency in CURRENCIES:        count = Pay.objects.filter(currency=currency).count()        if count > 0:            print(f"    {currency}: {count}")    # Розбиття за системами оплати    print(f"\n  💰 За системами оплати:")    for pay_sys in PAY_SYSTEMS:        count = Pay.objects.filter(pay_sys=pay_sys).count()        if count > 0:            print(f"    {pay_sys}: {count}")    print("\n" + "="*50)    print("✨ Тестові дані успішно загружені в БД!")    print("="*50)    print("\nВи можете тестувати:")    print("  ✓ Фільтрацію за статусом (active/not active)")    print("  ✓ Фільтрацію за типом (VPS/site/proxy)")    print("  ✓ Фільтрацію за валютою")    print("  ✓ Сортування за датою, ціною тощо")    print("  ✓ Пошук за назвою сервісу")    print("  ✓ Теги та теги кабінетів")    print("  ✓ Статистику платежів")if __name__ == '__main__':    try:        main()    except Exception as e:        print(f"\n❌ Помилка: {e}")        import traceback        traceback.print_exc()

@@ -10,7 +10,7 @@
   </div>
 
   <div class="forms-grid">
-    <form method="POST" class="form_cabinet form-card">
+    <form method="POST" class="form_cabinet form-card" id="cabinet-edit-form">
       {% csrf_token %}
       <div class="form-card__header">
         <h3 class="form-section-title">{% trans "Cabinet data" %}</h3>
@@ -41,12 +41,13 @@
       </div>
     </form>
 
-    <form method="POST" class="form_cabinet form-card">
+    <form method="POST" class="form_cabinet form-card" id="cabinet-edit-tag-create-form">
       {% csrf_token %}
       <div class="form-card__header">
         <h4 class="form-section-title">{% trans "Add new tag" %}</h4>
       </div>
       {{ tag_form.as_p }}
+      <div id="cabinet-edit-tag-create-hidden-container"></div>
       <div class="page-actions">
         <button type="submit" name="submit_action" value="create_tag" class="btn_pay">{% trans "Add tag" %}</button>
       </div>

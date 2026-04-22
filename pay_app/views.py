@@ -226,19 +226,21 @@ def cabinet_edit(request: HttpRequest, id: int) -> HttpResponse:
 
     if request.method == 'POST':
         submit_action = request.POST.get('submit_action')
-        form_cabinet_edit = CabinetForm(request.POST, instance=cabinet)
-        tag_assign_form = CabinetTagAssignForm(request.POST)
-        tag_form = TagForm(request.POST, prefix='new_tag')
 
         if submit_action == 'create_tag':
+            cabinet_form_data = services.extract_prefixed_cabinet_form_data(request.POST)
+            draft_selected_tag_ids = services.parse_tag_ids(request.POST.getlist('selected_tags')) or selected_tag_ids
+            form_cabinet_edit = CabinetForm(cabinet_form_data, instance=cabinet) if cabinet_form_data else CabinetForm(instance=cabinet)
+            tag_assign_form = CabinetTagAssignForm(initial={'tags': draft_selected_tag_ids})
+            tag_form = TagForm(request.POST, prefix='new_tag')
             if tag_form.is_valid():
                 new_tag = tag_form.save()
-                merged_ids = set(services.get_selected_cabinet_tag_ids(cabinet)) | {new_tag.id}
-                tag_assign_form = CabinetTagAssignForm(initial={'tags': list(merged_ids)})
-            else:
-                tag_assign_form = CabinetTagAssignForm(initial={'tags': selected_tag_ids})
-            tag_form = TagForm(prefix='new_tag')
+                merged_ids = sorted(set(draft_selected_tag_ids) | {new_tag.id})
+                tag_assign_form = CabinetTagAssignForm(initial={'tags': merged_ids})
+                tag_form = TagForm(prefix='new_tag')
         else:
+            form_cabinet_edit = CabinetForm(request.POST, instance=cabinet)
+            tag_assign_form = CabinetTagAssignForm(request.POST)
             tag_form = TagForm(prefix='new_tag')
             if form_cabinet_edit.is_valid() and tag_assign_form.is_valid():
                 cabinet = form_cabinet_edit.save()
