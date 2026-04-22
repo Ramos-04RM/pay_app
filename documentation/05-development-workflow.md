@@ -46,7 +46,6 @@ Runs with SQLite. No Docker required for local development.
 
 ```powershell
 git clone <your-repo-url>
-cd d1
 ```
 
 ### Step 2 — Create and activate a virtual environment
@@ -129,7 +128,6 @@ sudo apt install -y python3.11 python3.11-venv python3-pip git
 
 ```bash
 git clone <your-repo-url>
-cd d1
 ```
 
 ### Step 3 — Create and activate a virtual environment
@@ -203,7 +201,6 @@ brew install python@3.11 git
 
 ```bash
 git clone <your-repo-url>
-cd d1
 ```
 
 ### Step 3 — Create and activate a virtual environment
@@ -282,7 +279,6 @@ docker info
 
 ```bash
 git clone <your-repo-url>
-cd d1
 ```
 
 ### Step 3 — Create the environment file
