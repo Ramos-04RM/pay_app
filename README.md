@@ -24,4 +24,3 @@ Developer-focused documentation index for the Payment Control System.
 
 ## Critical Security Reminder
 Never read, print, or discuss `.env` contents. Use `.env.example` and `.env.security-policy`.
-
